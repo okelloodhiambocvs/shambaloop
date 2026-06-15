@@ -1,0 +1,6 @@
+{
+  "name": "ShambaLoop",
+  "description": "Kenya's trusted agricultural asset-sharing marketplace. Connect landowners, livestock investors, and smallholder farmers to lease, partner, and grow together.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
