@@ -1,0 +1,330 @@
+{
+  "users": [
+    {
+      "id": "user_1",
+      "phone": "0712345678",
+      "name": "Wanjiku Kamau",
+      "email": "wanjiku@shambaloop.co.ke",
+      "role": "landowner",
+      "verified": true,
+      "county": "Nyandarua",
+      "avatarUrl": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150",
+      "createdAt": "2026-06-14T22:37:18.047Z",
+      "farmSpecialties": [
+        "Potato Farming",
+        "Cabbage Farm leasing"
+      ],
+      "seekingLandAcreage": 12
+    },
+    {
+      "id": "user_2",
+      "phone": "0722111222",
+      "name": "Josphat Kiprop",
+      "email": "kiprop.farm@gmail.com",
+      "role": "farmer",
+      "verified": true,
+      "county": "Uasin Gishu",
+      "avatarUrl": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
+      "createdAt": "2026-06-14T22:43:58.047Z",
+      "farmSpecialties": [
+        "Dairy Farming",
+        "Maize Production",
+        "Heifer breeding"
+      ],
+      "seekingLandAcreage": 20
+    },
+    {
+      "id": "user_3",
+      "phone": "0733444555",
+      "name": "David Mwangi",
+      "email": "mwangi.diaspora@yahoo.com",
+      "role": "investor",
+      "verified": true,
+      "county": "Nairobi",
+      "avatarUrl": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150",
+      "createdAt": "2026-05-31T08:43:58.047Z",
+      "investmentBudgetKES": 1200000,
+      "preferredSectors": [
+        "Livestock",
+        "Leaseholds"
+      ],
+      "investmentGoal": "Seeking high-yield dairy cows or 10-25 acres of fertile cabbage shamba"
+    },
+    {
+      "id": "user_admin",
+      "phone": "0700000000",
+      "name": "Sylvanus Oroko",
+      "email": "admin@shambaloop.com",
+      "role": "admin",
+      "verified": true,
+      "county": "Nairobi",
+      "avatarUrl": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150",
+      "createdAt": "2026-06-15T08:43:58.047Z"
+    },
+    {
+      "id": "user_1781515857278",
+      "phone": "0791123298",
+      "name": "Senior Test Farmer Kiprop",
+      "email": "tester_0791123298@shambaloop.test",
+      "role": "farmer",
+      "verified": false,
+      "county": "Kakamega",
+      "createdAt": "2026-06-15T09:30:57.278Z",
+      "investmentBudgetKES": 120000
+    },
+    {
+      "id": "user_1781515906493",
+      "phone": "0786393705",
+      "name": "Senior Test Farmer Kiprop",
+      "email": "tester_0786393705@shambaloop.test",
+      "role": "farmer",
+      "verified": false,
+      "county": "Kakamega",
+      "createdAt": "2026-06-15T09:31:46.493Z",
+      "investmentBudgetKES": 120000
+    },
+    {
+      "id": "user_1781516088575",
+      "phone": "0780886875",
+      "name": "Senior Test Farmer Kiprop",
+      "email": "tester_0780886875@shambaloop.test",
+      "role": "farmer",
+      "verified": false,
+      "county": "Kakamega",
+      "createdAt": "2026-06-15T09:34:48.575Z",
+      "investmentBudgetKES": 120000
+    }
+  ],
+  "listings": [
+    {
+      "id": "list_1",
+      "type": "land",
+      "title": "5-Acre Flat Fertile Red Soil Plot",
+      "description": "Highly productive parcel suitable for high-yield white potatoes, cabbages or garden-pea operations. Already fenced off. Water is readily available through an on-site solar-pumped borehole feeding into gravity tanks. Easily accessible via primary graded feeder road 2km off the Ol Kalou tarmac.",
+      "locationCounty": "Nyandarua",
+      "priceKES": 12000,
+      "verified": true,
+      "imageUrl": "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800",
+      "ownerId": "user_1",
+      "ownerName": "Wanjiku Kamau",
+      "ownerPhone": "0712345678",
+      "landDetails": {
+        "acreage": 5,
+        "soilType": "Volcanic Red Loam",
+        "waterSource": "Solar Borehole",
+        "accessibility": "Chipped Feeder Road",
+        "idealCrops": [
+          "Potatoes",
+          "Cabbages",
+          "Carrots",
+          "Barley"
+        ]
+      },
+      "createdAt": "2026-06-05T08:43:58.211Z"
+    },
+    {
+      "id": "list_2",
+      "type": "livestock",
+      "title": "High-Yield Friesian Dairy Heifers",
+      "description": "Listing for shared investment in 3 registered pure pedigree Friesian dairy cows currently in early second lactation. Producing average of 24 liters daily each. Seeking an experienced dairy farm manager in Kiambu/Nyandarua who can manage fodder production and milk logistics. We will split high-yield margins 60% (Farmer-Manager) and 40% (Investor) after input subtractions.",
+      "locationCounty": "Kiambu",
+      "priceKES": 185000,
+      "revenueSplitPercent": 40,
+      "verified": true,
+      "imageUrl": "https://images.unsplash.com/photo-1570042225831-d98fa7577f1e?w=800",
+      "ownerId": "user_3",
+      "ownerName": "David Mwangi",
+      "ownerPhone": "0733444555",
+      "livestockDetails": {
+        "species": "dairy",
+        "tagId": "SL-KE-FR-901",
+        "breed": "Pure pedigree Friesian",
+        "expectedYield": "22 - 26 Liters per day each",
+        "revenueShareConfig": "60% Farmer (land/feed), 40% Investor (funding)"
+      },
+      "createdAt": "2026-06-10T08:43:58.211Z"
+    },
+    {
+      "id": "list_3",
+      "type": "opportunity",
+      "title": "Contract Farming: 10,000 Broiler Feed Cycle",
+      "description": "Seeking a skilled broiler poultry specialist to manage a clean modern poultry house in Nakuru (Lanet). Complete setup with automated drinkers, charcoal burners, heating grids and secure dry feed storage blocks already prepared. All starting chicks, vaccination schedules, and pre-purchased feeds are funded by the landowner investor. Offering handsome production-linked profit share.",
+      "locationCounty": "Nakuru",
+      "priceKES": 35000,
+      "verified": true,
+      "imageUrl": "https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=800",
+      "ownerId": "user_1",
+      "ownerName": "Wanjiku Kamau",
+      "ownerPhone": "0712345678",
+      "opportunityDetails": {
+        "requiredSkills": [
+          "Poultry vaccination",
+          "Biosecurity management",
+          "Broiler feeding regimens"
+        ],
+        "durationMonths": 6,
+        "expectedWorkforce": 2,
+        "compensationType": "Profit-Share"
+      },
+      "createdAt": "2026-06-12T08:43:58.211Z"
+    },
+    {
+      "id": "list_4",
+      "type": "land",
+      "title": "15-Acre Black Cotton Maize Land in Eldoret",
+      "description": "Virgin land ready for commercial white maize or soya bean operations. Mechanized tractor accessibility is fully available. Highly reliable seasonal rainfall pattern.",
+      "locationCounty": "Uasin Gishu",
+      "priceKES": 15000,
+      "verified": false,
+      "imageUrl": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=800",
+      "ownerId": "user_2",
+      "ownerName": "Josphat Kiprop",
+      "ownerPhone": "0722111222",
+      "landDetails": {
+        "acreage": 15,
+        "soilType": "Deep Black Cotton",
+        "waterSource": "Rain-fed / Seasonal Stream",
+        "accessibility": "Graded bypass",
+        "idealCrops": [
+          "Maize",
+          "Wheat",
+          "Soyabeans"
+        ]
+      },
+      "createdAt": "2026-06-15T08:43:58.211Z"
+    }
+  ],
+  "agreements": [
+    {
+      "id": "lease_abc",
+      "listingId": "list_1",
+      "landownerId": "user_1",
+      "farmerId": "user_2",
+      "acreageLeased": 2,
+      "pricePerAcreKES": 12000,
+      "durationMonths": 12,
+      "startDate": "2026-07-01",
+      "status": "SIGNED",
+      "mpesaEscrowStatus": "ESCROWED",
+      "paymentsMade": 24000
+    }
+  ],
+  "partnerships": [
+    {
+      "id": "part_xyz",
+      "listingId": "list_2",
+      "investorId": "user_3",
+      "farmerId": "user_2",
+      "animalTagId": "SL-KE-FR-901",
+      "animalType": "dairy",
+      "breed": "Pure pedigree Friesian",
+      "splitPercentInvestor": 40,
+      "status": "ACTIVE",
+      "healthLogs": [
+        {
+          "id": "h_1",
+          "date": "2026-06-10",
+          "status": "Vaccinated",
+          "notes": "Foot and mouth vaccination routine completed by County Vet Officers.",
+          "recordedBy": "Josphat Kiprop (Farmer)"
+        },
+        {
+          "id": "h_2",
+          "date": "2026-06-12",
+          "status": "Healthy",
+          "notes": "Normal milk extraction baseline confirmed. Feed adjusted with protein concentrate.",
+          "recordedBy": "Josphat Kiprop (Farmer)"
+        }
+      ],
+      "productionLogs": [
+        {
+          "id": "p_1",
+          "date": "2026-06-11",
+          "metric": "Milk Liters",
+          "quantity": 24,
+          "revenueKES": 1440,
+          "investorPayoutKES": 576,
+          "farmerPayoutKES": 864
+        },
+        {
+          "id": "p_2",
+          "date": "2026-06-12",
+          "metric": "Milk Liters",
+          "quantity": 25,
+          "revenueKES": 1500,
+          "investorPayoutKES": 600,
+          "farmerPayoutKES": 900
+        }
+      ]
+    }
+  ],
+  "verifications": [
+    {
+      "id": "verify_req_1",
+      "userId": "user_2",
+      "userName": "Josphat Kiprop",
+      "userRole": "farmer",
+      "documentType": "TITLE_DEED",
+      "documentNumber": "ELDORET/SOY/5690A",
+      "notes": "Submitting verification for 15-Acre mechanized cotton tillage zone listed on marketplace.",
+      "status": "PENDING",
+      "submittedAt": "2026-06-15T08:43:58.211Z"
+    }
+  ],
+  "transactions": [
+    {
+      "id": "tx_1",
+      "transactionId": "RGC56H78UI",
+      "phoneNumber": "0712345678",
+      "amountKES": 24000,
+      "purpose": "Smart Land Lease Escrow - list_1",
+      "status": "SUCCESS",
+      "timestamp": "2026-06-15T08:43:58.211Z"
+    },
+    {
+      "id": "tx_1781515857538",
+      "transactionId": "ZGL9387HJK",
+      "phoneNumber": "0791123298",
+      "amountKES": 2500,
+      "purpose": "Integration Test Lease Deposit",
+      "status": "SUCCESS",
+      "timestamp": "2026-06-15T09:30:57.538Z"
+    },
+    {
+      "id": "tx_1781515906728",
+      "transactionId": "RGL6372HJK",
+      "phoneNumber": "0786393705",
+      "amountKES": 2500,
+      "purpose": "Integration Test Lease Deposit",
+      "status": "SUCCESS",
+      "timestamp": "2026-06-15T09:31:46.728Z"
+    },
+    {
+      "id": "tx_1781516088838",
+      "transactionId": "RGL3093HJK",
+      "phoneNumber": "0780886875",
+      "amountKES": 2500,
+      "purpose": "Integration Test Lease Deposit",
+      "status": "SUCCESS",
+      "timestamp": "2026-06-15T09:34:48.838Z"
+    }
+  ],
+  "passwordHashes": {
+    "user_1": "$2b$10$3ovxIuDwu/39CCRB6J2pCuqHwIYypC49n6oxR67TxLQbFahzc5MMy",
+    "user_2": "$2b$10$3ovxIuDwu/39CCRB6J2pCuqHwIYypC49n6oxR67TxLQbFahzc5MMy",
+    "user_3": "$2b$10$3ovxIuDwu/39CCRB6J2pCuqHwIYypC49n6oxR67TxLQbFahzc5MMy",
+    "user_admin": "$2b$10$3ovxIuDwu/39CCRB6J2pCuqHwIYypC49n6oxR67TxLQbFahzc5MMy",
+    "user_1781515857278": "$2b$10$7opPen/Djoy4LMrjSVEjr.5PQi/EiKoyqrJx1WKPCpPhRQZw6Dyne",
+    "user_1781515906493": "$2b$10$iuDMVCPg4yp/AK58bXKikeoHnBpWb7/mDOE6rgDZDWoPtHvZQR532",
+    "user_1781516088575": "$2b$10$97gKLq6Xgs1Qvuy4jWwECeq4X/TGg7Vcgvvjpz31QQrl4Zi3kguVe"
+  },
+  "refreshTokens": [
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InVzZXJfMiIsImlhdCI6MTc4MTUxNTU3MCwiZXhwIjoxNzgyMTIwMzcwfQ.oBUC3PUhaTAOvmfSF5IbMyQO1yJ_bA-DijbFQzQgYx8",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InVzZXJfMTc4MTUxNTg1NzI3OCIsImlhdCI6MTc4MTUxNTg1NywiZXhwIjoxNzgyMTIwNjU3fQ.d04VAvI5HsSHn9W6MuUWNp8TYVf8I0pietRDGEkYYs4",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InVzZXJfMTc4MTUxNTg1NzI3OCIsImlhdCI6MTc4MTUxNTg1NywiZXhwIjoxNzgyMTIwNjU3fQ.d04VAvI5HsSHn9W6MuUWNp8TYVf8I0pietRDGEkYYs4",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InVzZXJfMTc4MTUxNTkwNjQ5MyIsImlhdCI6MTc4MTUxNTkwNiwiZXhwIjoxNzgyMTIwNzA2fQ.9V6ud4gmxg60NV5RRpIeIPfeeKy0O8svG-NFFYv3WFc",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InVzZXJfMTc4MTUxNTkwNjQ5MyIsImlhdCI6MTc4MTUxNTkwNiwiZXhwIjoxNzgyMTIwNzA2fQ.9V6ud4gmxg60NV5RRpIeIPfeeKy0O8svG-NFFYv3WFc",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InVzZXJfMTc4MTUxNjA4ODU3NSIsImlhdCI6MTc4MTUxNjA4OCwiZXhwIjoxNzgyMTIwODg4fQ.YV2FCaJh8D9UIMANBO02xJPUEMi5rI5ojhUOdbmywPU",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InVzZXJfMTc4MTUxNjA4ODU3NSIsImlhdCI6MTc4MTUxNjA4OCwiZXhwIjoxNzgyMTIwODg4fQ.YV2FCaJh8D9UIMANBO02xJPUEMi5rI5ojhUOdbmywPU"
+  ]
+}
