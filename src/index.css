@@ -1,0 +1,94 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import "tailwindcss";
+
+:root {
+  --color-bg-base: #faf8f5; /* agri-dirt-50 */
+  --color-text-base: #0f172a; /* slate-900 */
+  --color-card-bg: #ffffff;
+  --color-border-base: #f2ebe3; /* agri-dirt-100 */
+}
+
+.dark {
+  --color-bg-base: #070a13; /* Deep navy absolute background */
+  --color-text-base: #f8fafc; /* Slate-50 pure display text */
+  --color-card-bg: #0f172a; /* Slate-900 rich dark card */
+  --color-border-base: #1e293b; /* Slate-800 subtle division */
+}
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  
+  /* Brand colors: Deep Green (#1F6B3D) */
+  --color-agri-green-50: #f4fcf7;
+  --color-agri-green-100: #e3f5ea;
+  --color-agri-green-600: #1F6B3D;
+  --color-agri-green-700: #195631;
+  --color-agri-green-800: #134226;
+  --color-agri-green-900: #0d2c19;
+  
+  /* Brand colors: Earth Brown (#8B5E3C) */
+  --color-agri-dirt-50: #faf8f5;
+  --color-agri-dirt-100: #f2ebe3;
+  --color-agri-dirt-600: #8B5E3C;
+  --color-agri-dirt-900: #4a3220;
+  
+  /* Brand colors: Warm Gold (#D4A017) */
+  --color-agri-gold-400: #e3b639;
+  --color-agri-gold-500: #D4A017;
+  --color-agri-gold-600: #b58810;
+
+  /* Theme-specific custom mapping */
+  --color-bg-base: var(--color-bg-base);
+  --color-text-base: var(--color-text-base);
+  --color-card-bg: var(--color-card-bg);
+  --color-border-base: var(--color-border-base);
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-bg-base);
+  color: var(--color-text-base);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Base global transitions for theme variables to block flickering */
+body, div, header, section, footer, nav, aside, p, span, h1, h2, h3, h4, button, select, input, textarea {
+  transition-property: color, background-color, border-color, shadow;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
+
+h1, h2, h3, h4, .font-display {
+  font-family: var(--font-display);
+}
+
+.mono-display {
+  font-family: var(--font-mono);
+}
+
+/* Animations & interactive helpers */
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.glow-active {
+  animation: pulseGlow 2s infinite ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

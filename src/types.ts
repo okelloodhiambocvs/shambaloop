@@ -1,0 +1,165 @@
+export enum UserRole {
+  LANDOWNER = 'landowner',
+  FARMER = 'farmer',
+  INVESTOR = 'investor',
+  ADMIN = 'admin',
+  COOPERATIVE = 'cooperative',
+  VERIFIER = 'verifier',
+  SUPPORT = 'support'
+}
+
+export interface User {
+  id: string;
+  phone: string;
+  name: string;
+  email?: string;
+  role: UserRole;
+  verified: boolean;
+  county: string;
+  avatarUrl?: string;
+  createdAt: string;
+  // Dynamic fields for partnership matchmaking
+  investmentBudgetKES?: number;
+  preferredSectors?: string[]; // e.g. ["Livestock", "Crop Production", "Leaseholds"]
+  investmentGoal?: string;      // e.g. "Looking for irrigated Kiwi farm partner" or "Seeking 10-20 acres"
+  farmSpecialties?: string[];  // e.g. ["Dairy Farming", "Horticulture", "Apiculture"]
+  seekingLandAcreage?: number;  // e.g. 5 or 20
+  
+  // Security Hardening Metadata
+  passwordResetRequired?: boolean;
+  mfaEnabled?: boolean;
+  mfaSecret?: string; // Symmetrically encrypted seed/key
+  mfaType?: 'none' | 'email' | 'sms' | 'totp';
+  mfaBackupCodes?: string[];
+  deviceTrustExpiresAt?: string;
+}
+
+export enum ListingType {
+  LAND = 'land',
+  LIVESTOCK = 'livestock',
+  OPPORTUNITY = 'opportunity' // Farm jobs / contracts
+}
+
+export interface LandDetails {
+  acreage: number;
+  soilType?: string;
+  waterSource: string; // e.g. "Borehole", "River", "Rain-fed"
+  accessibility: string; // e.g. "Tarmac connection", "Dirt road", etc.
+  idealCrops: string[];
+}
+
+export interface LivestockDetails {
+  species: 'dairy' | 'poultry' | 'goat' | 'pig' | 'beef';
+  tagId: string;
+  breed: string;
+  expectedYield?: string; // e.g. "15-20 Liters/day" or "200 eggs/week"
+  revenueShareConfig: string; // Describe split, e.g., "60-40"
+}
+
+export interface OpportunityDetails {
+  requiredSkills: string[];
+  durationMonths: number;
+  expectedWorkforce: number;
+  compensationType: 'Salary' | 'Profit-Share' | 'Mixed';
+}
+
+export interface Listing {
+  id: string;
+  type: ListingType;
+  title: string;
+  description: string;
+  locationCounty: string; // e.g. "Kiambu", "Nakuru", "Nyandarua"
+  priceKES: number; // For leases per acre/month, or animal valuation
+  revenueSplitPercent?: number; // Represent investor's share (e.g. 60%)
+  verified: boolean;
+  imageUrl: string;
+  ownerId: string;
+  ownerName: string;
+  ownerPhone: string;
+  landDetails?: LandDetails;
+  livestockDetails?: LivestockDetails;
+  opportunityDetails?: OpportunityDetails;
+  createdAt: string;
+}
+
+export interface LeaseAgreement {
+  id: string;
+  listingId: string;
+  landownerId: string;
+  farmerId: string;
+  acreageLeased: number;
+  pricePerAcreKES: number;
+  durationMonths: number;
+  startDate: string;
+  status: 'PENDING' | 'SIGNED' | 'COMPLETED' | 'CANCELLED';
+  mpesaEscrowStatus: 'UNPAID' | 'ESCROWED' | 'DISBURSED' | 'REFUNDED' | 'DISPUTED';
+  paymentsMade: number;
+}
+
+export interface LivestockPartnership {
+  id: string;
+  listingId: string;
+  investorId: string;
+  farmerId: string;
+  animalTagId: string;
+  animalType: string;
+  breed: string;
+  splitPercentInvestor: number; // e.g. 40% to investor, 60% to farmer
+  status: 'PROPOSED' | 'ACTIVE' | 'COMPLETED';
+  healthLogs: HealthLog[];
+  productionLogs: ProductionLog[];
+}
+
+export interface HealthLog {
+  id: string;
+  date: string;
+  status: 'Healthy' | 'Sick' | 'Recovering' | 'Vaccinated';
+  notes: string;
+  recordedBy: string;
+}
+
+export interface ProductionLog {
+  id: string;
+  date: string;
+  metric: string; // e.g. "Milk Liters" or "Egg Trays"
+  quantity: number;
+  revenueKES: number;
+  investorPayoutKES: number;
+  farmerPayoutKES: number;
+}
+
+export interface VerificationRequest {
+  id: string;
+  userId: string;
+  userName: string;
+  userRole: UserRole;
+  documentType: 'ID_CARD' | 'TITLE_DEED' | 'LIVESTOCK_CERT';
+  documentNumber: string;
+  notes?: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  submittedAt: string;
+}
+
+export interface MpesaTransaction {
+  id: string;
+  transactionId: string; // Sourced from simulated push e.g. "RGC56H78UI"
+  phoneNumber: string;
+  amountKES: number;
+  purpose: string;
+  status: 'SUCCESS' | 'FAILED' | 'PENDING';
+  timestamp: string;
+}
+
+export interface Dispute {
+  id: string;
+  leaseId?: string;
+  partnershipId?: string;
+  creatorId: string;
+  creatorName: string;
+  reason: string;
+  evidenceText?: string;
+  status: 'OPEN' | 'UNDER_REVIEW' | 'REFUNDED' | 'RELEASED' | 'RESOLVED';
+  createdAt: string;
+  updatedAt: string;
+  resolutionNotes?: string;
+}
