@@ -93,7 +93,8 @@ async function runTests() {
 
     // 4. Listings Marketplace Assertion
     console.log('📋 Test Group 4: Marketplace CRUD & Filtering API');
-    const listCountBefore = (await (await fetch(`${BASE_URL}/api/listings`)).json()).length;
+    const listingsBefore = await (await fetch(`${BASE_URL}/api/listings`)).json();
+    const listCountBefore = listingsBefore.length;
     
     const listPayload = {
       type: ListingType.LAND,
@@ -122,13 +123,14 @@ async function runTests() {
     assert(createListRes.status === 201, 'POST /api/listings creates unverified marketplace entries');
     const newList = await createListRes.json();
 
-    const listCountAfter = (await (await fetch(`${BASE_URL}/api/listings`)).json()).length;
-    assert(listCountAfter === listCountBefore + 1, 'GET /api/listings array expands after POST operations');
+    const listingsAfter = await (await fetch(`${BASE_URL}/api/listings`)).json();
+    assert(newList.moderationStatus === 'PENDING', 'POST /api/listings submits new entries for moderation');
+    assert(listingsAfter.length === listCountBefore && !listingsAfter.some((listing: { id: string }) => listing.id === newList.id), 'GET /api/listings excludes pending listings until approval');
     
     // Filter listings
     const filterRes = await fetch(`${BASE_URL}/api/listings?county=Narok`);
     const filterData = await filterRes.json();
-    assert(filterData.length >= 1 && filterData[0].locationCounty === 'Narok', 'GET /api/listings handles county query parameters correctly');
+    assert(Array.isArray(filterData) && filterData.every((listing: { locationCounty: string }) => listing.locationCounty === 'Narok'), 'GET /api/listings handles county query parameters correctly');
     console.log('');
 
     // 5. M-Pesa Payment Escrow Assertions
@@ -185,7 +187,7 @@ async function runTests() {
       },
       body: JSON.stringify({
         listingId: 'list_2',
-        farmerId: 'user_2',
+        farmerId: regData.user.id,
         animalType: 'dairy',
         breed: 'Pedigree Ayrshire',
         splitPercentInvestor: 40

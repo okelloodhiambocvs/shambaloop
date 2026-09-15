@@ -58,9 +58,9 @@ describe('Recharts render test', () => {
     expect(cssText).toContain('#2e774a');
     expect(cssText).toContain('#a2784d');
     expect(cssText).toContain('#eeec05');
-    expect(cssText).toContain('#shambaloop_app_stage .text-slate-900');
-    expect(cssText).toContain('.dark #shambaloop_app_stage .text-slate-900');
-    expect(cssText).toContain('.lucide');
+    expect(cssText).toContain('@custom-variant dark');
+    expect(cssText).toContain('.dark, .dark *');
+    expect(cssText).not.toContain('.lucide {');
 
     const landingPageHtml = renderToString(
       React.createElement('div', null,

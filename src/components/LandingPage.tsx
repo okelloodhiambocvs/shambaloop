@@ -439,8 +439,12 @@ export default function LandingPage({
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className={`mt-auto pt-12 pb-8 border-t transition-colors ${isDarkMode ? 'bg-slate-950 text-slate-100 border-slate-800' : 'bg-white text-slate-800 border-slate-200'}`} id="landing_footer">
+      {/* Policy links remain above; the landing footer is intentionally logo-only. */}
+      <footer className={`mt-auto border-t py-6 transition-colors ${isDarkMode ? 'border-slate-800 bg-slate-950' : 'border-slate-200 bg-white'}`} id="landing_footer">
+        <div className="mx-auto flex max-w-7xl justify-center px-4 sm:px-6 lg:px-8">
+          <Logo size={36} variant="symbol" isDarkMode={isDarkMode} />
+        </div>
+        {false && <>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
             {/* Col 1: Brand */}
@@ -563,6 +567,7 @@ export default function LandingPage({
             </p>
           </div>
         </div>
+        </>}
       </footer>
     </div>
   );

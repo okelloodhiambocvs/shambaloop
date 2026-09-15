@@ -4334,8 +4334,10 @@ export default function App() {
 
       </main>
 
-      {/* High-Contrast Cooperative Footer */}
-      <footer className="mt-16 bg-slate-900 text-slate-300 select-none border-t border-slate-800 text-xs font-sans" id="shambaloop_custom_footer">
+      {/* Logged-in workspaces keep the footer unobtrusive: brand mark only. */}
+      <footer className="mt-10 flex justify-center border-t border-border-base bg-card-bg py-4" id="shambaloop_custom_footer">
+        <Logo size={30} variant="symbol" isDarkMode={isDarkMode} />
+        {false && <>
         {/* Newsletter Section */}
         <div className="bg-slate-950/80 py-8 border-b border-slate-800" id="newsletter_section">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -4531,6 +4533,7 @@ export default function App() {
             </div>
           </div>
         </div>
+        </>}
       </footer>
 
       {/* RENDER MODAL: Catalog asset creation */}

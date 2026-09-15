@@ -3,6 +3,10 @@
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
 @import "tailwindcss";
 
+/* The app toggle controls the `.dark` class; it must also control Tailwind's
+   dark utilities so foreground and surface colors switch together. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --color-bg-base: #f8fafc;
   --color-text-base: #0f172a;
