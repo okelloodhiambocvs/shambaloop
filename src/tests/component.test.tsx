@@ -29,6 +29,7 @@ import App from '../App';
 import AdminPanel from '../components/AdminPanel';
 import FarmerDashboard from '../components/FarmerDashboard';
 import InvestorDashboard from '../components/InvestorDashboard';
+import VeterinaryDashboard from '../components/VeterinaryDashboard';
 import { UserRole } from '../types';
 
 import { ResponsiveContainer, LineChart, Line } from 'recharts';
@@ -57,6 +58,9 @@ describe('Recharts render test', () => {
     expect(cssText).toContain('#2e774a');
     expect(cssText).toContain('#a2784d');
     expect(cssText).toContain('#eeec05');
+    expect(cssText).toContain('#shambaloop_app_stage .text-slate-900');
+    expect(cssText).toContain('.dark #shambaloop_app_stage .text-slate-900');
+    expect(cssText).toContain('.lucide');
 
     const landingPageHtml = renderToString(
       React.createElement('div', null,
@@ -109,5 +113,15 @@ describe('Recharts render test', () => {
     expect(html).toContain('Environmental data is unavailable');
     expect(html).not.toContain('Capital Partner Console');
     expect(html).not.toContain('Yield &amp; Payout Stream');
+  });
+
+  test('renders the veterinary job-first workspace without command-station copy', () => {
+    const html = renderToString(React.createElement(VeterinaryDashboard, {
+      currentUser: { id: 'vet_1', phone: '0712345678', name: 'Vet One', role: UserRole.VETERINARIAN, verified: true, county: 'Nakuru', createdAt: '2026-01-01' },
+      partnerships: [], reports: [], vetJobs: [], onSaveReport: async () => {}, onUpdateJobStatus: async () => {}
+    }));
+    expect(html).toContain('Jobs, records, and follow-up');
+    expect(html).toContain('Jobs requiring action');
+    expect(html).not.toContain('Veterinary Command Station');
   });
 });

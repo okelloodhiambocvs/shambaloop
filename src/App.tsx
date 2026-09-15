@@ -462,14 +462,11 @@ export default function App() {
     localStorage.removeItem('sl_token');
   };
 
-  const handleSaveVeterinaryReport = (report: VeterinaryReport) => {
-    setVeterinaryReports(previous => [report, ...previous]);
-    logAction('publish_veterinary_report', {
-      reportId: report.id,
-      partnershipId: report.partnershipId,
-      animalTagId: report.animalTagId,
-      status: report.status
-    }, report.veterinarianId, report.veterinarianName);
+  const handleSaveVeterinaryReport = async (input: { partnershipId: string; visitType: string; findings: string; recommendations: string; status: VeterinaryReport['status'] }) => {
+    const { data, error } = await veterinaryFetch<VeterinaryReport>('/api/veterinary/reports', { method: 'POST', body: JSON.stringify(input) });
+    if (error || !data) throw new Error(error || 'Could not publish the veterinary report.');
+    setVeterinaryReports(previous => [data, ...previous]);
+    showToast('Veterinary report published.');
   };
 
   const openLoginModal = (targetRole?: UserRole | 'dashboard') => {
@@ -799,8 +796,10 @@ export default function App() {
     showToast('Veterinary service request submitted.');
   };
 
-  const handleUpdateVetJobStatus = (jobId: string, status: VeterinaryJob['status']) => {
-    setVetJobs(prev => prev.map(j => j.id === jobId ? { ...j, status } : j));
+  const handleUpdateVetJobStatus = async (jobId: string, status: VeterinaryJob['status']) => {
+    const { data, error } = await veterinaryFetch<VeterinaryJob>(`/api/veterinary/jobs/${encodeURIComponent(jobId)}`, { method: 'PATCH', body: JSON.stringify({ status }) });
+    if (error || !data) throw new Error(error || 'Could not update the veterinary job.');
+    setVetJobs(previous => previous.map(job => job.id === data.id ? data : job));
     showToast(`Job status updated to ${status}.`);
   };
 
@@ -850,6 +849,7 @@ export default function App() {
   const [selectedType, setSelectedType] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('default');
+  const [dashboardView, setDashboardView] = useState<'overview' | 'listings'>('overview');
 
   // -------------------------------------------------------------
   // Offline & Data Sync Service Worker Infrastructure state
@@ -1721,6 +1721,17 @@ export default function App() {
   }, [currentUser?.id, currentUser?.role]);
 
   useEffect(() => {
+    const token = localStorage.getItem('sl_token');
+    if (currentUser?.role !== UserRole.VETERINARIAN || !token) return;
+    const headers = { Authorization: `Bearer ${token}` };
+    Promise.all([fetch('/api/veterinary/jobs', { headers }), fetch('/api/veterinary/partnerships', { headers }), fetch('/api/veterinary/reports', { headers })]).then(async ([jobs, partnershipsResponse, reports]) => {
+      if (jobs.ok) setVetJobs(await jobs.json());
+      if (partnershipsResponse.ok) setPartnerships(await partnershipsResponse.json());
+      if (reports.ok) setVeterinaryReports(await reports.json());
+    }).catch(() => showToast('Veterinary workspace data could not be refreshed.'));
+  }, [currentUser?.id, currentUser?.role]);
+
+  useEffect(() => {
     // A. Sync status event handlers
     const handleOnline = () => {
       setIsOnline(true);
@@ -2412,6 +2423,12 @@ export default function App() {
     });
   };
 
+  const veterinaryFetch = <T,>(url: string, init: RequestInit = {}) => {
+    const token = localStorage.getItem('sl_token');
+    if (!token) return Promise.resolve({ data: null as T | null, error: 'A signed-in veterinary session is required.' });
+    return safeFetch<T>(url, { ...init, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, ...init.headers } });
+  };
+
   const handleSaveFarmerProfile = async (input: { farmSpecialties: string[]; seekingLandAcreage: number }) => {
     const { data, error } = await farmerFetch<{ user: User }>('/api/farmer/profile', { method: 'PUT', body: JSON.stringify(input) });
     if (error || !data) throw new Error(error || 'Could not save the farm summary.');
@@ -2566,6 +2583,7 @@ export default function App() {
               setSearchQuery('');
               setSelectedCounty('All Counties');
               setSelectedType('all');
+              setDashboardView('overview');
             }}
             className="flex items-center gap-3 shrink-0 focus:outline-none cursor-pointer group text-left"
             id="shambaloop_header_logo_btn"
@@ -2658,43 +2676,6 @@ export default function App() {
       {/* Main Container Area */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 lg:mt-8 space-y-8 flex-1">
         
-        {/* Swahili onboarding welcome panel */}
-        <section className="bg-gradient-to-r from-agri-green-900 to-agri-green-800 text-white rounded-2xl p-6 md:p-8 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6 select-none relative overflow-hidden">
-          {/* Subtle background graphics */}
-          <div className="absolute -right-16 -bottom-16 w-48 h-48 rounded-full bg-white/5 border border-white/10"></div>
-          
-          <div className="space-y-2 relative">
-            <span className="bg-emerald-500 text-white text-[9px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-full border border-emerald-400/40">
-              M-PESA INTEGRATED
-            </span>
-            <h2 className="text-2.5xl font-extrabold font-display leading-tight text-white">
-              Shamba leasehold & Livestock partnership in one click!
-            </h2>
-            <p className="text-agri-green-100 text-xs md:text-sm font-medium leading-relaxed max-w-xl">
-              Turn idle fertile parcels into food baskets and high-yielding dairy herds. Backed by digital title-deeds validation, Escrow escrowing buffers, and direct automated profit splits.
-            </p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0 relative items-center">
-            <button
-              onClick={() => setIsListingModalOpen(true)}
-              className="bg-white hover:bg-slate-50 text-agri-green-900 px-5 py-3.5 rounded-xl text-xs font-bold tracking-wide uppercase shadow-md flex items-center justify-center gap-2 cursor-pointer transition active:scale-98"
-            >
-              List an Asset (Land/Cows)
-            </button>
-            {currentUser && (
-              <div className="bg-emerald-900/50 backdrop-blur-md p-2 rounded-xl border border-emerald-500/25 flex items-center gap-1.5 shadow-sm">
-                <WorkflowTooltip
-                  role={currentUser.role}
-                  actionType="submit_listing"
-                  align="right"
-                  buttonLabel="Registration Info"
-                />
-              </div>
-            )}
-          </div>
-        </section>
-
         {/* ROLE SPECIFIC DASHBOARDS WITH STANDARDIZED PERFORMANT FADE-IN */}
         {currentUser && (
           <section key={currentUser.role} className="space-y-4 animate-fade-in">
@@ -2756,12 +2737,10 @@ export default function App() {
               <VeterinaryDashboard
                 currentUser={currentUser}
                 partnerships={partnerships}
-                usersList={usersList}
                 reports={veterinaryReports}
                 vetJobs={vetJobs}
-                onSaveReport={(rep) => handleSaveVeterinaryReport(rep)}
+                onSaveReport={handleSaveVeterinaryReport}
                 onUpdateJobStatus={handleUpdateVetJobStatus}
-                onLogLifeEvent={(evt) => handleLogFarmEvent(evt)}
               />
             )}
 
@@ -2863,8 +2842,25 @@ export default function App() {
           </section>
         )}
 
+        <nav className="flex items-center gap-2 border-b border-border-base pb-3" aria-label="Dashboard views">
+          <button
+            type="button"
+            onClick={() => setDashboardView('overview')}
+            className={`rounded-lg px-4 py-2 text-xs font-bold transition-colors ${dashboardView === 'overview' ? 'bg-emerald-700 text-white' : 'bg-card-bg text-text-base border border-border-base hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+          >
+            Dashboard
+          </button>
+          <button
+            type="button"
+            onClick={() => setDashboardView('listings')}
+            className={`rounded-lg px-4 py-2 text-xs font-bold transition-colors ${dashboardView === 'listings' ? 'bg-emerald-700 text-white' : 'bg-card-bg text-text-base border border-border-base hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+          >
+            Listings
+          </button>
+        </nav>
+
         {/* Section: Market Browsing & Livestock Registry logs */}
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {dashboardView === 'listings' && <section className="dashboard-surface grid grid-cols-1 lg:grid-cols-3 gap-8">
           
           {/* LEFT: Filters and Active Farm contracts */}
           <div className="space-y-6">
@@ -4131,13 +4127,20 @@ export default function App() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-agri-dirt-100 gap-2 select-none">
                 <div className="flex items-center gap-2">
                   <span className="w-2.5 h-2.5 bg-emerald-600 rounded-full animate-ping glow-active"></span>
-                  <h2 className="text-sm font-bold uppercase tracking-widest text-[#2f4f1a]">
+                  <h2 className="text-sm font-bold uppercase tracking-widest text-text-base">
                     Active {selectedCounty !== 'All Counties' && `${selectedCounty} Hub`} Listings ({displayedListings.length})
                   </h2>
                 </div>
                 
                 {/* Reordering Sorting controls */}
                 <div className="flex items-center gap-2 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setIsListingModalOpen(true)}
+                    className="rounded-lg bg-emerald-700 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-white hover:bg-emerald-800"
+                  >
+                    Add listing
+                  </button>
                   <span className="text-slate-500 dark:text-slate-400 font-bold whitespace-nowrap text-[10px] uppercase tracking-wider">Sort by price:</span>
                   <select
                     value={sortBy}
@@ -4199,7 +4202,7 @@ export default function App() {
                       <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
                         {isOnline 
                           ? 'Service worker monitoring and caching the latest ShambaLoop marketplace feeds.' 
-                          : '🔌 Connection interrupted. Viewing the regional browser sync data.'}
+                          : 'Connection interrupted. Viewing the regional browser sync data.'}
                       </p>
                     </div>
                   </div>
@@ -4262,7 +4265,7 @@ export default function App() {
                   <div className="p-3 bg-slate-950 dark:bg-black/45 rounded-xl font-mono text-[9px] text-emerald-400 max-h-36 overflow-y-auto space-y-1 border border-white/5 shadow-inner" id="sw_connection_logs_panel">
                     <p className="text-slate-500 pb-1 border-b border-white/5 font-sans font-bold uppercase tracking-wide text-[8px] flex justify-between items-center">
                       <span>Sync Server Event Streams</span>
-                      <span className="animate-pulse text-emerald-500">● FEED LOGS ACTIVE</span>
+                      <span className="animate-pulse text-emerald-500">FEED LOGS ACTIVE</span>
                     </p>
                     {cacheDetails.syncLog.map((log, idx) => (
                       <p key={idx} className="leading-snug truncate">
@@ -4327,7 +4330,7 @@ export default function App() {
 
           </div>
 
-        </section>
+        </section>}
 
       </main>
 

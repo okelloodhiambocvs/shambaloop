@@ -423,6 +423,15 @@ describe('ShambaLoop End-to-End Integration Tests', () => {
       const response = await fetch(`${BASE_URL}/api/veterinary/reports`);
       expect(response.status).toBe(401);
     });
+
+    test('prevents a farmer from accessing veterinary job controls and writing clinical reports', async () => {
+      const [jobs, report] = await Promise.all([
+        fetch(`${BASE_URL}/api/veterinary/jobs`, { headers: { Authorization: `Bearer ${jwtToken}` } }),
+        fetch(`${BASE_URL}/api/veterinary/reports`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${jwtToken}` }, body: JSON.stringify({ partnershipId: 'part_xyz', visitType: 'Spoofed', findings: 'Spoofed', recommendations: 'Spoofed', status: 'FIT_FOR_PRODUCTION' }) })
+      ]);
+      expect(jobs.status).toBe(403);
+      expect(report.status).toBe(403);
+    });
   });
 
   describe('Investor workspace authorization and validation', () => {

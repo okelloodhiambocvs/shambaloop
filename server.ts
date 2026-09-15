@@ -1686,6 +1686,58 @@ app.get('/api/veterinary/reports', JWTAuthMiddleware, (req: AuthenticatedRequest
   res.json(reports);
 });
 
+// 5d. Veterinary workspace. A veterinarian may claim an open request, then only
+// access the linked partnership and publish records for that assignment.
+const veterinaryOnly = requireRole([UserRole.VETERINARIAN]);
+const veterinaryJobsFor = (vetId: string) => (db.veterinaryJobs || []).filter(job => job.status === 'OPEN' || job.assignedVetId === vetId);
+
+app.get('/api/veterinary/jobs', JWTAuthMiddleware, veterinaryOnly, (req: AuthenticatedRequest, res) => {
+  res.json(veterinaryJobsFor(req.user!.id));
+});
+
+app.patch('/api/veterinary/jobs/:id', JWTAuthMiddleware, veterinaryOnly, (req: AuthenticatedRequest, res) => {
+  const job = (db.veterinaryJobs || []).find(item => item.id === req.params.id);
+  if (!job) return res.status(404).json({ error: 'Veterinary job not found.' });
+  const { status } = req.body;
+  const allowed: VeterinaryJob['status'][] = ['IN_PROGRESS', 'COMPLETED'];
+  if (!allowed.includes(status)) return res.status(400).json({ error: 'Choose in progress or completed.' });
+  if (job.status === 'OPEN') {
+    if (status !== 'IN_PROGRESS') return res.status(409).json({ error: 'An open job must be accepted before completion.' });
+    job.assignedVetId = req.user!.id;
+    job.assignedVetName = req.user!.name;
+  } else if (job.assignedVetId !== req.user!.id) {
+    return res.status(403).json({ error: 'This job is assigned to another veterinarian.' });
+  }
+  if (job.status === 'COMPLETED') return res.status(409).json({ error: 'Completed jobs cannot be changed.' });
+  job.status = status;
+  saveDatabase();
+  writeAuditLog(req.user!.id, 'veterinary_job_updated', `vet_job:${job.id}`, null, { status }, req.ip || '127.0.0.1');
+  res.json(job);
+});
+
+app.get('/api/veterinary/partnerships', JWTAuthMiddleware, veterinaryOnly, (req: AuthenticatedRequest, res) => {
+  const farmIds = new Set(veterinaryJobsFor(req.user!.id).filter(job => job.assignedVetId === req.user!.id).map(job => job.farmId));
+  res.json(db.partnerships.filter(item => farmIds.has(item.id)));
+});
+
+app.post('/api/veterinary/reports', JWTAuthMiddleware, veterinaryOnly, (req: AuthenticatedRequest, res) => {
+  const { partnershipId, visitType, findings, recommendations, status } = req.body;
+  const partnership = db.partnerships.find(item => item.id === partnershipId);
+  const job = (db.veterinaryJobs || []).find(item => item.farmId === partnershipId && item.assignedVetId === req.user!.id && (item.status === 'IN_PROGRESS' || item.status === 'COMPLETED'));
+  const validStatuses: VeterinaryReport['status'][] = ['FIT_FOR_PRODUCTION', 'FOLLOW_UP_REQUIRED', 'TREATMENT_REQUIRED', 'NOT_FIT_FOR_PRODUCTION'];
+  const normalizedVisit = cleanText(visitType, 160);
+  const normalizedFindings = cleanText(findings, 3000);
+  const normalizedRecommendations = cleanText(recommendations, 3000);
+  if (!partnership || !job) return res.status(403).json({ error: 'A current assigned job is required for this livestock record.' });
+  if (!normalizedVisit || !normalizedFindings || !normalizedRecommendations || !validStatuses.includes(status)) return res.status(400).json({ error: 'Provide a valid service, observations, recommendations, and status.' });
+  const report: VeterinaryReport = { id: `vet_report_${Date.now()}`, partnershipId, animalTagId: partnership.animalTagId, veterinarianId: req.user!.id, veterinarianName: req.user!.name, farmerId: partnership.farmerId, investorId: partnership.investorId, visitType: normalizedVisit, findings: normalizedFindings, recommendations: normalizedRecommendations, status, createdAt: new Date().toISOString() };
+  db.veterinaryReports ||= [];
+  db.veterinaryReports.unshift(report);
+  saveDatabase();
+  writeAuditLog(req.user!.id, 'veterinary_report_created', `report:${report.id}`, null, { partnershipId, status }, req.ip || '127.0.0.1');
+  res.status(201).json(report);
+});
+
 // 5c. Investor workspace. Discovery exposes only public farmer information;
 // collaboration, proposals, events, and reports remain scoped to the investor.
 const investorOnly = requireRole([UserRole.INVESTOR]);
