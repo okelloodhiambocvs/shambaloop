@@ -424,4 +424,106 @@ describe('ShambaLoop End-to-End Integration Tests', () => {
       expect(response.status).toBe(401);
     });
   });
+
+  describe('Investor workspace authorization and validation', () => {
+    let investorToken = '';
+    let investorId = '';
+    let secondInvestorToken = '';
+    let proposalId = '';
+
+    test('registers an investor and rejects investor routes for a farmer', async () => {
+      const phone = `07${Math.floor(10000000 + Math.random() * 90000000)}`;
+      const registration = await fetch(`${BASE_URL}/api/auth/register`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, name: 'Integration Investor', role: UserRole.INVESTOR, county: 'Nakuru', password: 'InvestorPassword99!' })
+      });
+      expect(registration.status).toBe(201);
+      const investor = await registration.json();
+      investorToken = investor.token;
+      investorId = investor.user.id;
+
+      const farmerAttempt = await fetch(`${BASE_URL}/api/investor/farmers`, { headers: { Authorization: `Bearer ${jwtToken}` } });
+      expect(farmerAttempt.status).toBe(403);
+    });
+
+    test('discovers public farmer profiles and stores a brief under the authenticated investor', async () => {
+      const discovery = await fetch(`${BASE_URL}/api/investor/farmers?county=Kakamega`, { headers: { Authorization: `Bearer ${investorToken}` } });
+      expect(discovery.status).toBe(200);
+      const farmers = await discovery.json();
+      expect(farmers.some((farmer: any) => farmer.id === testUserId)).toBe(true);
+      farmers.forEach((farmer: any) => {
+        expect(farmer.phone).toBeUndefined();
+        farmer.listings.forEach((listing: any) => expect(listing.ownerPhone).toBeUndefined());
+      });
+
+      const saved = await fetch(`${BASE_URL}/api/investor/criteria`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${investorToken}` },
+        body: JSON.stringify({ investorId: 'user_admin', investorName: 'Spoofed Admin', lookingFor: 'FARMER_WITH_LAND_NEEDING_CAPITAL', budgetKES: 300000, preferredSectors: ['Dairy'], targetCounties: ['Kakamega'], resourcesProvided: 'Capital and feed equipment.', partnerRequirements: 'Experienced dairy farmer with land.', notes: 'Monthly record review required.' })
+      });
+      expect(saved.status).toBe(200);
+      expect((await saved.json()).investorId).toBe(investorId);
+    });
+
+    test('validates investment briefs, searches, and investor listings', async () => {
+      const invalidBrief = await fetch(`${BASE_URL}/api/investor/criteria`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${investorToken}` },
+        body: JSON.stringify({ lookingFor: 'INVALID', budgetKES: -1, preferredSectors: [], targetCounties: [], resourcesProvided: '', partnerRequirements: '', notes: '' })
+      });
+      expect(invalidBrief.status).toBe(400);
+
+      const invalidSearch = await fetch(`${BASE_URL}/api/investor/farmers?q=${'x'.repeat(81)}`, { headers: { Authorization: `Bearer ${investorToken}` } });
+      expect(invalidSearch.status).toBe(400);
+
+      const invalidListing = await fetch(`${BASE_URL}/api/listings`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${investorToken}` },
+        body: JSON.stringify({ type: 'invalid', title: '', description: '', locationCounty: '', priceKES: -100 })
+      });
+      expect(invalidListing.status).toBe(400);
+    });
+
+    test('limits proposal viewing and decisions to the addressed investor', async () => {
+      const proposal = await fetch(`${BASE_URL}/api/farmer/proposals`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${jwtToken}` },
+        body: JSON.stringify({ investorId, title: 'Secure dairy expansion', sector: 'Dairy', farmDescription: 'Established farm with water, fodder, and experienced staff.', capitalRequestedKES: 200000, farmerContribution: 'Land, labour, water, and feed storage.', investorSharePercent: 40 })
+      });
+      expect(proposal.status).toBe(201);
+      proposalId = (await proposal.json()).id;
+
+      const listed = await fetch(`${BASE_URL}/api/investor/proposals`, { headers: { Authorization: `Bearer ${investorToken}` } });
+      expect(listed.status).toBe(200);
+      expect((await listed.json()).some((item: any) => item.id === proposalId)).toBe(true);
+
+      const changed = await fetch(`${BASE_URL}/api/investor/proposals/${proposalId}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${investorToken}` }, body: JSON.stringify({ status: 'NEGOTIATING', farmerId: 'user_admin' })
+      });
+      expect(changed.status).toBe(200);
+      expect((await changed.json()).status).toBe('NEGOTIATING');
+    });
+
+    test('blocks a second investor from unrelated proposals, collaboration records, and reports', async () => {
+      const phone = `07${Math.floor(10000000 + Math.random() * 90000000)}`;
+      const registration = await fetch(`${BASE_URL}/api/auth/register`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, name: 'Second Investor', role: UserRole.INVESTOR, county: 'Nairobi', password: 'SecondInvestorPassword99!' })
+      });
+      expect(registration.status).toBe(201);
+      secondInvestorToken = (await registration.json()).token;
+
+      const [proposalsResponse, partnershipsResponse, eventsResponse, reportsResponse] = await Promise.all([
+        fetch(`${BASE_URL}/api/investor/proposals`, { headers: { Authorization: `Bearer ${secondInvestorToken}` } }),
+        fetch(`${BASE_URL}/api/livestock/partnerships`, { headers: { Authorization: `Bearer ${secondInvestorToken}` } }),
+        fetch(`${BASE_URL}/api/investor/events`, { headers: { Authorization: `Bearer ${secondInvestorToken}` } }),
+        fetch(`${BASE_URL}/api/veterinary/reports`, { headers: { Authorization: `Bearer ${secondInvestorToken}` } })
+      ]);
+      expect(await proposalsResponse.json()).toEqual([]);
+      expect(await partnershipsResponse.json()).toEqual([]);
+      expect(await eventsResponse.json()).toEqual([]);
+      expect(await reportsResponse.json()).toEqual([]);
+
+      const mutation = await fetch(`${BASE_URL}/api/investor/proposals/${proposalId}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${secondInvestorToken}` }, body: JSON.stringify({ status: 'ACCEPTED' })
+      });
+      expect(mutation.status).toBe(403);
+    });
+  });
 });

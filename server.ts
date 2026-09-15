@@ -8,7 +8,7 @@ import crypto from 'crypto';
 import { 
   UserRole, User, Listing, ListingType, LeaseAgreement, 
   LivestockPartnership, VerificationRequest, MpesaTransaction,
-  HealthLog, ProductionLog, Dispute, TripartiteMatch, FarmerProposal, FarmEvent, VeterinaryJob, VeterinaryReport
+  HealthLog, ProductionLog, Dispute, TripartiteMatch, FarmerProposal, FarmEvent, VeterinaryJob, VeterinaryReport, InvestorCriteria
 } from './src/types.js';
 
 const app = express();
@@ -32,6 +32,7 @@ interface DatabaseSchema {
   farmEvents?: FarmEvent[];
   veterinaryJobs?: VeterinaryJob[];
   veterinaryReports?: VeterinaryReport[];
+  investorCriteria?: InvestorCriteria[];
 }
 
 const DATA_DIR = path.join(process.cwd(), 'data');
@@ -262,7 +263,8 @@ let db: DatabaseSchema = {
   proposals: [],
   farmEvents: [],
   veterinaryJobs: [],
-  veterinaryReports: []
+  veterinaryReports: [],
+  investorCriteria: []
 };
 
 // Seed initial default accounts and records
@@ -558,6 +560,7 @@ function loadDatabase() {
       db.farmEvents ||= [];
       db.veterinaryJobs ||= [];
       db.veterinaryReports ||= [];
+      db.investorCriteria ||= [];
       // Older persisted listings did not have a moderation state. Preserve their
       // visibility while making their administrative state explicit.
       db.listings = db.listings.map(listing => ({
@@ -1243,8 +1246,13 @@ app.post('/api/listings', JWTAuthMiddleware, (req: AuthenticatedRequest, res) =>
     landDetails, livestockDetails, opportunityDetails 
   } = req.body;
 
-  if (!type || !title || !description || !locationCounty || !priceKES) {
-    return res.status(400).json({ error: 'Missing mandatory listing parameters.' });
+  const normalizedTitle = cleanText(title, 160);
+  const normalizedDescription = cleanText(description, 3000);
+  const normalizedCounty = cleanText(locationCounty, 100);
+  const normalizedPrice = Number(priceKES);
+  const normalizedRevenueSplit = revenueSplitPercent === undefined || revenueSplitPercent === '' ? undefined : Number(revenueSplitPercent);
+  if (!Object.values(ListingType).includes(type) || !normalizedTitle || !normalizedDescription || !normalizedCounty || !Number.isFinite(normalizedPrice) || normalizedPrice <= 0 || normalizedPrice > 100000000 || (normalizedRevenueSplit !== undefined && (!Number.isFinite(normalizedRevenueSplit) || normalizedRevenueSplit < 1 || normalizedRevenueSplit > 99))) {
+    return res.status(400).json({ error: 'Provide a valid listing type, title, description, county, price, and revenue split where applicable.' });
   }
 
   const verifiedOwnerId = req.user ? req.user.id : (ownerId || 'user_1');
@@ -1253,12 +1261,12 @@ app.post('/api/listings', JWTAuthMiddleware, (req: AuthenticatedRequest, res) =>
 
   const newListing: Listing = {
     id: `list_${Date.now()}`,
-    type: type as ListingType,
-    title: title.trim(),
-    description: description.trim(),
-    locationCounty: locationCounty.trim(),
-    priceKES: Number(priceKES),
-    revenueSplitPercent: revenueSplitPercent ? Number(revenueSplitPercent) : undefined,
+    type,
+    title: normalizedTitle,
+    description: normalizedDescription,
+    locationCounty: normalizedCounty,
+    priceKES: normalizedPrice,
+    revenueSplitPercent: normalizedRevenueSplit,
     verified: false, // Default unverified, awaits admin auditing
     moderationStatus: 'PENDING',
     imageUrl: imageUrl || 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800',
@@ -1676,6 +1684,106 @@ app.post('/api/farmer/veterinary-jobs', JWTAuthMiddleware, farmerOnly, (req: Aut
 app.get('/api/veterinary/reports', JWTAuthMiddleware, (req: AuthenticatedRequest, res) => {
   const reports = (db.veterinaryReports || []).filter(report => req.user!.role === UserRole.ADMIN || report.farmerId === req.user!.id || report.investorId === req.user!.id || report.veterinarianId === req.user!.id);
   res.json(reports);
+});
+
+// 5c. Investor workspace. Discovery exposes only public farmer information;
+// collaboration, proposals, events, and reports remain scoped to the investor.
+const investorOnly = requireRole([UserRole.INVESTOR]);
+
+const queryFilter = (value: unknown, maxLength = 80): string | null => {
+  if (value === undefined) return '';
+  return typeof value === 'string' ? cleanText(value, maxLength) : null;
+};
+
+app.get('/api/investor/farmers', JWTAuthMiddleware, investorOnly, (req, res) => {
+  const query = queryFilter(req.query.q);
+  const county = queryFilter(req.query.county);
+  const sector = queryFilter(req.query.sector);
+  if (query === null || county === null || sector === null) return res.status(400).json({ error: 'Search filters must be short text values.' });
+
+  const farmers = db.users.filter(user => user.role === UserRole.FARMER).filter(user => {
+    const listings = db.listings.filter(listing => listing.ownerId === user.id && listing.moderationStatus === 'APPROVED');
+    const searchable = `${user.name} ${user.county} ${(user.farmSpecialties || []).join(' ')} ${listings.map(listing => `${listing.title} ${listing.description}`).join(' ')}`.toLowerCase();
+    return (!query || searchable.includes(query.toLowerCase())) && (!county || user.county.toLowerCase() === county.toLowerCase()) && (!sector || searchable.includes(sector.toLowerCase()));
+  }).map(user => ({
+    id: user.id,
+    name: user.name,
+    county: user.county,
+    verified: user.verified,
+    createdAt: user.createdAt,
+    farmSpecialties: user.farmSpecialties || [],
+    seekingLandAcreage: user.seekingLandAcreage,
+    listings: db.listings.filter(listing => listing.ownerId === user.id && listing.moderationStatus === 'APPROVED').map(listing => {
+      const { ownerPhone, ...publicListing } = listing;
+      return publicListing;
+    })
+  }));
+  res.json(farmers);
+});
+
+app.get('/api/investor/criteria', JWTAuthMiddleware, investorOnly, (req: AuthenticatedRequest, res) => {
+  res.json((db.investorCriteria || []).find(criteria => criteria.investorId === req.user!.id) || null);
+});
+
+app.put('/api/investor/criteria', JWTAuthMiddleware, investorOnly, (req: AuthenticatedRequest, res) => {
+  const { lookingFor, budgetKES, preferredSectors, targetCounties, notes, resourcesProvided, partnerRequirements, investorId, investorName } = req.body;
+  const validModels: InvestorCriteria['lookingFor'][] = ['FARMER_WITH_LAND_NEEDING_CAPITAL', 'FARM_MANAGER_EXPERTISE', 'LAND_FOR_LEASE_PROJECT'];
+  const budget = Number(budgetKES);
+  const normalizedNotes = cleanText(notes, 1500);
+  const normalizedResources = resourcesProvided === undefined ? undefined : cleanText(resourcesProvided, 1000);
+  const normalizedRequirements = partnerRequirements === undefined ? undefined : cleanText(partnerRequirements, 1000);
+  const sectors = Array.isArray(preferredSectors) ? preferredSectors.map(item => cleanText(item, 80)) : [];
+  const counties = Array.isArray(targetCounties) ? targetCounties.map(item => cleanText(item, 80)) : [];
+  if (!validModels.includes(lookingFor) || !Number.isFinite(budget) || budget <= 0 || budget > 100000000 || !normalizedNotes || !normalizedResources || !normalizedRequirements || sectors.length < 1 || sectors.length > 10 || counties.length < 1 || counties.length > 10 || sectors.some(item => !item) || counties.some(item => !item)) {
+    return res.status(400).json({ error: 'Provide an investment model, valid budget, sectors, counties, resources, partner requirements, and notes.' });
+  }
+
+  const criteria: InvestorCriteria = {
+    id: (db.investorCriteria || []).find(item => item.investorId === req.user!.id)?.id || `criteria_${Date.now()}`,
+    investorId: req.user!.id,
+    investorName: req.user!.name,
+    lookingFor,
+    budgetKES: budget,
+    preferredSectors: sectors as string[],
+    targetCounties: counties as string[],
+    notes: normalizedNotes,
+    resourcesProvided: normalizedResources,
+    partnerRequirements: normalizedRequirements,
+    status: 'ACTIVE',
+    createdAt: new Date().toISOString()
+  };
+  db.investorCriteria ||= [];
+  db.investorCriteria = [criteria, ...db.investorCriteria.filter(item => item.investorId !== req.user!.id)];
+  // Farmer discovery deliberately uses the authenticated investor's public profile fields.
+  req.user!.investmentBudgetKES = budget;
+  req.user!.preferredSectors = criteria.preferredSectors;
+  req.user!.investmentGoal = criteria.partnerRequirements;
+  saveDatabase();
+  writeAuditLog(req.user!.id, 'investor_criteria_saved', `criteria:${criteria.id}`, null, { sectorCount: criteria.preferredSectors.length, budget }, req.ip || '127.0.0.1');
+  res.json(criteria);
+});
+
+app.get('/api/investor/proposals', JWTAuthMiddleware, investorOnly, (req: AuthenticatedRequest, res) => {
+  res.json((db.proposals || []).filter(proposal => proposal.investorId === req.user!.id));
+});
+
+app.patch('/api/investor/proposals/:id', JWTAuthMiddleware, investorOnly, (req: AuthenticatedRequest, res) => {
+  const proposal = (db.proposals || []).find(item => item.id === req.params.id);
+  if (!proposal) return res.status(404).json({ error: 'Proposal not found.' });
+  if (proposal.investorId !== req.user!.id) return res.status(403).json({ error: 'You cannot update a proposal addressed to another investor.' });
+  const { status, farmerId, investorId } = req.body;
+  const validStatuses: FarmerProposal['status'][] = ['NEGOTIATING', 'ACCEPTED', 'REJECTED'];
+  if (!validStatuses.includes(status)) return res.status(400).json({ error: 'Choose negotiating, accepted, or rejected.' });
+  const previousStatus = proposal.status;
+  proposal.status = status;
+  saveDatabase();
+  writeAuditLog(req.user!.id, 'investor_proposal_updated', `proposal:${proposal.id}`, { status: previousStatus }, { status }, req.ip || '127.0.0.1');
+  res.json(proposal);
+});
+
+app.get('/api/investor/events', JWTAuthMiddleware, investorOnly, (req: AuthenticatedRequest, res) => {
+  const partnershipIds = new Set(db.partnerships.filter(partnership => partnership.investorId === req.user!.id).map(partnership => partnership.id));
+  res.json((db.farmEvents || []).filter(event => partnershipIds.has(event.farmId)));
 });
 
 // 6. Verification Queue & Approvals

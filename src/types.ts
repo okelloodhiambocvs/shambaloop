@@ -233,8 +233,22 @@ export interface InvestorCriteria {
   preferredSectors: string[];
   targetCounties: string[];
   notes: string;
+  resourcesProvided?: string;
+  partnerRequirements?: string;
   status: 'ACTIVE' | 'MATCHED' | 'PAUSED';
   createdAt: string;
+}
+
+/** Public farmer information that an authenticated investor may use for discovery. */
+export interface InvestorFarmerProfile {
+  id: string;
+  name: string;
+  county: string;
+  verified: boolean;
+  createdAt: string;
+  farmSpecialties?: string[];
+  seekingLandAcreage?: number;
+  listings: Listing[];
 }
 
 export interface FarmEvent {
