@@ -32,11 +32,13 @@ public/             Static assets and service worker
 
 ## Dashboards
 
-Farmer, investor, veterinary, landowner, and administrator dashboards remain separate. The administrator dashboard starts with actionable KYC, listing, and dispute queues, then provides focused user management, match proposals, dispute resolution, and operational metrics. It does not use decorative charts or duplicate statistics.
+Farmer, investor, veterinary, landowner, and administrator dashboards remain separate. The farmer dashboard starts with current attention items, active collaborations, open proposals, and a next action. It provides investor discovery, proposal submission and tracking, a concise farm summary, production and event records, veterinary requests, and authorized veterinary reports. The administrator dashboard starts with actionable KYC, listing, and dispute queues, then provides focused user management, match proposals, dispute resolution, and operational metrics. Neither dashboard uses decorative charts or duplicate statistics.
+
+Farmer APIs are scoped to the authenticated farmer: `/api/farmer/investors`, `/api/farmer/veterinarians`, `/api/farmer/proposals`, `/api/farmer/profile`, `/api/farmer/events`, and `/api/farmer/veterinary-jobs`. Production records use the existing livestock partnership endpoint with an ownership check. Veterinary reports are exposed through `/api/veterinary/reports` only to the linked farmer, investor, veterinarian, or an administrator.
 
 ## Authentication and authorization
 
-Protected APIs require a signed Bearer JWT. Role checks run on the server for all administrator routes. Administrative APIs cover KYC review, user verification, listing moderation, tripartite match proposals, escrow disbursement, dispute resolution, user enumeration, and decision analytics.
+Protected APIs require a signed Bearer JWT. Role checks run on the server for all administrator and farmer routes. Administrative APIs cover KYC review, user verification, listing moderation, tripartite match proposals, escrow disbursement, dispute resolution, user enumeration, and decision analytics. Farmer mutations derive ownership from the access token and validate farm-partnership ownership before writing production records, activities, or veterinary requests.
 
 Self-service registration cannot create administrator accounts. User responses omit MFA secrets, backup codes, device-trust data, password hashes, access tokens, and refresh tokens. KYC queue results mask document numbers; a protected single-record endpoint is available for an administrator who needs to inspect a submission.
 
