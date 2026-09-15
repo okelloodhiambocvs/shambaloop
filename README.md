@@ -1,490 +1,94 @@
-# ShambaLoop | Ecosystem Trust Marketplace
+# ShambaLoop
 
-Kenya's trusted agricultural asset-sharing marketplace matches verified land lease options, livestock partnerships, and crop opportunities.
+ShambaLoop is a TypeScript application for agricultural listings, land leases, livestock partnerships, verification requests, escrow simulations, and administrator-led platform operations.
 
-**Kenya's Agricultural Trust Marketplace for Land, Livestock, Investment, and Farm Partnerships**
+## Architecture
 
-ShambaLoop connects landowners, farmers, investors, and agricultural professionals through a trusted digital marketplace designed to unlock underutilized agricultural assets and create sustainable farming opportunities across Kenya.
+The application is a single Node.js process. Express serves JSON APIs and, in development, Vite serves the React client. The data layer is a JSON document at `data/db.json`; audit events are append-only JSON lines in `data/audit_log.json`.
 
-The platform enables secure land leasing, livestock investment partnerships, agricultural opportunity discovery, escrow-backed transactions, verification workflows, audit logging, and role-based access control within a single ecosystem.
+The admin dashboard uses the same APIs as the client. Administrative data and mutations are server-authorized; the browser does not determine whether a user is an administrator.
 
----
+## Stack
 
-# Live Demo
+- React 19, TypeScript, Vite, Tailwind CSS, Lucide
+- Node.js, Express, TypeScript
+- JWT access and refresh tokens, bcryptjs, Node crypto AES-256-GCM
+- Vitest
 
-**Production URL**
-
-https://shambaloop.onrender.com
-
----
-
-# What ShambaLoop Solves
-
-Across Kenya, thousands of acres of productive land remain idle while many skilled farmers lack access to land, financing, livestock, and investment opportunities.
-
-ShambaLoop bridges this gap by creating a trusted marketplace where:
-
-* Landowners can lease land securely.
-* Farmers can access productive acreage.
-* Investors can participate in livestock and agricultural ventures.
-* Agricultural professionals can discover verified opportunities.
-* Transactions can be protected through escrow-style workflows.
-* Disputes can be managed transparently.
-* Platform administrators can monitor activity through audit trails and analytics.
-
----
-
-# Core Features
-
-## Land Marketplace
-
-* Verified land listings
-* Acreage information
-* Soil profile information
-* Water source details
-* County-based discovery
-* Crop suitability recommendations
-
-## Livestock Partnerships
-
-* Dairy partnerships
-* Livestock investment opportunities
-* Revenue-sharing structures
-* Production monitoring
-* Health log tracking
-
-## Agricultural Opportunities
-
-* Contract farming opportunities
-* Poultry management partnerships
-* Crop production collaborations
-* Profit-sharing arrangements
-
-## Authentication & Access Control
-
-* JWT authentication
-* Refresh token management
-* Multi-Factor Authentication (MFA)
-* Role-Based Access Control (RBAC)
-* Administrative authorization controls
-
-## Security Features
-
-* Password hashing using bcrypt
-* Refresh token protection
-* AES-256-GCM field encryption
-* Audit logging
-* Request validation
-* Fraud detection controls
-* Security headers
-* Transaction verification workflows
-
-## Escrow & Transaction Management
-
-* Escrow payment workflows
-* Transaction reconciliation
-* Dispute management
-* Administrative resolution workflows
-* M-Pesa integration architecture
-
-## Platform Monitoring
-
-* Audit trails
-* Health monitoring
-* Administrative analytics
-* Operational metrics
-* Transaction reporting
-
----
-
-# User Roles
-
-## Administrator
-
-Platform governance, verification approvals, dispute resolution, and analytics.
-
-**Demo Login**
-
-Phone Number:
+## Project layout
 
 ```text
-0700000000
+src/
+  components/       React dashboards and shared UI
+  hooks/            Client hooks
+  tests/            Component and API integration tests
+  utils/            Validation and API error handling
+  App.tsx           Application state and API integration
+  types.ts          Shared domain models
+server.ts           Express API and JSON persistence adapter
+data/               Runtime database and audit log (not source code)
+public/             Static assets and service worker
 ```
 
----
+## Dashboards
 
-## Farmer
+Farmer, investor, veterinary, landowner, and administrator dashboards remain separate. The administrator dashboard starts with actionable KYC, listing, and dispute queues, then provides focused user management, match proposals, dispute resolution, and operational metrics. It does not use decorative charts or duplicate statistics.
 
-Browse opportunities, lease land, manage agricultural partnerships, and participate in livestock programs.
+## Authentication and authorization
 
-**Demo Login**
+Protected APIs require a signed Bearer JWT. Role checks run on the server for all administrator routes. Administrative APIs cover KYC review, user verification, listing moderation, tripartite match proposals, escrow disbursement, dispute resolution, user enumeration, and decision analytics.
 
-Phone Number:
+Self-service registration cannot create administrator accounts. User responses omit MFA secrets, backup codes, device-trust data, password hashes, access tokens, and refresh tokens. KYC queue results mask document numbers; a protected single-record endpoint is available for an administrator who needs to inspect a submission.
 
-```text
-0722111222
+## Environment
+
+Copy `.env.example` to `.env` and configure production secrets before deploying:
+
+```dotenv
+JWT_SECRET=replace-with-a-long-random-value
+REFRESH_TOKEN_SECRET=replace-with-a-different-long-random-value
+DB_ENCRYPTION_KEY=replace-with-a-32-byte-secret
+CORS_WHITELIST=https://your-domain.example
+NODE_ENV=production
 ```
 
----
+The defaults in `server.ts` support local development only. Do not use them in a deployed environment. The process requires write access to `data/` for the current persistence adapter.
 
-## Landowner
-
-List agricultural land, manage agreements, and collaborate with farmers.
-
-**Demo Login**
-
-Phone Number:
-
-```text
-0712345678
-```
-
----
-
-## Investor
-
-Discover livestock and agricultural investment opportunities.
-
-**Demo Login**
-
-Phone Number:
-
-```text
-0733444555
-```
-
----
-
-# Technology Stack
-
-## Frontend
-
-* React 19
-* TypeScript
-* Vite
-* Recharts
-* Tailwind CSS
-* Lucide React
-
-## Backend
-
-* Node.js
-* Express
-* TypeScript
-
-## Security
-
-* JWT
-* bcryptjs
-* AES-256-GCM Encryption
-
-## Data Layer
-
-Current MVP implementation:
-
-```text
-data/db.json
-```
-
-Future production target:
-
-```text
-PostgreSQL
-```
-
----
-
-# Project Structure
-
-```text
-ShambaLoop
-│
-├── assets/
-│
-├── backend-go/
-│   ├── cmd/
-│   ├── internal/
-│   │   ├── handlers/
-│   │   └── models/
-│   ├── schema.sql
-│   └── DEPLOY.md
-│
-├── data/
-│   └── db.json
-│
-├── public/
-│   └── sw.js
-│
-├── src/
-│   ├── components/
-│   ├── hooks/
-│   ├── tests/
-│   ├── utils/
-│   ├── App.tsx
-│   ├── main.tsx
-│   └── types.ts
-│
-├── server.ts
-├── test-endpoints.ts
-├── package.json
-├── tsconfig.json
-├── vite.config.ts
-└── README.md
-```
-
----
-
-# Local Development
-
-## Clone Repository
-
-```bash
-git clone https://github.com/okelloodhiambocvs/shambaloop.git
-cd shambaloop
-```
-
----
-
-## Install Dependencies
+## Setup and development
 
 ```bash
 npm install
-```
-
----
-
-## Start Development Server
-
-```bash
 npm run dev
 ```
 
-Expected Output:
+The development server listens on port 3000. Open `http://localhost:3000`.
 
-```text
-ShambaLoop Express Server running on port 3000
-```
-
-Application:
-
-```text
-http://localhost:3000
-```
-
----
-
-# Production Build
-
-Build the frontend and backend bundle:
-
-```bash
-npm run build
-```
-
-Expected Output:
-
-```text
-✓ built successfully
-dist/server.cjs generated
-```
-
----
-
-## Start Production Server
-
-```bash
-npm start
-```
-
-Expected Output:
-
-```text
-ShambaLoop Express Server running on port 3000
-```
-
----
-
-# Terminal-Based Validation Tests
-
-## Verify Application Loads
-
-```bash
-curl http://localhost:3000
-```
-
-Expected:
-
-```text
-HTTP 200 OK
-```
-
----
-
-## Verify Health Endpoint
-
-```bash
-curl http://localhost:3000/api/health
-```
-
-Expected:
-
-```json
-{
-  "status": "healthy"
-}
-```
-
----
-
-## Verify Listings Endpoint
-
-```bash
-curl http://localhost:3000/api/listings
-```
-
-Expected:
-
-```json
-[
-  {
-    "id": "list_1"
-  }
-]
-```
-
----
-
-## Verify Analytics Endpoint
-
-```bash
-curl http://localhost:3000/api/admin/analytics
-```
-
-Expected:
-
-```json
-{
-  "activeListings": 4
-}
-```
-
----
-
-## Verify TypeScript Compilation
-
-```bash
-npm run lint
-```
-
-Expected:
-
-```text
-No TypeScript errors
-```
-
----
-
-## Verify Automated Tests
+## Tests and verification
 
 ```bash
 npm test
+npm run lint
+npm run build
 ```
 
----
+`npm test` runs Vitest. The integration tests expect the Express server at `http://localhost:3000`; start `npm run dev` in a separate terminal when running them directly. `npm run lint` runs TypeScript type checking. There is no separate formatter or static-analysis script configured in `package.json`.
 
-## Watch Test Mode
-
-```bash
-npm run test:watch
-```
-
----
-
-## Verify Build Pipeline
+## Build and deployment
 
 ```bash
-npm install
 npm run build
 npm start
 ```
 
-All commands should complete successfully.
+The build emits the Vite client and bundles the server to `dist/server.cjs`. Deploy the resulting process behind HTTPS, set the environment variables above, persist `data/` only for non-production/demo use, and configure health checks against `/api/health`.
 
----
+## Security architecture
 
-# Deployment
+- JWT Bearer authentication and server-side RBAC
+- bcrypt password hashes and hashed refresh-token storage
+- AES-256-GCM encryption for newly submitted KYC document numbers
+- administrative audit events for verification, listing, user, matching, escrow, and dispute actions
+- request security headers, CORS allow-listing in production, and authentication rate limiting
+- ownership checks for supported non-administrative resources
 
-## Current Hosting
-
-**Frontend + Backend**
-
-Hosted on Render
-
-Production URL:
-
-https://shambaloop.onrender.com
-
----
-
-## Deployment Workflow
-
-Every push to the main branch triggers:
-
-1. Repository sync from GitHub
-2. Dependency installation
-3. Production build
-4. Deployment rollout
-5. Health verification
-
----
-
-# Security Controls
-
-Implemented controls include:
-
-* Role-Based Access Control (RBAC)
-* Multi-Factor Authentication (MFA)
-* Audit Logging
-* Refresh Token Protection
-* Security Headers
-* AES-256-GCM Encryption
-* Transaction Reconciliation
-* Fraud Detection Logic
-* Escrow Workflow Controls
-* Administrative Approval Flows
-
----
-
-# Health Monitoring
-
-Production health endpoint:
-
-```text
-https://shambaloop.onrender.com/api/health
-```
-
-Useful for uptime checks and operational monitoring.
-
----
-
-# Future Roadmap
-
-* PostgreSQL Migration
-* Grafana Dashboards
-* OpenAPI Documentation
-* CI/CD Security Scanning
-* Automated Backups
-* Mobile Application
-* Real M-Pesa Production Integration
-* SMS Notification Engine
-* Advanced Fraud Analytics
-
----
-
-# License
-
-This project is developed as an MVP and demonstration platform for modern agricultural asset sharing and trust-based farming partnerships in Kenya.
-
----
-
-Built with a deep appreciation for Kenyan agriculture, entrepreneurship, and digital trust.
+The JSON store and local audit file are suitable for development and demonstration, not multi-instance production deployment. See [SCALABILITY.md](SCALABILITY.md) for the practical migration path.
