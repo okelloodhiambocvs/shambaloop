@@ -428,7 +428,7 @@ export default function App() {
       const { data, error } = await safeFetch<any>('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: authPhone })
+        body: JSON.stringify({ phone: authPhone, password: authPassword || undefined })
       });
 
       if (!error && data?.user) {
@@ -492,7 +492,7 @@ export default function App() {
     logAction('login_role_select', { role: user.role, name: user.name }, user.id, user.name);
   };
 
-  const handleModalCustomLogin = async (phone: string): Promise<{ success: boolean; error?: string }> => {
+  const handleModalCustomLogin = async (phone: string, password?: string): Promise<{ success: boolean; error?: string }> => {
     const matched = usersList.find(u => u.phone === phone);
 
     if (loginTargetRole && loginTargetRole !== 'dashboard' && matched && matched.role !== loginTargetRole) {
@@ -507,7 +507,7 @@ export default function App() {
       const { data, error } = await safeFetch<any>('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone })
+        body: JSON.stringify({ phone, password })
       });
 
       if (!error && data?.user) {
@@ -817,24 +817,19 @@ export default function App() {
     showToast('Farm management event logged to immutable health timeline.');
   };
 
-  const handleCreateTripartiteMatch = (matchData: Omit<TripartiteMatch, 'id' | 'createdAt'>) => {
-    const newMatch: TripartiteMatch = {
-      ...matchData,
-      id: `match_${Date.now()}`,
-      createdAt: new Date().toISOString().split('T')[0]
-    };
-    setTripartiteMatches(prev => [newMatch, ...prev]);
-    showToast('Tripartite Match established in platform registry.');
+  const handleCreateTripartiteMatch = async (matchData: Pick<TripartiteMatch, 'investorId' | 'farmerId' | 'veterinarianId' | 'sector' | 'allocatedCapitalKES' | 'agreedTerms'>) => {
+    const { data, error } = await adminFetch<TripartiteMatch>('/api/admin/matches', { method: 'POST', body: JSON.stringify(matchData) });
+    if (error || !data) throw new Error(error || 'Could not create the match.');
+    setTripartiteMatches(previous => [data, ...previous]);
+    showToast('Tripartite match proposal created.');
   };
 
-  const handleResolveDispute = (disputeId: string, resolution: 'refund_farmer' | 'disburse_landowner', reason: string) => {
-    setDisputesList(prev => prev.map(d => d.id === disputeId ? {
-      ...d,
-      status: 'RESOLVED' as const,
-      resolutionNotes: `Resolved: ${resolution === 'refund_farmer' ? 'Refunded to Tenant Farmer' : 'Disbursed to Landowner'}. Reason: ${reason}`,
-      updatedAt: new Date().toISOString()
-    } : d));
-    showToast(`Dispute ${disputeId} arbitrated. Audit trail updated.`);
+  const handleResolveDispute = async (disputeId: string, resolution: 'refund_farmer' | 'disburse_landowner', reason: string) => {
+    const { data, error } = await adminFetch<{ dispute: Dispute; agreement: LeaseAgreement }>(`/api/disputes/${encodeURIComponent(disputeId)}/resolve`, { method: 'POST', body: JSON.stringify({ resolution, resolutionReason: reason }) });
+    if (error || !data) throw new Error(error || 'Could not resolve the dispute.');
+    setDisputesList(previous => previous.map(dispute => dispute.id === data.dispute.id ? data.dispute : dispute));
+    setLeases(previous => previous.map(lease => lease.id === data.agreement.id ? data.agreement : lease));
+    showToast('Dispute resolution recorded.');
   };
 
   const handleDeleteListing = (listingId: string) => {
@@ -1602,8 +1597,12 @@ export default function App() {
     setNetworkLoading(true);
     const wasOnline = navigator.onLine;
     try {
-      // Fetch listings
-      const listRes = await fetch('/api/listings');
+      const token = localStorage.getItem('sl_token');
+      const isAdmin = currentUser?.role === UserRole.ADMIN && Boolean(token);
+      const adminHeaders = token ? { Authorization: `Bearer ${token}` } : undefined;
+
+      // Admins receive their protected moderation queue; all other users only see public listings.
+      const listRes = await fetch(isAdmin ? '/api/admin/listings' : '/api/listings', { headers: adminHeaders });
       if (listRes.ok) {
         const data = await listRes.json();
         setListings(data);
@@ -1631,25 +1630,19 @@ export default function App() {
         localStorage.setItem('sl_partnerships', JSON.stringify(data));
       }
 
-      // Fetch verifications
-      const verRes = await fetch('/api/admin/verifications');
-      if (verRes.ok) {
-        const data = await verRes.json();
-        setVerifications(data);
-        localStorage.setItem('sl_verifications', JSON.stringify(data));
-      }
-
-      // Fetch metrics
-      const metricRes = await fetch('/api/admin/analytics');
-      if (metricRes.ok) {
-        setAnalytics(await metricRes.json());
-      }
-
-      // Fetch users
-      const usersRes = await fetch('/api/auth/users');
-      if (usersRes.ok) {
-        const uList = await usersRes.json();
-        setUsersList(uList);
+      if (isAdmin) {
+        const [verRes, metricRes, usersRes, disputesRes, matchesRes] = await Promise.all([
+          fetch('/api/admin/verifications', { headers: adminHeaders }),
+          fetch('/api/admin/analytics', { headers: adminHeaders }),
+          fetch('/api/auth/users', { headers: adminHeaders }),
+          fetch('/api/disputes', { headers: adminHeaders }),
+          fetch('/api/admin/matches', { headers: adminHeaders })
+        ]);
+        if (verRes.ok) { const data = await verRes.json(); setVerifications(data); localStorage.setItem('sl_verifications', JSON.stringify(data)); }
+        if (metricRes.ok) setAnalytics(await metricRes.json());
+        if (usersRes.ok) setUsersList(await usersRes.json());
+        if (disputesRes.ok) setDisputesList(await disputesRes.json());
+        if (matchesRes.ok) setTripartiteMatches(await matchesRes.json());
       }
 
       // Trigger cache metric recalculation
@@ -1666,6 +1659,12 @@ export default function App() {
       setNetworkLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (currentUser?.role === UserRole.ADMIN && localStorage.getItem('sl_token')) {
+      fetchAllData();
+    }
+  }, [currentUser?.id, currentUser?.role]);
 
   useEffect(() => {
     // A. Sync status event handlers
@@ -2331,31 +2330,29 @@ export default function App() {
     setTimeout(() => setVerificationSubmittedMsg(''), 6000);
   };
 
-  // 7. Admin approvals callback responders
-  const handleApproveListing = async (listingId: string) => {
-    try {
-      await safeFetch('/api/admin/approve-listing', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ listingId })
-      });
-      logAction('approve_listing', { listingId }, currentUser?.id, currentUser?.name);
-    } catch (e) {}
-
-    setListings(listings.map(l => l.id === listingId ? { ...l, verified: true } : l));
+  // 7. Administrative callbacks use the backend as the source of truth. No local fallback is allowed.
+  const adminFetch = <T,>(url: string, init: RequestInit = {}) => {
+    const token = localStorage.getItem('sl_token');
+    if (!token) return Promise.resolve({ data: null as T | null, error: 'An administrator session is required.' });
+    return safeFetch<T>(url, {
+      ...init,
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, ...init.headers }
+    });
   };
 
-  const handleApproveVerification = async (requestId: string, status: 'APPROVED' | 'REJECTED') => {
-    try {
-      await safeFetch('/api/admin/approve-doc', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ requestId, status })
-      });
-      logAction('approve_verification', { requestId, status }, currentUser?.id, currentUser?.name);
-    } catch (e) {}
+  const handleModerateListing = async (listingId: string, status: 'APPROVED' | 'REJECTED' | 'SUSPENDED', note?: string) => {
+    const { data, error } = await adminFetch<{ listing: Listing }>('/api/admin/approve-listing', { method: 'POST', body: JSON.stringify({ listingId, status, note }) });
+    if (error || !data) throw new Error(error || 'Could not update the listing.');
+    setListings(previous => previous.map(listing => listing.id === listingId ? data.listing : listing));
+    logAction('moderate_listing', { listingId, status }, currentUser?.id, currentUser?.name);
+  };
 
-    setVerifications(verifications.map(v => v.id === requestId ? { ...v, status } : v));
+  const handleReviewVerification = async (requestId: string, status: 'APPROVED' | 'REJECTED' | 'MORE_INFO', note?: string) => {
+    const { data, error } = await adminFetch<{ verification: VerificationRequest }>('/api/admin/approve-doc', { method: 'POST', body: JSON.stringify({ requestId, status, note }) });
+    if (error || !data) throw new Error(error || 'Could not update the verification.');
+    setVerifications(previous => previous.map(verification => verification.id === requestId ? data.verification : verification));
+    if (status !== 'MORE_INFO') await fetchAllData();
+    logAction('review_verification', { requestId, status }, currentUser?.id, currentUser?.name);
   };
 
   const handleDisburseEscrow = async (leaseId: string) => {
@@ -2373,18 +2370,11 @@ export default function App() {
   };
 
   const handleApproveUser = async (userId: string, status: 'APPROVED' | 'REJECTED') => {
-    try {
-      await safeFetch('/api/admin/approve-user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, status })
-      });
-      logAction('approve_user', { userId, status }, currentUser?.id, currentUser?.name);
-    } catch (e) {}
-
-    const updated = usersList.map(u => u.id === userId ? { ...u, verified: status === 'APPROVED' } : u);
+    const { data, error } = await adminFetch<{ user: User }>('/api/admin/approve-user', { method: 'POST', body: JSON.stringify({ userId, status }) });
+    if (error || !data) throw new Error(error || 'Could not update the user.');
+    const updated = usersList.map(user => user.id === userId ? data.user : user);
     setUsersList(updated);
-    localStorage.setItem('sl_users_list', JSON.stringify(updated));
+    logAction('approve_user', { userId, status }, currentUser?.id, currentUser?.name);
 
     // If the approved user was the currentUser, update currentUser as well
     if (currentUser && currentUser.id === userId) {
@@ -2619,18 +2609,17 @@ export default function App() {
             {/* Admin Dashboard */}
             {currentUser.role === UserRole.ADMIN && (
               <AdminPanel
-                unverifiedListings={listings.filter(l => !l.verified)}
                 allListings={listings}
                 verificationRequests={verifications}
                 activeLeases={leases}
                 usersList={usersList}
                 disputes={disputesList}
                 partnerships={partnerships}
-                onApproveListing={handleApproveListing}
-                onApproveVerification={handleApproveVerification}
-                onDisburseEscrow={handleDisburseEscrow}
+                matches={tripartiteMatches}
+                analytics={analytics}
+                onModerateListing={handleModerateListing}
+                onReviewVerification={handleReviewVerification}
                 onApproveUser={handleApproveUser}
-                onDeleteListing={handleDeleteListing}
                 onResolveDispute={handleResolveDispute}
                 onCreateTripartiteMatch={handleCreateTripartiteMatch}
               />

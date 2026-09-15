@@ -146,3 +146,22 @@ h1, h2, h3, h4, .font-display {
 .animate-fade-in {
   animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* Compact, shared administrative actions. */
+.action-primary, .action-secondary, .action-danger, .link-action {
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.action-primary, .action-secondary, .action-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+}
+.action-primary { background: #1a5832; color: #fff; }
+.action-secondary { background: #f1f5f9; color: #334155; }
+.action-danger { background: #fff1f2; color: #be123c; }
+.link-action { color: #1a5832; }
+.action-primary:disabled, .action-secondary:disabled, .action-danger:disabled, .link-action:disabled { cursor: not-allowed; opacity: 0.5; }

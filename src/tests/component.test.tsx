@@ -26,6 +26,7 @@ Object.defineProperty(global, 'navigator', {
 };
 
 import App from '../App';
+import AdminPanel from '../components/AdminPanel';
 
 import { ResponsiveContainer, LineChart, Line } from 'recharts';
 
@@ -70,5 +71,17 @@ describe('Recharts render test', () => {
     expect(landingPageHtml).toContain('How It Works');
     expect(landingPageHtml).toContain('Privacy Policy');
     expect(landingPageHtml).toContain('Cookies &amp; Tracking Policy');
+  });
+
+  test('renders the compact admin attention queue without decorative charts', () => {
+    const html = renderToString(React.createElement(AdminPanel, {
+      allListings: [], verificationRequests: [], activeLeases: [], usersList: [], disputes: [], partnerships: [], matches: [],
+      analytics: { activeListings: 0, registeredUsersCount: 0, pendingVerificationsCount: 0, totalEscrowKES: 0 },
+      onReviewVerification: async () => {}, onModerateListing: async () => {}, onApproveUser: async () => {},
+      onResolveDispute: async () => {}, onCreateTripartiteMatch: async () => {}
+    }));
+    expect(html).toContain('Requires attention');
+    expect(html).toContain('KYC awaiting action');
+    expect(html).not.toContain('Regional Hub Escrow Capital');
   });
 });
