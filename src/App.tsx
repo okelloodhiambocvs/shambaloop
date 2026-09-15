@@ -623,6 +623,8 @@ export default function App() {
     registeredUsersCount: 4,
     pendingVerificationsCount: 0
   });
+  const [farmerInvestors, setFarmerInvestors] = useState<User[]>([]);
+  const [farmerVeterinarians, setFarmerVeterinarians] = useState<User[]>([]);
 
   // Ecosystem state for 4-role dashboards
   const [proposals, setProposals] = useState<FarmerProposal[]>([
@@ -765,15 +767,11 @@ export default function App() {
     }
   ]);
 
-  const handleCreateProposal = (proposalData: Omit<FarmerProposal, 'id' | 'createdAt'>) => {
-    const newProp: FarmerProposal = {
-      ...proposalData,
-      id: `prop_${Date.now()}`,
-      status: 'SUBMITTED',
-      createdAt: new Date().toISOString().split('T')[0]
-    };
-    setProposals(prev => [newProp, ...prev]);
-    showToast('Proposal submitted successfully! Matching investors have been notified.');
+  const handleCreateProposal = async (proposalData: { investorId?: string; title: string; sector: FarmerProposal['sector']; farmDescription: string; capitalRequestedKES: number; farmerContribution: string; investorSharePercent: number }) => {
+    const { data, error } = await farmerFetch<FarmerProposal>('/api/farmer/proposals', { method: 'POST', body: JSON.stringify(proposalData) });
+    if (error || !data) throw new Error(error || 'Could not submit the proposal.');
+    setProposals(previous => [data, ...previous]);
+    showToast('Proposal sent to the investor.');
   };
 
   const handleAcceptProposal = (proposalId: string) => {
@@ -793,14 +791,11 @@ export default function App() {
     showToast('Investment criteria saved. Recommendation engine updated.');
   };
 
-  const handleRequestVetJob = (jobData: Omit<VeterinaryJob, 'id' | 'status'>) => {
-    const newJob: VeterinaryJob = {
-      ...jobData,
-      id: `job_${Date.now()}`,
-      status: 'OPEN'
-    };
-    setVetJobs(prev => [newJob, ...prev]);
-    showToast('Veterinary dispatch request submitted to regional KVB board.');
+  const handleRequestVetJob = async (jobData: Pick<VeterinaryJob, 'farmId' | 'location' | 'animalOrCropType' | 'serviceType' | 'urgency' | 'assignedVetId' | 'notes'>) => {
+    const { data, error } = await farmerFetch<VeterinaryJob>('/api/farmer/veterinary-jobs', { method: 'POST', body: JSON.stringify(jobData) });
+    if (error || !data) throw new Error(error || 'Could not request veterinary care.');
+    setVetJobs(previous => [data, ...previous]);
+    showToast('Veterinary service request submitted.');
   };
 
   const handleUpdateVetJobStatus = (jobId: string, status: VeterinaryJob['status']) => {
@@ -808,13 +803,25 @@ export default function App() {
     showToast(`Job status updated to ${status}.`);
   };
 
-  const handleLogFarmEvent = (eventData: Omit<FarmEvent, 'id'>) => {
-    const newEvent: FarmEvent = {
-      ...eventData,
-      id: `evt_${Date.now()}`
-    };
-    setFarmEvents(prev => [newEvent, ...prev]);
-    showToast('Farm management event logged to immutable health timeline.');
+  const handleLogFarmEvent = async (eventData: Pick<FarmEvent, 'farmId' | 'eventType' | 'title' | 'description' | 'severity'>) => {
+    // Veterinary activity is still recorded locally by the existing veterinary workspace.
+    // Farmer activity is persisted through the ownership-checked farmer endpoint.
+    if (currentUser?.role !== UserRole.FARMER) {
+      const event: FarmEvent = {
+        ...eventData,
+        id: `evt_${Date.now()}`,
+        date: new Date().toISOString(),
+        farmerName: currentUser?.name || 'Veterinary professional',
+        reportedBy: currentUser?.name || 'Veterinary professional',
+      };
+      setFarmEvents(previous => [event, ...previous]);
+      showToast('Farm event saved.');
+      return;
+    }
+    const { data, error } = await farmerFetch<FarmEvent>('/api/farmer/events', { method: 'POST', body: JSON.stringify(eventData) });
+    if (error || !data) throw new Error(error || 'Could not save the farm event.');
+    setFarmEvents(previous => [data, ...previous]);
+    showToast('Farm event saved.');
   };
 
   const handleCreateTripartiteMatch = async (matchData: Pick<TripartiteMatch, 'investorId' | 'farmerId' | 'veterinarianId' | 'sector' | 'allocatedCapitalKES' | 'agreedTerms'>) => {
@@ -1667,6 +1674,30 @@ export default function App() {
   }, [currentUser?.id, currentUser?.role]);
 
   useEffect(() => {
+    const token = localStorage.getItem('sl_token');
+    if (currentUser?.role !== UserRole.FARMER || !token) return;
+    const headers = { Authorization: `Bearer ${token}` };
+    Promise.all([
+      fetch('/api/livestock/partnerships', { headers }),
+      fetch('/api/farmer/investors', { headers }),
+      fetch('/api/farmer/veterinarians', { headers }),
+      fetch('/api/farmer/proposals', { headers }),
+      fetch('/api/farmer/events', { headers }),
+      fetch('/api/farmer/veterinary-jobs', { headers }),
+      fetch('/api/veterinary/reports', { headers })
+    ]).then(async responses => {
+      const [partnershipsResponse, investorsResponse, vetsResponse, proposalsResponse, eventsResponse, jobsResponse, reportsResponse] = responses;
+      if (partnershipsResponse.ok) setPartnerships(await partnershipsResponse.json());
+      if (investorsResponse.ok) setFarmerInvestors(await investorsResponse.json());
+      if (vetsResponse.ok) setFarmerVeterinarians(await vetsResponse.json());
+      if (proposalsResponse.ok) setProposals(await proposalsResponse.json());
+      if (eventsResponse.ok) setFarmEvents(await eventsResponse.json());
+      if (jobsResponse.ok) setVetJobs(await jobsResponse.json());
+      if (reportsResponse.ok) setVeterinaryReports(await reportsResponse.json());
+    }).catch(() => showToast('Farmer workspace data could not be refreshed.'));
+  }, [currentUser?.id, currentUser?.role]);
+
+  useEffect(() => {
     // A. Sync status event handlers
     const handleOnline = () => {
       setIsOnline(true);
@@ -2340,6 +2371,31 @@ export default function App() {
     });
   };
 
+  const farmerFetch = <T,>(url: string, init: RequestInit = {}) => {
+    const token = localStorage.getItem('sl_token');
+    if (!token) return Promise.resolve({ data: null as T | null, error: 'A signed-in farmer session is required.' });
+    return safeFetch<T>(url, {
+      ...init,
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, ...init.headers }
+    });
+  };
+
+  const handleSaveFarmerProfile = async (input: { farmSpecialties: string[]; seekingLandAcreage: number }) => {
+    const { data, error } = await farmerFetch<{ user: User }>('/api/farmer/profile', { method: 'PUT', body: JSON.stringify(input) });
+    if (error || !data) throw new Error(error || 'Could not save the farm summary.');
+    setCurrentUser(data.user);
+    localStorage.setItem('sl_current_user', JSON.stringify(data.user));
+    setUsersList(previous => previous.map(user => user.id === data.user.id ? data.user : user));
+    showToast('Farm summary saved.');
+  };
+
+  const handleFarmerProduction = async (partnershipId: string, quantity: number, metric: string) => {
+    const { data, error } = await farmerFetch<LivestockPartnership>('/api/livestock/production', { method: 'POST', body: JSON.stringify({ partnershipId, quantity, metric }) });
+    if (error || !data) throw new Error(error || 'Could not save the production record.');
+    setPartnerships(previous => previous.map(partnership => partnership.id === data.id ? data : partnership));
+    showToast('Production record saved.');
+  };
+
   const handleModerateListing = async (listingId: string, status: 'APPROVED' | 'REJECTED' | 'SUSPENDED', note?: string) => {
     const { data, error } = await adminFetch<{ listing: Listing }>('/api/admin/approve-listing', { method: 'POST', body: JSON.stringify({ listingId, status, note }) });
     if (error || !data) throw new Error(error || 'Could not update the listing.');
@@ -2406,6 +2462,10 @@ export default function App() {
     // Default: Sort by newest (reverse chronological)
     return b.id.localeCompare(a.id);
   });
+
+  const visibleVeterinaryReports = currentUser?.role === UserRole.ADMIN
+    ? veterinaryReports
+    : veterinaryReports.filter(report => report.farmerId === currentUser?.id || report.investorId === currentUser?.id || report.veterinarianId === currentUser?.id);
 
   if (!currentUser) {
     return (
@@ -2644,28 +2704,18 @@ export default function App() {
             {currentUser.role === UserRole.FARMER && (
               <FarmerDashboard
                 currentUser={currentUser}
-                usersList={usersList}
                 partnerships={partnerships}
-                veterinaryReports={veterinaryReports}
+                reports={veterinaryReports.filter(report => report.farmerId === currentUser.id)}
                 proposals={proposals}
-                farmEvents={farmEvents}
+                events={farmEvents}
                 vetJobs={vetJobs}
+                investors={farmerInvestors}
+                veterinarians={farmerVeterinarians}
                 onCreateProposal={handleCreateProposal}
-                onRequestVetJob={(jobData) => {
-                  handleRequestVetJob({
-                    ...jobData,
-                    requestedDate: new Date().toISOString().split('T')[0]
-                  });
-                }}
-                onLogProduction={(partnershipId, quantity, metric) => {
-                  showToast(`Yield of ${quantity} ${metric} logged for partnership.`);
-                }}
-                onLogFarmEvent={(eventData) => {
-                  handleLogFarmEvent({
-                    ...eventData,
-                    date: new Date().toISOString().split('T')[0]
-                  });
-                }}
+                onSaveProfile={handleSaveFarmerProfile}
+                onRequestVet={handleRequestVetJob}
+                onLogProduction={handleFarmerProduction}
+                onLogEvent={handleLogFarmEvent}
               />
             )}
 
@@ -2679,11 +2729,11 @@ export default function App() {
                 vetJobs={vetJobs}
                 onSaveReport={(rep) => handleSaveVeterinaryReport(rep)}
                 onUpdateJobStatus={handleUpdateVetJobStatus}
-                onLogLifeEvent={(evt) => handleLogFarmEvent({ ...evt, date: new Date().toISOString().split('T')[0] })}
+                onLogLifeEvent={(evt) => handleLogFarmEvent(evt)}
               />
             )}
 
-            {(currentUser.role === UserRole.INVESTOR || currentUser.role === UserRole.FARMER || currentUser.role === UserRole.ADMIN) && veterinaryReports.length > 0 && (
+            {(currentUser.role === UserRole.INVESTOR || currentUser.role === UserRole.FARMER || currentUser.role === UserRole.ADMIN) && visibleVeterinaryReports.length > 0 && (
               <section className="rounded-2xl border border-emerald-100 dark:border-emerald-900/60 bg-white dark:bg-slate-900 p-5 space-y-3" id="shared_veterinary_reports">
                 <div className="flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-2">
                   <div>
@@ -2693,7 +2743,7 @@ export default function App() {
                   <span className="text-[10px] font-bold uppercase text-emerald-600 dark:text-emerald-400">Auditable record</span>
                 </div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                  {veterinaryReports.map(report => (
+                  {visibleVeterinaryReports.map(report => (
                     <article key={report.id} className="rounded-xl border border-slate-200 dark:border-slate-800 p-3 text-xs">
                       <div className="flex justify-between gap-2 font-bold">
                         <span>{report.animalTagId} · {report.visitType}</span>

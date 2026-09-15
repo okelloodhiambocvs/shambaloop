@@ -27,6 +27,8 @@ Object.defineProperty(global, 'navigator', {
 
 import App from '../App';
 import AdminPanel from '../components/AdminPanel';
+import FarmerDashboard from '../components/FarmerDashboard';
+import { UserRole } from '../types';
 
 import { ResponsiveContainer, LineChart, Line } from 'recharts';
 
@@ -83,5 +85,16 @@ describe('Recharts render test', () => {
     expect(html).toContain('Requires attention');
     expect(html).toContain('KYC awaiting action');
     expect(html).not.toContain('Regional Hub Escrow Capital');
+  });
+
+  test('renders the farmer attention-first workspace without technical dashboard copy', () => {
+    const html = renderToString(React.createElement(FarmerDashboard, {
+      currentUser: { id: 'farmer_1', phone: '0712345678', name: 'Farmer One', role: UserRole.FARMER, verified: true, county: 'Nakuru', createdAt: '2026-01-01' },
+      partnerships: [], reports: [], proposals: [], events: [], vetJobs: [], investors: [], veterinarians: [],
+      onCreateProposal: async () => {}, onSaveProfile: async () => {}, onLogProduction: async () => {}, onLogEvent: async () => {}, onRequestVet: async () => {}
+    }));
+    expect(html).toContain('What needs attention');
+    expect(html).toContain('Find investors');
+    expect(html).not.toContain('Farm Control Center');
   });
 });
