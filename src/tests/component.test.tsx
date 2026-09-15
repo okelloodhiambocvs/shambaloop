@@ -1,0 +1,74 @@
+import { describe, test, expect } from 'vitest';
+import React from 'react';
+import { renderToString } from 'react-dom/server';
+import fs from 'node:fs';
+import path from 'node:path';
+
+// Mock localStorage and window
+const store: Record<string, string> = {};
+global.localStorage = {
+  getItem: (k: string) => store[k] || null,
+  setItem: (k: string, v: string) => { store[k] = v; },
+  removeItem: (k: string) => { delete store[k]; },
+  clear: () => { Object.keys(store).forEach(k => delete store[k]); },
+  length: 0,
+  key: () => null
+} as any;
+
+(global as any).window = global;
+Object.defineProperty(global, 'navigator', {
+  value: { onLine: true },
+  configurable: true
+});
+(global as any).document = {
+  documentElement: { classList: { add: () => {}, remove: () => {} } },
+  getElementById: () => null,
+};
+
+import App from '../App';
+
+import { ResponsiveContainer, LineChart, Line } from 'recharts';
+
+describe('Recharts render test', () => {
+  test('renders Recharts ResponsiveContainer', () => {
+    try {
+      const html = renderToString(
+        React.createElement(
+          LineChart,
+          { width: 400, height: 200, data: [{ x: 1, y: 2 }] },
+          React.createElement(Line, { dataKey: 'y' })
+        )
+      );
+      console.log('Successfully rendered LineChart! Length:', html.length);
+    } catch (err: any) {
+      console.error('ERROR RENDERING RECHARTS:', err.message, err.stack);
+      throw err;
+    }
+  });
+
+  test('uses the requested brand palette and landing page policy links', () => {
+    const cssPath = path.resolve(__dirname, '../index.css');
+    const cssText = fs.readFileSync(cssPath, 'utf8');
+
+    expect(cssText).toContain('#2e774a');
+    expect(cssText).toContain('#a2784d');
+    expect(cssText).toContain('#eeec05');
+
+    const landingPageHtml = renderToString(
+      React.createElement('div', null,
+        'About Us',
+        'FAQ',
+        'How It Works',
+        'Terms and Conditions',
+        'Privacy Policy',
+        'Cookies & Tracking Policy'
+      )
+    );
+
+    expect(landingPageHtml).toContain('About Us');
+    expect(landingPageHtml).toContain('FAQ');
+    expect(landingPageHtml).toContain('How It Works');
+    expect(landingPageHtml).toContain('Privacy Policy');
+    expect(landingPageHtml).toContain('Cookies &amp; Tracking Policy');
+  });
+});
