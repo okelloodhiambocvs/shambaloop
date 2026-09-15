@@ -1,4 +1,5 @@
 import { describe, test, expect, beforeAll } from 'vitest';
+import jwt from 'jsonwebtoken';
 import { UserRole } from '../types';
 
 const BASE_URL = 'http://localhost:3000';
@@ -8,6 +9,7 @@ describe('ShambaLoop End-to-End Integration Tests', () => {
   let testUserPhone: string = '';
   let testUserId: string = '';
   let testCheckoutRequestId: string = '';
+  const adminToken = jwt.sign({ id: 'user_admin', role: UserRole.ADMIN }, 'shambaloop_super_secret_jwt_token_key_2026_default');
 
   beforeAll(() => {
     // Generate a unique phone number for every test run to bypass duplicate validation constraints
@@ -207,13 +209,22 @@ describe('ShambaLoop End-to-End Integration Tests', () => {
       expect(data.transaction.status).toBe('SUCCESS');
     });
 
-    test('GET /api/admin/analytics - Should dynamically increment aggregated active transaction metrics', async () => {
+    test('GET /api/admin/analytics - rejects unauthenticated access', async () => {
       const response = await fetch(`${BASE_URL}/api/admin/analytics`);
+      expect(response.status).toBe(401);
+    });
+
+    test('GET /api/admin/analytics - permits authenticated administrators and returns decision metrics', async () => {
+      const response = await fetch(`${BASE_URL}/api/admin/analytics`, {
+        headers: { Authorization: `Bearer ${adminToken}` }
+      });
       expect(response.status).toBe(200);
       const data = await response.json();
       expect(data).toHaveProperty('activeListings');
       expect(data).toHaveProperty('activeFarms');
       expect(data).toHaveProperty('totalEscrowKES');
+      expect(data).toHaveProperty('pendingListingsCount');
+      expect(data).toHaveProperty('openDisputesCount');
     });
   });
 
@@ -276,6 +287,59 @@ describe('ShambaLoop End-to-End Integration Tests', () => {
       });
 
       expect(response.status).toBe(403); // Forbids landowner/farmers role from arbitrating
+    });
+  });
+
+  describe('Administrative authorization boundaries', () => {
+    test('does not issue an administrator session from a phone number alone', async () => {
+      const response = await fetch(`${BASE_URL}/api/auth/login`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone: '0700000000' })
+      });
+      expect(response.status).toBe(400);
+    });
+
+    test('does not accept user IDs or unsigned base64 payloads as credentials', async () => {
+      const forgedToken = Buffer.from(JSON.stringify({ id: 'user_admin' })).toString('base64');
+      const response = await fetch(`${BASE_URL}/api/admin/verifications?userId=user_admin`, {
+        headers: { Authorization: `Bearer ${forgedToken}`, 'x-user-id': 'user_admin' }
+      });
+      expect(response.status).toBe(401);
+    });
+
+    test('prevents a farmer from reading KYC queue, users, listing controls, and match records', async () => {
+      const endpoints = ['/api/admin/verifications', '/api/auth/users', '/api/admin/listings', '/api/admin/matches'];
+      const responses = await Promise.all(endpoints.map(endpoint => fetch(`${BASE_URL}${endpoint}`, {
+        headers: { Authorization: `Bearer ${jwtToken}` }
+      })));
+      responses.forEach(response => expect(response.status).toBe(403));
+    });
+
+    test('returns masked KYC numbers in the administrative queue', async () => {
+      const response = await fetch(`${BASE_URL}/api/admin/verifications`, {
+        headers: { Authorization: `Bearer ${adminToken}` }
+      });
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      if (data.length) expect(data[0].documentNumber).toMatch(/^\*\*\*\*/);
+    });
+
+    test('allows an administrator to request information with a recorded KYC history', async () => {
+      const submitted = await fetch(`${BASE_URL}/api/verification/request`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${jwtToken}` },
+        body: JSON.stringify({ documentType: 'ID_CARD', documentNumber: 'TEST-ID-9384', notes: 'Integration review record' })
+      });
+      expect(submitted.status).toBe(201);
+      const request = await submitted.json();
+      const decision = await fetch(`${BASE_URL}/api/admin/approve-doc`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
+        body: JSON.stringify({ requestId: request.id, status: 'MORE_INFO', note: 'Please provide a clearer image.' })
+      });
+      expect(decision.status).toBe(200);
+      const data = await decision.json();
+      expect(data.verification.status).toBe('MORE_INFO');
+      expect(data.verification.history.at(-1)).toMatchObject({ action: 'MORE_INFO', note: 'Please provide a clearer image.' });
     });
   });
 });

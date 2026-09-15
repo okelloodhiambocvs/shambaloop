@@ -4,6 +4,7 @@
  */
 
 import { UserRole, ListingType } from './src/types.js';
+import jwt from 'jsonwebtoken';
 
 const BASE_URL = 'http://localhost:3000';
 
@@ -234,7 +235,10 @@ async function runTests() {
 
     // 8. Admin Dashboard Metric Aggregations
     console.log('📋 Test Group 8: Administrative Panel Metric Aggregations');
-    const analyticsRes = await fetch(`${BASE_URL}/api/admin/analytics`);
+    const adminToken = jwt.sign({ id: 'user_admin', role: UserRole.ADMIN }, 'shambaloop_super_secret_jwt_token_key_2026_default');
+    const analyticsRes = await fetch(`${BASE_URL}/api/admin/analytics`, {
+      headers: { Authorization: `Bearer ${adminToken}` }
+    });
     assert(analyticsRes.status === 200, 'GET /api/admin/analytics yields dynamic platform metrics');
     const analyticsData = await analyticsRes.json();
     assert(analyticsData.activeListings >= 1, 'Analytical KPIs count active listings dynamically');

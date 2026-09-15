@@ -8,7 +8,7 @@ import crypto from 'crypto';
 import { 
   UserRole, User, Listing, ListingType, LeaseAgreement, 
   LivestockPartnership, VerificationRequest, MpesaTransaction,
-  HealthLog, ProductionLog, Dispute
+  HealthLog, ProductionLog, Dispute, TripartiteMatch
 } from './src/types.js';
 
 const app = express();
@@ -27,6 +27,7 @@ interface DatabaseSchema {
   passwordHashes: Record<string, string>; // Maps user ID to bcrypt hashes
   refreshTokens: string[];
   disputes?: Dispute[];
+  matches?: TripartiteMatch[];
 }
 
 const DATA_DIR = path.join(process.cwd(), 'data');
@@ -252,7 +253,8 @@ let db: DatabaseSchema = {
   transactions: [],
   passwordHashes: {},
   refreshTokens: [],
-  disputes: []
+  disputes: [],
+  matches: []
 };
 
 // Seed initial default accounts and records
@@ -542,6 +544,14 @@ function loadDatabase() {
       const content = fs.readFileSync(DB_FILE, 'utf-8');
       const loaded = JSON.parse(content);
       db = { ...db, ...loaded };
+      db.disputes ||= [];
+      db.matches ||= [];
+      // Older persisted listings did not have a moderation state. Preserve their
+      // visibility while making their administrative state explicit.
+      db.listings = db.listings.map(listing => ({
+        ...listing,
+        moderationStatus: listing.moderationStatus || (listing.verified ? 'APPROVED' : 'PENDING')
+      }));
     } catch (err) {
       console.error('Failed to parse database file. Initializing default seeds:', err);
       seedDefaultData();
@@ -609,18 +619,10 @@ function generateRefreshToken(user: User) {
   return token;
 }
 
-// Dual token decoding for seamless backward compatibility
 function verifyToken(token: string): any {
   try {
     return jwt.verify(token, JWT_SECRET);
-  } catch (err) {
-    // Graceful base64 fallback for pre-existing client tokens or offline cached credentials
-    try {
-      const parsed = JSON.parse(Buffer.from(token, 'base64').toString('ascii'));
-      if (parsed && parsed.id) {
-        return parsed;
-      }
-    } catch (_) {}
+  } catch (_) {
     return null;
   }
 }
@@ -636,27 +638,9 @@ const JWTAuthMiddleware = (req: AuthenticatedRequest, res: express.Response, nex
 
   if (authHeader && authHeader.startsWith('Bearer ')) {
     token = authHeader.substring(7);
-  } else if (req.query.token) {
-    token = req.query.token as string;
   }
 
   if (!token) {
-    // Search headers/body fallback for seamless onboarding and search queries in the active preview tabs
-    const fallbackId = req.headers['x-user-id'] || req.body?.userId || req.body?.ownerId || req.query?.userId;
-    if (fallbackId) {
-      const matched = db.users.find(u => u.id === String(fallbackId));
-      if (matched) {
-        req.user = matched;
-        return next();
-      }
-    }
-
-    // Pass guest queries seamlessly rather than hard crashing
-    const publicPaths = ['/api/listings', '/api/auth/login', '/api/auth/register', '/api/auth/users', '/api/health', '/api/payments/callback'];
-    const isPublic = publicPaths.some(p => req.path.startsWith(p));
-    if (isPublic) {
-      return next();
-    }
     return res.status(401).json({ error: 'Authorization header with Bearer token is required.' });
   }
 
@@ -689,6 +673,20 @@ const requireRole = (allowedRoles: UserRole[]) => {
 };
 
 const RequireRole = requireRole;
+
+const safeUser = (user: User) => {
+  const { mfaSecret, mfaBackupCodes, deviceTrustExpiresAt, ...publicProfile } = user;
+  return publicProfile;
+};
+
+const cleanText = (value: unknown, maxLength: number): string | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim().replace(/[\u0000-\u001F\u007F]/g, '');
+  return normalized && normalized.length <= maxLength ? normalized : null;
+};
+
+const verificationDecisionStatuses = new Set(['APPROVED', 'REJECTED', 'MORE_INFO']);
+const listingModerationStatuses = new Set(['APPROVED', 'REJECTED', 'SUSPENDED']);
 
 const RequireOwnership = (resourceType: 'listing' | 'agreement' | 'partnership', paramName = 'id') => {
   return (req: AuthenticatedRequest, res: express.Response, next: express.NextFunction) => {
@@ -820,6 +818,10 @@ app.post('/api/auth/register', authRateLimiter, (req, res) => {
   // Sanitize fields
   const normalizedPhone = phone.trim();
   const normalizedEmail = email ? email.trim() : undefined;
+  const selfServiceRoles = [UserRole.LANDOWNER, UserRole.FARMER, UserRole.INVESTOR, UserRole.VETERINARIAN, UserRole.COOPERATIVE];
+  if (!selfServiceRoles.includes(role)) {
+    return res.status(403).json({ error: 'This role cannot be assigned through self-service registration.' });
+  }
 
   // Enforce phone limits
   if (normalizedPhone.length < 9) {
@@ -865,11 +867,11 @@ app.post('/api/auth/register', authRateLimiter, (req, res) => {
   const newUser: User = {
     id: newId,
     phone: normalizedPhone,
-    name: name.trim(),
+    name: cleanText(name, 80) || 'Unnamed user',
     email: normalizedEmail,
     role: role as UserRole,
     verified: false,
-    county: county || 'Nairobi',
+    county: cleanText(county, 80) || 'Nairobi',
     createdAt: new Date().toISOString(),
     passwordResetRequired: resetRequired
   };
@@ -885,10 +887,9 @@ app.post('/api/auth/register', authRateLimiter, (req, res) => {
   writeAuditLog(newId, 'register_account', `user:${newId}`, null, { name: newUser.name, phone: newUser.phone, role: newUser.role }, req.ip || '127.0.0.1');
 
   res.status(201).json({
-    user: newUser,
+    user: safeUser(newUser),
     token,
     refreshToken,
-    temporaryPassword: resetRequired ? finalPassword : undefined,
     passwordResetRequired: resetRequired
   });
 });
@@ -928,19 +929,22 @@ app.post('/api/auth/login', authRateLimiter, (req, res) => {
     writeAuditLog(tempId, 'frictionless_signup', `user:${tempId}`, null, { phone: normalized }, req.ip || '127.0.0.1');
 
     return res.status(200).json({
-      user: defaultUser,
+      user: safeUser(defaultUser),
       token,
       refreshToken,
       passwordResetRequired: true,
-      temporaryPassword: securePass,
       message: 'Frictionless signup concluded. Secure complex temp password generated.'
     });
   }
 
-  // Validate passwords securely if customized
+  // Administrative sessions may never be issued from a phone number alone.
+  if (matchedUser.role === UserRole.ADMIN && !password) {
+    writeAuditLog('anonymous', 'failed_admin_login_missing_password', `user:${matchedUser.id}`, null, null, req.ip || '127.0.0.1');
+    return res.status(400).json({ error: 'A password is required for administrator sign-in.' });
+  }
   if (password) {
     const verifiedHash = db.passwordHashes[matchedUser.id];
-    if (verifiedHash && !bcrypt.compareSync(password, verifiedHash)) {
+    if (!verifiedHash || !bcrypt.compareSync(password, verifiedHash)) {
       writeAuditLog('anonymous', 'failed_login_bad_password', `user:${matchedUser.id}`, null, { phone: normalized }, req.ip || '127.0.0.1');
       return res.status(401).json({ error: 'Forbidden credentials. Verification failed.' });
     }
@@ -964,7 +968,7 @@ app.post('/api/auth/login', authRateLimiter, (req, res) => {
   writeAuditLog(matchedUser.id, 'login_success', `user:${matchedUser.id}`, null, { phone: normalized }, req.ip || '127.0.0.1');
 
   res.status(200).json({
-    user: matchedUser,
+    user: safeUser(matchedUser),
     token,
     refreshToken,
     passwordResetRequired: matchedUser.passwordResetRequired
@@ -1160,14 +1164,14 @@ app.post('/api/auth/logout', (req, res) => {
   res.json({ success: true, message: 'Logged out successfully.' });
 });
 
-app.get('/api/auth/users', (req, res) => {
-  // Return users safely without private/unverified hashes
-  res.json(db.users);
+app.get('/api/auth/users', JWTAuthMiddleware, requireRole([UserRole.ADMIN]), (req, res) => {
+  // Kept as an administrative endpoint for compatibility; user enumeration is privileged.
+  res.json(db.users.map(safeUser));
 });
 
 // Profile retrievals and updates
 app.get('/api/users/profile', JWTAuthMiddleware, (req: AuthenticatedRequest, res) => {
-  res.json(req.user);
+  res.json(safeUser(req.user!));
 });
 
 app.put('/api/users/profile', JWTAuthMiddleware, (req: AuthenticatedRequest, res) => {
@@ -1186,13 +1190,13 @@ app.put('/api/users/profile', JWTAuthMiddleware, (req: AuthenticatedRequest, res
   if (seekingLandAcreage !== undefined) user.seekingLandAcreage = Number(seekingLandAcreage);
 
   saveDatabase();
-  res.json({ success: true, user });
+  res.json({ success: true, user: safeUser(user) });
 });
 
 // 2. Listing Operations (Browse with search and filters)
 app.get('/api/listings', (req, res) => {
   const { county, type, minPrice, maxPrice, status } = req.query;
-  let filtered = [...db.listings];
+  let filtered = db.listings.filter(listing => listing.moderationStatus === 'APPROVED');
 
   if (county) {
     filtered = filtered.filter(l => l.locationCounty.toLowerCase() === (county as string).trim().toLowerCase());
@@ -1244,6 +1248,7 @@ app.post('/api/listings', JWTAuthMiddleware, (req: AuthenticatedRequest, res) =>
     priceKES: Number(priceKES),
     revenueSplitPercent: revenueSplitPercent ? Number(revenueSplitPercent) : undefined,
     verified: false, // Default unverified, awaits admin auditing
+    moderationStatus: 'PENDING',
     imageUrl: imageUrl || 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800',
     ownerId: verifiedOwnerId,
     ownerName: verifiedOwnerName,
@@ -1257,6 +1262,7 @@ app.post('/api/listings', JWTAuthMiddleware, (req: AuthenticatedRequest, res) =>
   db.listings.push(newListing);
   saveDatabase();
   syncRefs();
+  writeAuditLog(req.user!.id, 'listing_submitted', `listing:${newListing.id}`, null, { type: newListing.type }, req.ip || '127.0.0.1');
 
   res.status(201).json(newListing);
 });
@@ -1275,6 +1281,7 @@ app.delete('/api/listings/:id', JWTAuthMiddleware, (req: AuthenticatedRequest, r
   db.listings.splice(listingIndex, 1);
   saveDatabase();
   syncRefs();
+  writeAuditLog(req.user!.id, 'listing_deleted', `listing:${item.id}`, item, null, req.ip || '127.0.0.1');
   res.json({ success: true, message: 'Marketplace listing removed.' });
 });
 
@@ -1421,16 +1428,18 @@ app.get('/api/land/leases', (req, res) => {
   res.json(db.agreements);
 });
 
-app.post('/api/land/leases/disburse', JWTAuthMiddleware, (req, res) => {
+app.post('/api/land/leases/disburse', JWTAuthMiddleware, requireRole([UserRole.ADMIN]), (req: AuthenticatedRequest, res) => {
   const { leaseId } = req.body;
   const item = db.agreements.find(a => a.id === leaseId);
   if (!item) {
     return res.status(404).json({ error: 'Lease record could not be located.' });
   }
 
+  if (item.mpesaEscrowStatus !== 'ESCROWED') return res.status(409).json({ error: 'Only escrowed leases can be disbursed.' });
   item.mpesaEscrowStatus = 'DISBURSED';
   saveDatabase();
   syncRefs();
+  writeAuditLog(req.user!.id, 'escrow_disbursed', `lease:${item.id}`, { mpesaEscrowStatus: 'ESCROWED' }, { mpesaEscrowStatus: 'DISBURSED' }, req.ip || '127.0.0.1');
   res.json(item);
 });
 
@@ -1533,8 +1542,9 @@ app.post('/api/livestock/production', JWTAuthMiddleware, (req, res) => {
 // 6. Verification Queue & Approvals
 app.post('/api/verification/request', JWTAuthMiddleware, (req: AuthenticatedRequest, res) => {
   const { userId, userName, userRole, documentType, documentNumber, notes } = req.body;
-  
-  if (!documentType || !documentNumber) {
+  const normalizedDocumentNumber = cleanText(documentNumber, 200);
+  const normalizedNotes = notes === undefined ? undefined : cleanText(notes, 1000);
+  if (!['ID_CARD', 'TITLE_DEED', 'LIVESTOCK_CERT'].includes(documentType) || !normalizedDocumentNumber || (notes !== undefined && !normalizedNotes)) {
     return res.status(400).json({ error: 'Form parameter error. Please complete required fields.' });
   }
 
@@ -1548,10 +1558,11 @@ app.post('/api/verification/request', JWTAuthMiddleware, (req: AuthenticatedRequ
     userName: creatorName,
     userRole: creatorRole as UserRole,
     documentType,
-    documentNumber: encryptField(documentNumber), // AES-256-GCM field encryption at rest
-    notes,
+    documentNumber: encryptField(normalizedDocumentNumber), // AES-256-GCM field encryption at rest
+    notes: normalizedNotes,
     status: 'PENDING',
-    submittedAt: new Date().toISOString()
+    submittedAt: new Date().toISOString(),
+    history: [{ at: new Date().toISOString(), actorId: creatorId, action: 'SUBMITTED' }]
   };
 
   db.verifications.push(verification);
@@ -1567,70 +1578,121 @@ app.post('/api/verification/request', JWTAuthMiddleware, (req: AuthenticatedRequ
   });
 });
 
-app.get('/api/admin/verifications', JWTAuthMiddleware, (req, res) => {
-  // Decrypt on-the-fly for authenticated administrators
-  const decrypted = db.verifications.map(v => {
-    try {
-      return {
-        ...v,
-        documentNumber: v.documentNumber.startsWith('enc_v1:') ? decryptField(v.documentNumber) : v.documentNumber
-      };
-    } catch (_) {
-      return { ...v, documentNumber: '[DECRYPTION_ERROR]' };
-    }
-  });
-  res.json(decrypted);
+const maskDocumentNumber = (value: string) => {
+  const clear = decryptField(value);
+  return clear.length > 4 ? `****${clear.slice(-4)}` : '****';
+};
+
+const verificationSummary = (verification: VerificationRequest) => ({
+  ...verification,
+  documentNumber: maskDocumentNumber(verification.documentNumber)
 });
 
-// Verify listing listing securely
-app.post('/api/admin/approve-listing', JWTAuthMiddleware, requireRole([UserRole.ADMIN]), (req, res) => {
-  const { listingId } = req.body;
-  const item = db.listings.find(l => l.id === listingId);
-  if (!item) {
-    return res.status(404).json({ error: 'Marketplace listing was not found.' });
+app.get('/api/admin/verifications', JWTAuthMiddleware, requireRole([UserRole.ADMIN]), (req, res) => {
+  const status = typeof req.query.status === 'string' ? req.query.status : undefined;
+  const query = typeof req.query.q === 'string' ? req.query.q.trim().toLowerCase() : '';
+  const results = db.verifications.filter(item =>
+    (!status || item.status === status) &&
+    (!query || item.userName.toLowerCase().includes(query) || item.userRole.toLowerCase().includes(query))
+  ).map(verificationSummary);
+  res.json(results);
+});
+
+// A document number is only returned for the individual record to an authenticated administrator.
+app.get('/api/admin/verifications/:id', JWTAuthMiddleware, requireRole([UserRole.ADMIN]), (req, res) => {
+  const item = db.verifications.find(verification => verification.id === req.params.id);
+  if (!item) return res.status(404).json({ error: 'Verification request was not found.' });
+  res.json({ ...item, documentNumber: decryptField(item.documentNumber) });
+});
+
+app.post('/api/admin/approve-doc', JWTAuthMiddleware, requireRole([UserRole.ADMIN]), (req: AuthenticatedRequest, res) => {
+  const { requestId, status, note } = req.body;
+  if (typeof requestId !== 'string' || !verificationDecisionStatuses.has(status)) {
+    return res.status(400).json({ error: 'A verification request and valid decision are required.' });
   }
-  item.verified = true;
+  const adminNote = note === undefined ? undefined : cleanText(note, 1000);
+  if (note !== undefined && !adminNote) return res.status(400).json({ error: 'Decision note must contain at most 1000 printable characters.' });
+  if (status === 'MORE_INFO' && !adminNote) return res.status(400).json({ error: 'A note is required when requesting additional information.' });
+
+  const request = db.verifications.find(item => item.id === requestId);
+  if (!request) return res.status(404).json({ error: 'Verification request was not found.' });
+  if (request.status === 'APPROVED' || request.status === 'REJECTED') {
+    return res.status(409).json({ error: 'This verification has already received a final decision.' });
+  }
+
+  const previousStatus = request.status;
+  request.status = status;
+  request.adminNote = adminNote;
+  request.reviewedAt = new Date().toISOString();
+  request.reviewedBy = req.user!.id;
+  request.history = [...(request.history || []), { at: request.reviewedAt, actorId: req.user!.id, action: status, note: adminNote }];
+  const subscriber = db.users.find(user => user.id === request.userId);
+  if (subscriber && status === 'APPROVED') subscriber.verified = true;
+  if (subscriber && status === 'REJECTED') subscriber.verified = false;
   saveDatabase();
+  writeAuditLog(req.user!.id, 'verification_decided', `verify_req:${request.id}`, { status: previousStatus }, { status, note: adminNote }, req.ip || '127.0.0.1');
+  res.json({ success: true, verification: verificationSummary(request) });
+});
+
+app.get('/api/admin/listings', JWTAuthMiddleware, requireRole([UserRole.ADMIN]), (req, res) => {
+  const status = typeof req.query.status === 'string' ? req.query.status : undefined;
+  res.json(db.listings.filter(item => !status || item.moderationStatus === status));
+});
+
+app.post('/api/admin/approve-listing', JWTAuthMiddleware, requireRole([UserRole.ADMIN]), (req: AuthenticatedRequest, res) => {
+  const { listingId, status = 'APPROVED', note } = req.body;
+  if (typeof listingId !== 'string' || !listingModerationStatuses.has(status)) {
+    return res.status(400).json({ error: 'A listing and valid moderation decision are required.' });
+  }
+  const moderationNote = note === undefined ? undefined : cleanText(note, 1000);
+  if (note !== undefined && !moderationNote) return res.status(400).json({ error: 'Moderation note must contain at most 1000 printable characters.' });
+  const item = db.listings.find(listing => listing.id === listingId);
+  if (!item) return res.status(404).json({ error: 'Marketplace listing was not found.' });
+  const previousStatus = item.moderationStatus;
+  item.moderationStatus = status;
+  item.moderationNote = moderationNote;
+  item.verified = status === 'APPROVED';
+  saveDatabase();
+  writeAuditLog(req.user!.id, 'listing_moderated', `listing:${item.id}`, { status: previousStatus }, { status, note: moderationNote }, req.ip || '127.0.0.1');
   res.json({ success: true, listing: item });
 });
 
-// Verify paper credentials securely
-app.post('/api/admin/approve-doc', JWTAuthMiddleware, requireRole([UserRole.ADMIN]), (req, res) => {
-  const { requestId, status } = req.body; // 'APPROVED' or 'REJECTED'
-  const request = db.verifications.find(v => v.id === requestId);
-  if (!request) {
-    return res.status(404).json({ error: 'Credentials application document not found.' });
-  }
-
-  request.status = status;
-  if (status === 'APPROVED') {
-    const subscriber = db.users.find(u => u.id === request.userId);
-    if (subscriber) {
-      subscriber.verified = true;
-    }
-  }
-
-  saveDatabase();
-  res.json({ success: true, verification: request });
-});
-
-// Admin directly sets user verified state
-app.post('/api/admin/approve-user', JWTAuthMiddleware, requireRole([UserRole.ADMIN]), (req, res) => {
+app.post('/api/admin/approve-user', JWTAuthMiddleware, requireRole([UserRole.ADMIN]), (req: AuthenticatedRequest, res) => {
   const { userId, status } = req.body;
-  const target = db.users.find(u => u.id === userId);
-  if (!target) {
-    return res.status(404).json({ error: 'User account could not be found.' });
-  }
-
+  if (typeof userId !== 'string' || !['APPROVED', 'REJECTED'].includes(status)) return res.status(400).json({ error: 'A user and valid status are required.' });
+  const target = db.users.find(user => user.id === userId);
+  if (!target) return res.status(404).json({ error: 'User account could not be found.' });
+  if (target.role === UserRole.ADMIN && target.id !== req.user!.id) return res.status(403).json({ error: 'Administrator accounts cannot be changed through this endpoint.' });
   target.verified = status === 'APPROVED';
   saveDatabase();
-  res.json({ success: true, user: target });
+  writeAuditLog(req.user!.id, 'user_verification_updated', `user:${target.id}`, null, { status }, req.ip || '127.0.0.1');
+  res.json({ success: true, user: safeUser(target) });
+});
+
+app.get('/api/admin/matches', JWTAuthMiddleware, requireRole([UserRole.ADMIN]), (req, res) => res.json(db.matches || []));
+app.post('/api/admin/matches', JWTAuthMiddleware, requireRole([UserRole.ADMIN]), (req: AuthenticatedRequest, res) => {
+  const { investorId, farmerId, veterinarianId, sector, allocatedCapitalKES, agreedTerms } = req.body;
+  const investor = db.users.find(user => user.id === investorId && user.role === UserRole.INVESTOR);
+  const farmer = db.users.find(user => user.id === farmerId && user.role === UserRole.FARMER);
+  const veterinarian = db.users.find(user => user.id === veterinarianId && user.role === UserRole.VETERINARIAN);
+  const terms = cleanText(agreedTerms, 2000);
+  const capital = Number(allocatedCapitalKES);
+  if (!investor || !farmer || !veterinarian || !cleanText(sector, 80) || !terms || !Number.isFinite(capital) || capital <= 0) {
+    return res.status(400).json({ error: 'Select an investor, farmer, veterinarian, sector, positive capital amount, and terms.' });
+  }
+  const match: TripartiteMatch = { id: `match_${Date.now()}`, investorId, investorName: investor.name, farmerId, farmerName: farmer.name, veterinarianId, veterinarianName: veterinarian.name, sector: sector.trim(), allocatedCapitalKES: capital, agreedTerms: terms, status: 'PROPOSED', createdAt: new Date().toISOString() };
+  db.matches ||= [];
+  db.matches.unshift(match);
+  saveDatabase();
+  writeAuditLog(req.user!.id, 'tripartite_match_created', `match:${match.id}`, null, { investorId, farmerId, veterinarianId }, req.ip || '127.0.0.1');
+  res.status(201).json(match);
 });
 
 // 8. ESCROW INTEGRATED DISPUTE RESOLUTION
 app.post('/api/disputes', JWTAuthMiddleware, (req: AuthenticatedRequest, res) => {
   const { agreementId, reason } = req.body;
-  if (!agreementId || !reason) {
+  const normalizedReason = cleanText(reason, 2000);
+  if (typeof agreementId !== 'string' || !normalizedReason) {
     return res.status(400).json({ error: 'Agreement ID and dispute reasoning details are mandatory.' });
   }
 
@@ -1659,10 +1721,11 @@ app.post('/api/disputes', JWTAuthMiddleware, (req: AuthenticatedRequest, res) =>
     leaseId: agreementId,
     creatorId: userId,
     creatorName: userName,
-    reason: reason.trim(),
+    reason: normalizedReason,
     status: 'OPEN',
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
+    history: [{ at: new Date().toISOString(), actorId: userId, action: 'OPENED', note: normalizedReason }]
   };
 
   db.disputes.push(newDispute);
@@ -1695,8 +1758,9 @@ app.get('/api/disputes', JWTAuthMiddleware, (req: AuthenticatedRequest, res) => 
 app.post('/api/disputes/:id/resolve', JWTAuthMiddleware, requireRole([UserRole.ADMIN]), (req: AuthenticatedRequest, res) => {
   const { id } = req.params;
   const { resolution, resolutionReason } = req.body; // 'refund_farmer' | 'disburse_landowner'
+  const normalizedResolutionReason = cleanText(resolutionReason, 2000);
   
-  if (!resolution || !resolutionReason) {
+  if (!resolution || !normalizedResolutionReason) {
     return res.status(400).json({ error: 'Resolution choice and descriptive justification are required.' });
   }
 
@@ -1728,20 +1792,21 @@ app.post('/api/disputes/:id/resolve', JWTAuthMiddleware, requireRole([UserRole.A
     return res.status(400).json({ error: 'Invalid resolution choice. Permitted: refund_farmer, disburse_landowner.' });
   }
 
-  dispute.resolutionNotes = resolutionReason;
+  dispute.resolutionNotes = normalizedResolutionReason;
   dispute.updatedAt = new Date().toISOString();
+  dispute.history = [...(dispute.history || []), { at: dispute.updatedAt, actorId: req.user!.id, action: resolution === 'refund_farmer' ? 'REFUNDED' : 'RELEASED', note: normalizedResolutionReason }];
 
   saveDatabase();
   syncRefs();
 
-  writeAuditLog(req.user!.id, 'dispute_resolved', `dispute:${dispute.id}`, agreement.id, { resolution, resolutionReason }, req.ip || '127.0.0.1');
+  writeAuditLog(req.user!.id, 'dispute_resolved', `dispute:${dispute.id}`, agreement.id, { resolution, resolutionReason: normalizedResolutionReason }, req.ip || '127.0.0.1');
 
   res.json({ success: true, dispute, agreement });
 });
 
 // 7. Administrative Metrics (Dynamic counting formula queries instead of hardcoded numbers)
-app.get('/api/admin/analytics', (req, res) => {
-  const activeListings = db.listings.length;
+app.get('/api/admin/analytics', JWTAuthMiddleware, requireRole([UserRole.ADMIN]), (req, res) => {
+  const activeListings = db.listings.filter(item => item.moderationStatus === 'APPROVED').length;
   const activeFarms = db.agreements.filter(a => a.status === 'SIGNED').length + db.partnerships.filter(p => p.status === 'ACTIVE').length;
   
   // Real math aggregates calculated elegantly on live database items
@@ -1754,7 +1819,10 @@ app.get('/api/admin/analytics', (req, res) => {
     totalLeasedAcreage,
     totalEscrowKES,
     registeredUsersCount: db.users.length,
-    pendingVerificationsCount: db.verifications.filter(v => v.status === 'PENDING').length
+    pendingVerificationsCount: db.verifications.filter(v => v.status === 'PENDING' || v.status === 'MORE_INFO').length,
+    pendingListingsCount: db.listings.filter(item => item.moderationStatus === 'PENDING').length,
+    openDisputesCount: db.disputes.filter(item => item.status === 'OPEN' || item.status === 'UNDER_REVIEW').length,
+    activeCollaborationsCount: db.agreements.filter(item => item.status === 'SIGNED').length + db.partnerships.filter(item => item.status === 'ACTIVE').length + (db.matches || []).filter(item => item.status === 'ACTIVE' || item.status === 'PROPOSED').length
   });
 });
 

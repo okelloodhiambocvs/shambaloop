@@ -8,7 +8,7 @@ interface LoginModalProps {
   targetRole?: UserRole | 'dashboard' | null;
   usersList: User[];
   onSelectUser: (user: User) => void;
-  onCustomLogin: (phone: string) => Promise<{ success: boolean; error?: string }>;
+  onCustomLogin: (phone: string, password?: string) => Promise<{ success: boolean; error?: string }>;
   onCustomRegister: (userData: {
     name: string;
     phone: string;
@@ -31,6 +31,7 @@ export default function LoginModal({
 }: LoginModalProps) {
   const [tab, setTab] = useState<'quick' | 'phone' | 'register'>('quick');
   const [phoneInput, setPhoneInput] = useState('');
+  const [passwordInput, setPasswordInput] = useState('');
   const [nameInput, setNameInput] = useState('');
   const [emailInput, setEmailInput] = useState('');
   const [countyInput, setCountyInput] = useState('Nyandarua');
@@ -47,6 +48,7 @@ export default function LoginModal({
     if (targetRole && targetRole !== 'dashboard') {
       setRoleInput(targetRole);
     }
+    if (targetRole === 'dashboard') setTab('phone');
     setErrorMsg('');
   }, [targetRole, isOpen]);
 
@@ -60,7 +62,7 @@ export default function LoginModal({
       return;
     }
     setLoading(true);
-    const result = await onCustomLogin(phoneInput.trim());
+    const result = await onCustomLogin(phoneInput.trim(), passwordInput || undefined);
     setLoading(false);
     if (!result.success) {
       setErrorMsg(result.error || 'User not found. Try registering a new account!');
@@ -271,7 +273,7 @@ export default function LoginModal({
               )}
 
               {/* Admin / Supervisor Profile */}
-              {(targetRole === null || targetRole === 'dashboard' || targetRole === UserRole.ADMIN) && (
+              {(targetRole === null || targetRole === UserRole.ADMIN) && (
                 <div className="space-y-1.5">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
                     System Supervisor / Dashboard Admin
@@ -345,6 +347,20 @@ export default function LoginModal({
                   id="modal_login_phone_input"
                 />
               </div>
+
+              {targetRole === 'dashboard' && (
+                <div>
+                  <label className="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1.5">Password</label>
+                  <input
+                    type="password"
+                    required
+                    value={passwordInput}
+                    onChange={(e) => setPasswordInput(e.target.value)}
+                    className="w-full p-3 text-sm rounded-xl border border-border-base bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    id="modal_login_password_input"
+                  />
+                </div>
+              )}
 
               <button
                 type="submit"

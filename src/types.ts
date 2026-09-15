@@ -73,6 +73,9 @@ export interface Listing {
   priceKES: number; // For leases per acre/month, or animal valuation
   revenueSplitPercent?: number; // Represent investor's share (e.g. 60%)
   verified: boolean;
+  /** Administrative state. Listings created before moderation support remain PENDING. */
+  moderationStatus?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
+  moderationNote?: string;
   imageUrl: string;
   ownerId: string;
   ownerName: string;
@@ -152,8 +155,19 @@ export interface VerificationRequest {
   documentType: 'ID_CARD' | 'TITLE_DEED' | 'LIVESTOCK_CERT';
   documentNumber: string;
   notes?: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'MORE_INFO';
   submittedAt: string;
+  adminNote?: string;
+  reviewedAt?: string;
+  reviewedBy?: string;
+  history?: VerificationHistoryEntry[];
+}
+
+export interface VerificationHistoryEntry {
+  at: string;
+  actorId: string;
+  action: 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'MORE_INFO';
+  note?: string;
 }
 
 export interface MpesaTransaction {
@@ -178,6 +192,14 @@ export interface Dispute {
   createdAt: string;
   updatedAt: string;
   resolutionNotes?: string;
+  history?: DisputeHistoryEntry[];
+}
+
+export interface DisputeHistoryEntry {
+  at: string;
+  actorId: string;
+  action: 'OPENED' | 'UNDER_REVIEW' | 'REFUNDED' | 'RELEASED';
+  note?: string;
 }
 
 // ==========================================
