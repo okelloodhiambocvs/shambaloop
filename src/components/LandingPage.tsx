@@ -93,7 +93,7 @@ export default function LandingPage({
             </button>
 
             <button
-              onClick={() => onLoginClick(UserRole.FARMER)}
+              onClick={() => onLoginClick('dashboard')}
               className="flex items-center gap-1 px-4 py-2 rounded-xl bg-[#1F6B3D] hover:bg-[#185530] dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-extrabold uppercase tracking-wider shadow-sm hover:shadow transition-all cursor-pointer"
               id="landing_header_get_started_btn"
             >
@@ -208,9 +208,6 @@ export default function LandingPage({
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {/* Role 1: Admin */}
               <div className="p-6 rounded-2xl border border-border-base bg-card-bg hover:border-amber-500 transition-all space-y-3 shadow-xs">
-                <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-700 dark:text-amber-400 flex items-center justify-center font-bold text-base">
-                  ⚖️
-                </div>
                 <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
                   1. Platform Administrator
                 </h3>
@@ -226,9 +223,6 @@ export default function LandingPage({
 
               {/* Role 2: Farmer */}
               <div className="p-6 rounded-2xl border border-border-base bg-card-bg hover:border-emerald-500 transition-all space-y-3 shadow-xs">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 flex items-center justify-center font-bold text-base">
-                  🚜
-                </div>
                 <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
                   2. Smallholder Farmer
                 </h3>
@@ -244,9 +238,6 @@ export default function LandingPage({
 
               {/* Role 3: Investor */}
               <div className="p-6 rounded-2xl border border-border-base bg-card-bg hover:border-purple-500 transition-all space-y-3 shadow-xs">
-                <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-700 dark:text-purple-400 flex items-center justify-center font-bold text-base">
-                  💼
-                </div>
                 <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
                   3. Capital Investor
                 </h3>
@@ -262,9 +253,6 @@ export default function LandingPage({
 
               {/* Role 4: Veterinary */}
               <div className="p-6 rounded-2xl border border-border-base bg-card-bg hover:border-teal-500 transition-all space-y-3 shadow-xs">
-                <div className="w-10 h-10 rounded-xl bg-teal-500/10 text-teal-700 dark:text-teal-400 flex items-center justify-center font-bold text-base">
-                  🩺
-                </div>
                 <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
                   4. Certified Veterinarian
                 </h3>

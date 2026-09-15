@@ -30,6 +30,7 @@ import AdminPanel from '../components/AdminPanel';
 import FarmerDashboard from '../components/FarmerDashboard';
 import InvestorDashboard from '../components/InvestorDashboard';
 import VeterinaryDashboard from '../components/VeterinaryDashboard';
+import LoginModal from '../components/LoginModal';
 import { UserRole } from '../types';
 
 import { ResponsiveContainer, LineChart, Line } from 'recharts';
@@ -60,7 +61,7 @@ describe('Recharts render test', () => {
     expect(cssText).toContain('#eeec05');
     expect(cssText).toContain('@custom-variant dark');
     expect(cssText).toContain('.dark, .dark *');
-    expect(cssText).not.toContain('.lucide {');
+    expect(cssText).toContain('.lucide {');
 
     const landingPageHtml = renderToString(
       React.createElement('div', null,
@@ -78,6 +79,36 @@ describe('Recharts render test', () => {
     expect(landingPageHtml).toContain('How It Works');
     expect(landingPageHtml).toContain('Privacy Policy');
     expect(landingPageHtml).toContain('Cookies &amp; Tracking Policy');
+  });
+
+  test('opens every seeded role for Corporate Portal dashboard exploration', () => {
+    const demoUsers = [
+      { id: 'user_1', phone: '0712345678', name: 'Landowner Demo', role: UserRole.LANDOWNER, verified: true, county: 'Nyandarua', createdAt: '2026-01-01' },
+      { id: 'user_2', phone: '0722111222', name: 'Farmer Demo', role: UserRole.FARMER, verified: true, county: 'Uasin Gishu', createdAt: '2026-01-01' },
+      { id: 'user_3', phone: '0733444555', name: 'Investor Demo', role: UserRole.INVESTOR, verified: true, county: 'Nairobi', createdAt: '2026-01-01' },
+      { id: 'user_admin', phone: '0700000000', name: 'Admin Demo', role: UserRole.ADMIN, verified: true, county: 'Nairobi', createdAt: '2026-01-01' },
+      { id: 'user_vet', phone: '0744555666', name: 'Veterinary Demo', role: UserRole.VETERINARIAN, verified: true, county: 'Kiambu', createdAt: '2026-01-01' }
+    ];
+    const html = renderToString(React.createElement(LoginModal, {
+      isOpen: true, targetRole: 'dashboard', usersList: demoUsers,
+      onClose: () => {}, onDemoLogin: async () => ({ success: true }), onCustomLogin: async () => ({ success: true }), onCustomRegister: async () => ({ success: true })
+    }));
+
+    expect(html).toContain('Choose a seeded demo account to explore its dashboard:');
+    for (const user of demoUsers) expect(html).toContain(user.name);
+  });
+
+  test('keeps the shared Dashboard and Listings controls at the top and removes regional indices', () => {
+    const appPath = path.resolve(__dirname, '../App.tsx');
+    const appText = fs.readFileSync(appPath, 'utf8');
+    const navIndex = appText.indexOf('id="dashboard_view_navigation"');
+    const roleDashboardsIndex = appText.indexOf('ROLE SPECIFIC DASHBOARDS');
+
+    expect(navIndex).toBeGreaterThan(-1);
+    expect(navIndex).toBeLessThan(roleDashboardsIndex);
+    expect(appText).not.toContain('Kenyan Region Cultivation Indices');
+    expect(appText).not.toContain('Live Soil Trends');
+    expect(appText).not.toContain('Nyandarua Zone (Loam soil)');
   });
 
   test('renders the compact admin attention queue without decorative charts', () => {

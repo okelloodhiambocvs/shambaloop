@@ -10,6 +10,7 @@ import {
   LivestockPartnership, VerificationRequest, MpesaTransaction,
   HealthLog, ProductionLog, Dispute, TripartiteMatch, FarmerProposal, FarmEvent, VeterinaryJob, VeterinaryReport, InvestorCriteria
 } from './src/types.js';
+import { DEMO_ACCOUNT_IDS, DEMO_ACCOUNT_PROFILES } from './src/demoAccounts.js';
 
 const app = express();
 const PORT = 3000;
@@ -269,59 +270,7 @@ let db: DatabaseSchema = {
 
 // Seed initial default accounts and records
 function seedDefaultData() {
-  db.users = [
-    {
-      id: 'user_1',
-      phone: '0712345678',
-      name: 'Wanjiku Kamau',
-      email: 'wanjiku@shambaloop.co.ke',
-      role: UserRole.LANDOWNER,
-      verified: true,
-      county: 'Nyandarua',
-      avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150',
-      createdAt: new Date(Date.now() - 36400 * 1000).toISOString(),
-      farmSpecialties: ['Potato Farming', 'Cabbage Farm leasing'],
-      seekingLandAcreage: 12
-    },
-    {
-      id: 'user_2',
-      phone: '0722111222',
-      name: 'Josphat Kiprop',
-      email: 'kiprop.farm@gmail.com',
-      role: UserRole.FARMER,
-      verified: true,
-      county: 'Uasin Gishu',
-      avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
-      createdAt: new Date(Date.now() - 36000 * 1000).toISOString(),
-      farmSpecialties: ['Dairy Farming', 'Maize Production', 'Heifer breeding'],
-      seekingLandAcreage: 20
-    },
-    {
-      id: 'user_3',
-      phone: '0733444555',
-      name: 'David Mwangi',
-      email: 'mwangi.diaspora@yahoo.com',
-      role: UserRole.INVESTOR,
-      verified: true,
-      county: 'Nairobi',
-      avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
-      createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-      investmentBudgetKES: 1200000,
-      preferredSectors: ['Livestock', 'Leaseholds'],
-      investmentGoal: 'Seeking high-yield dairy cows or 10-25 acres of fertile cabbage shamba'
-    },
-    {
-      id: 'user_admin',
-      phone: '0700000000',
-      name: 'Sylvanus Oroko',
-      email: 'admin@shambaloop.com',
-      role: UserRole.ADMIN,
-      verified: true,
-      county: 'Nairobi',
-      avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
-      createdAt: new Date().toISOString()
-    }
-  ];
+  db.users = Object.values(DEMO_ACCOUNT_PROFILES).map(user => ({ ...user }));
 
   // Generate cryptographically secure temporary complex passwords for seeded accounts
   function generateSecureTemporaryPassword(): string {
@@ -586,8 +535,25 @@ function saveDatabase() {
   }
 }
 
+const DEMO_SESSIONS_ENABLED = process.env.NODE_ENV !== 'production';
+
+function ensureDevelopmentDemoAccounts(): boolean {
+  if (!DEMO_SESSIONS_ENABLED) return false;
+
+  let changed = false;
+  for (const account of Object.values(DEMO_ACCOUNT_PROFILES)) {
+    if (db.users.some(user => user.id === account.id)) continue;
+
+    db.users.push({ ...account, passwordResetRequired: true });
+    db.passwordHashes[account.id] = bcrypt.hashSync(`${crypto.randomBytes(24).toString('base64url')}Aa1!`, 10);
+    changed = true;
+  }
+  return changed;
+}
+
 // Execute initial load
 loadDatabase();
+if (ensureDevelopmentDemoAccounts()) saveDatabase();
 
 // References for runtime matching (backward compatibility)
 let users = db.users;
@@ -919,50 +885,18 @@ app.post('/api/auth/login', authRateLimiter, (req, res) => {
   const matchedUser = db.users.find(u => u.phone === normalized);
 
   if (!matchedUser) {
-    // Autoprovide register for frictionless sandbox trials using complex temporary password
-    const tempId = `user_${Date.now()}`;
-    const defaultUser: User = {
-      id: tempId,
-      phone: normalized,
-      name: `Mkulima_${normalized.slice(-4)}`,
-      role: UserRole.FARMER,
-      verified: false,
-      county: 'Nairobi',
-      createdAt: new Date().toISOString(),
-      passwordResetRequired: true
-    };
-    
-    const securePass = 'ShambaLoop123!_TempReset';
-    db.passwordHashes[tempId] = bcrypt.hashSync(securePass, 10);
-    db.users.push(defaultUser);
-    saveDatabase();
-    syncRefs();
-
-    const token = generateSimulatedToken(defaultUser);
-    const refreshToken = generateRefreshToken(defaultUser);
-
-    writeAuditLog(tempId, 'frictionless_signup', `user:${tempId}`, null, { phone: normalized }, req.ip || '127.0.0.1');
-
-    return res.status(200).json({
-      user: safeUser(defaultUser),
-      token,
-      refreshToken,
-      passwordResetRequired: true,
-      message: 'Frictionless signup concluded. Secure complex temp password generated.'
-    });
+    return res.status(404).json({ error: 'No account was found for this phone number. Please register first.' });
   }
 
-  // Administrative sessions may never be issued from a phone number alone.
-  if (matchedUser.role === UserRole.ADMIN && !password) {
-    writeAuditLog('anonymous', 'failed_admin_login_missing_password', `user:${matchedUser.id}`, null, null, req.ip || '127.0.0.1');
-    return res.status(400).json({ error: 'A password is required for administrator sign-in.' });
+  if (!password) {
+    writeAuditLog('anonymous', 'failed_login_missing_password', `user:${matchedUser.id}`, null, null, req.ip || '127.0.0.1');
+    return res.status(400).json({ error: 'A password is required for sign-in.' });
   }
-  if (password) {
-    const verifiedHash = db.passwordHashes[matchedUser.id];
-    if (!verifiedHash || !bcrypt.compareSync(password, verifiedHash)) {
-      writeAuditLog('anonymous', 'failed_login_bad_password', `user:${matchedUser.id}`, null, { phone: normalized }, req.ip || '127.0.0.1');
-      return res.status(401).json({ error: 'Forbidden credentials. Verification failed.' });
-    }
+
+  const verifiedHash = db.passwordHashes[matchedUser.id];
+  if (!verifiedHash || !bcrypt.compareSync(password, verifiedHash)) {
+    writeAuditLog('anonymous', 'failed_login_bad_password', `user:${matchedUser.id}`, null, { phone: normalized }, req.ip || '127.0.0.1');
+    return res.status(401).json({ error: 'Forbidden credentials. Verification failed.' });
   }
 
   // Handle optional MFA Challenge initially
@@ -988,6 +922,24 @@ app.post('/api/auth/login', authRateLimiter, (req, res) => {
     refreshToken,
     passwordResetRequired: matchedUser.passwordResetRequired
   });
+});
+
+// Demo sessions are strictly local-development tooling. They use the same JWT
+// issuance and downstream authorization checks as password-based sessions, but
+// are never available in production and disclose no seeded passwords.
+app.post('/api/auth/demo-login', authRateLimiter, (req, res) => {
+  if (!DEMO_SESSIONS_ENABLED) return res.status(404).json({ error: 'Demo accounts are not available in production.' });
+
+  const userId = typeof req.body?.userId === 'string' ? req.body.userId : '';
+  if (!DEMO_ACCOUNT_IDS.has(userId)) return res.status(400).json({ error: 'Choose one of the available demo accounts.' });
+
+  const user = db.users.find(candidate => candidate.id === userId);
+  if (!user) return res.status(404).json({ error: 'The requested demo account is not available.' });
+
+  const token = generateSimulatedToken(user);
+  const refreshToken = generateRefreshToken(user);
+  writeAuditLog(user.id, 'demo_login_success', `user:${user.id}`, null, { role: user.role }, req.ip || '127.0.0.1');
+  res.status(200).json({ user: safeUser(user), token, refreshToken, passwordResetRequired: user.passwordResetRequired });
 });
 
 // Optional MFA challenges endpoints

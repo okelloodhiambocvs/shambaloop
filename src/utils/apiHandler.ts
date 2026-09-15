@@ -32,7 +32,7 @@ export function showToast(message: string, duration = 4000) {
   
   toast.innerHTML = `
     <div class="flex items-center gap-2">
-      <span class="text-amber-500 font-bold">⚠️ Notice:</span>
+      <span class="text-amber-500 font-bold">Notice:</span>
       <span class="leading-snug">${escapeHTML(message)}</span>
     </div>
     <button class="text-slate-400 hover:text-white font-bold ml-2 transition-colors cursor-pointer" onclick="this.parentElement.remove()">×</button>

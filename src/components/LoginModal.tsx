@@ -7,7 +7,7 @@ interface LoginModalProps {
   onClose: () => void;
   targetRole?: UserRole | 'dashboard' | null;
   usersList: User[];
-  onSelectUser: (user: User) => void;
+  onDemoLogin: (userId: string) => Promise<{ success: boolean; error?: string }>;
   onCustomLogin: (phone: string, password?: string) => Promise<{ success: boolean; error?: string }>;
   onCustomRegister: (userData: {
     name: string;
@@ -24,12 +24,13 @@ export default function LoginModal({
   onClose,
   targetRole = null,
   usersList,
-  onSelectUser,
+  onDemoLogin,
   onCustomLogin,
   onCustomRegister,
   isDarkMode = false
 }: LoginModalProps) {
-  const [tab, setTab] = useState<'quick' | 'phone' | 'register'>('quick');
+  const demoModeEnabled = import.meta.env.DEV;
+  const [tab, setTab] = useState<'quick' | 'phone' | 'register'>(demoModeEnabled ? 'quick' : 'phone');
   const [phoneInput, setPhoneInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
   const [nameInput, setNameInput] = useState('');
@@ -48,11 +49,20 @@ export default function LoginModal({
     if (targetRole && targetRole !== 'dashboard') {
       setRoleInput(targetRole);
     }
-    if (targetRole === 'dashboard') setTab('phone');
+    if (targetRole === 'dashboard') setTab(demoModeEnabled ? 'quick' : 'phone');
     setErrorMsg('');
   }, [targetRole, isOpen]);
 
   if (!isOpen) return null;
+
+  const handleDemoLogin = async (user: User) => {
+    setErrorMsg('');
+    setLoading(true);
+    const result = await onDemoLogin(user.id);
+    setLoading(false);
+    if (result.success) onClose();
+    else setErrorMsg(result.error || 'Demo sign-in could not be completed.');
+  };
 
   const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -137,7 +147,7 @@ export default function LoginModal({
         {/* Tab switcher */}
         <div className="p-4 pb-0">
           <div className="flex gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
-            <button
+            {demoModeEnabled && <button
               onClick={() => { setTab('quick'); setErrorMsg(''); }}
               className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                 tab === 'quick' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400'
@@ -145,7 +155,7 @@ export default function LoginModal({
               id="modal_tab_quick"
             >
               1-Click Role Login
-            </button>
+            </button>}
             <button
               onClick={() => { setTab('phone'); setErrorMsg(''); }}
               className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
@@ -179,7 +189,7 @@ export default function LoginModal({
           {tab === 'quick' && (
             <div className="space-y-3" id="quick_role_select_list">
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Select an account profile below to instantly log in:
+                {targetRole === 'dashboard' ? 'Choose a seeded demo account to explore its dashboard:' : 'Select an account profile below to instantly log in:'}
               </p>
 
               {/* Investor Profile */}
@@ -191,10 +201,8 @@ export default function LoginModal({
                   {investorUsers.map(user => (
                     <button
                       key={user.id}
-                      onClick={() => {
-                        onSelectUser(user);
-                        onClose();
-                      }}
+                      onClick={() => void handleDemoLogin(user)}
+                      disabled={loading}
                       className="w-full p-3 rounded-xl border border-purple-200 dark:border-purple-900/60 bg-purple-50/40 dark:bg-purple-950/20 hover:border-purple-500 hover:shadow-xs transition-all text-left flex items-center justify-between cursor-pointer"
                       id={`quick_user_btn_${user.id}`}
                     >
@@ -221,10 +229,8 @@ export default function LoginModal({
                   {farmerUsers.map(user => (
                     <button
                       key={user.id}
-                      onClick={() => {
-                        onSelectUser(user);
-                        onClose();
-                      }}
+                      onClick={() => void handleDemoLogin(user)}
+                      disabled={loading}
                       className="w-full p-3 rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/40 dark:bg-emerald-950/20 hover:border-emerald-500 hover:shadow-xs transition-all text-left flex items-center justify-between cursor-pointer"
                       id={`quick_user_btn_${user.id}`}
                     >
@@ -251,10 +257,8 @@ export default function LoginModal({
                   {landownerUsers.map(user => (
                     <button
                       key={user.id}
-                      onClick={() => {
-                        onSelectUser(user);
-                        onClose();
-                      }}
+                      onClick={() => void handleDemoLogin(user)}
+                      disabled={loading}
                       className="w-full p-3 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/40 dark:bg-amber-950/20 hover:border-amber-500 hover:shadow-xs transition-all text-left flex items-center justify-between cursor-pointer"
                       id={`quick_user_btn_${user.id}`}
                     >
@@ -273,7 +277,7 @@ export default function LoginModal({
               )}
 
               {/* Admin / Supervisor Profile */}
-              {(targetRole === null || targetRole === UserRole.ADMIN) && (
+              {(targetRole === null || targetRole === UserRole.ADMIN || targetRole === 'dashboard') && (
                 <div className="space-y-1.5">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
                     System Supervisor / Dashboard Admin
@@ -281,10 +285,8 @@ export default function LoginModal({
                   {adminUsers.map(user => (
                     <button
                       key={user.id}
-                      onClick={() => {
-                        onSelectUser(user);
-                        onClose();
-                      }}
+                      onClick={() => void handleDemoLogin(user)}
+                      disabled={loading}
                       className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 hover:border-slate-500 hover:shadow-xs transition-all text-left flex items-center justify-between cursor-pointer"
                       id={`quick_user_btn_${user.id}`}
                     >
@@ -303,7 +305,7 @@ export default function LoginModal({
               )}
 
               {/* Veterinary Profile */}
-              {targetRole === UserRole.VETERINARIAN && veterinarianUsers.length > 0 && (
+              {(targetRole === UserRole.VETERINARIAN || targetRole === 'dashboard') && veterinarianUsers.length > 0 && (
                 <div className="space-y-1.5">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                     Veterinary Profiles
@@ -311,10 +313,8 @@ export default function LoginModal({
                   {veterinarianUsers.map(user => (
                     <button
                       key={user.id}
-                      onClick={() => {
-                        onSelectUser(user);
-                        onClose();
-                      }}
+                      onClick={() => void handleDemoLogin(user)}
+                      disabled={loading}
                       className="w-full p-3 rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/40 dark:bg-emerald-950/20 hover:border-emerald-500 hover:shadow-xs transition-all text-left flex items-center justify-between cursor-pointer"
                       id={`quick_user_btn_${user.id}`}
                     >

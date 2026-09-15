@@ -17,6 +17,37 @@ describe('ShambaLoop End-to-End Integration Tests', () => {
   });
 
   describe('Authentication and Subscriber Onboarding Flow', () => {
+    test.each([
+      [UserRole.FARMER, 'user_2', '/api/farmer/investors'],
+      [UserRole.INVESTOR, 'user_3', '/api/investor/farmers'],
+      [UserRole.VETERINARIAN, 'user_vet', '/api/veterinary/jobs'],
+      [UserRole.ADMIN, 'user_admin', '/api/admin/analytics']
+    ])('issues a development demo session for the %s dashboard', async (role, userId, dashboardEndpoint) => {
+      const login = await fetch(`${BASE_URL}/api/auth/demo-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId })
+      });
+      expect(login.status).toBe(200);
+      const session = await login.json();
+      expect(session.user.role).toBe(role);
+      expect(session.token).toEqual(expect.any(String));
+
+      const dashboard = await fetch(`${BASE_URL}${dashboardEndpoint}`, {
+        headers: { Authorization: `Bearer ${session.token}` }
+      });
+      expect(dashboard.status).toBe(200);
+    });
+
+    test('does not issue a demo session for an arbitrary account ID', async () => {
+      const response = await fetch(`${BASE_URL}/api/auth/demo-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: 'user_not_a_demo_account' })
+      });
+      expect(response.status).toBe(400);
+    });
+
     test('POST /api/auth/register - Should reject a weak password registration attempt', async () => {
       const weakPayload = {
         phone: '0700000001',
@@ -294,6 +325,13 @@ describe('ShambaLoop End-to-End Integration Tests', () => {
     test('does not issue an administrator session from a phone number alone', async () => {
       const response = await fetch(`${BASE_URL}/api/auth/login`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone: '0700000000' })
+      });
+      expect(response.status).toBe(400);
+    });
+
+    test.each(['0722111222', '0733444555', '0744555666'])('does not issue a passwordless session for %s', async (phone) => {
+      const response = await fetch(`${BASE_URL}/api/auth/login`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone })
       });
       expect(response.status).toBe(400);
     });

@@ -4,6 +4,7 @@ import {
   LivestockPartnership, VerificationRequest, MpesaTransaction, VeterinaryReport,
   FarmerProposal, InvestorCriteria, InvestorFarmerProfile, FarmEvent, VeterinaryJob, TripartiteMatch, Dispute
 } from './types';
+import { DEMO_ACCOUNT_PROFILES } from './demoAccounts';
 import ListingCard from './components/ListingCard';
 import CreateListingModal from './components/CreateListingModal';
 import EscrowPaymentModal from './components/EscrowPaymentModal';
@@ -141,66 +142,7 @@ const CustomProductionDot = (props: any) => {
 const COUNTIES_LIST = ['All Counties', 'Nyandarua', 'Kiambu', 'Nakuru', 'Uasin Gishu', 'Nairobi'];
 
 // --- Canonical Seed Users Single Source of Truth ---
-export const CANONICAL_SEED_USERS: Record<string, User> = {
-  [UserRole.LANDOWNER]: {
-    id: 'user_1',
-    phone: '0712345678',
-    name: 'Wanjiku Kamau',
-    email: 'wanjiku@shambaloop.co.ke',
-    role: UserRole.LANDOWNER,
-    verified: true,
-    county: 'Nyandarua',
-    createdAt: '2026-06-15T00:00:00.000Z',
-    farmSpecialties: ['Potato Farming', 'Cabbage Farm leasing'],
-    seekingLandAcreage: 12
-  },
-  [UserRole.FARMER]: {
-    id: 'user_2',
-    phone: '0722111222',
-    name: 'Josphat Kiprop',
-    email: 'kiprop.farm@gmail.com',
-    role: UserRole.FARMER,
-    verified: true,
-    county: 'Uasin Gishu',
-    createdAt: '2026-06-15T00:00:00.000Z',
-    farmSpecialties: ['Dairy Farming', 'Maize Production', 'Heifer breeding'],
-    seekingLandAcreage: 20
-  },
-  [UserRole.INVESTOR]: {
-    id: 'user_3',
-    phone: '0733444555',
-    name: 'David Mwangi',
-    email: 'mwangi.diaspora@yahoo.com',
-    role: UserRole.INVESTOR,
-    verified: true,
-    county: 'Nairobi',
-    createdAt: '2026-06-15T00:00:00.000Z',
-    investmentBudgetKES: 1200000,
-    preferredSectors: ['Livestock', 'Leaseholds'],
-    investmentGoal: 'Seeking high-yield dairy cows or 10-25 acres of fertile cabbage shamba'
-  },
-  [UserRole.ADMIN]: {
-    id: 'user_admin',
-    phone: '0700000000',
-    role: UserRole.ADMIN,
-    verified: true,
-    county: 'Nairobi',
-    name: 'Sylvanus Oroko',
-    email: 'admin@shambaloop.ke',
-    createdAt: '2026-06-15T00:00:00.000Z'
-  },
-  [UserRole.VETERINARIAN]: {
-    id: 'user_vet',
-    phone: '0744555666',
-    role: UserRole.VETERINARIAN,
-    verified: true,
-    county: 'Kiambu',
-    name: 'Dr. Akinyi Otieno',
-    email: 'vet@shambaloop.ke',
-    createdAt: '2026-06-15T00:00:00.000Z',
-    farmSpecialties: ['Dairy health', 'Vaccination', 'Breeding checks']
-  }
-};
+export const CANONICAL_SEED_USERS = DEMO_ACCOUNT_PROFILES;
 
 const seedUsers: User[] = [
   CANONICAL_SEED_USERS[UserRole.LANDOWNER],
@@ -442,17 +384,8 @@ export default function App() {
       } else {
         setAuthError(error || 'Login failed');
       }
-    } catch (err) {
-      // Offline fallback
-      const matchedUser = usersList.find(u => u.phone === authPhone);
-      if (matchedUser) {
-        setCurrentUser(matchedUser);
-        localStorage.setItem('sl_current_user', JSON.stringify(matchedUser));
-        setAuthSuccessMsg('Welcome back (offline sandbox session)!');
-        logAction('login_account_offline', { phone: authPhone }, matchedUser.id, matchedUser.name);
-      } else {
-        setAuthError('Phone number not found. You can register a new account on the register tab!');
-      }
+    } catch {
+      setAuthError('The authentication service is unavailable. Please try again.');
     }
   };
 
@@ -474,32 +407,30 @@ export default function App() {
     setIsLoginModalOpen(true);
   };
 
-  const handleSelectModalUser = (user: User) => {
-    if (loginTargetRole && loginTargetRole !== 'dashboard' && user.role !== loginTargetRole) {
-      return;
-    }
+  const handleDemoLogin = async (userId: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const { data, error } = await safeFetch<any>('/api/auth/demo-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId })
+      });
 
-    if (loginTargetRole === 'dashboard' && user.role !== UserRole.ADMIN) {
-      return;
-    }
+      if (error || !data?.user || !data.token) return { success: false, error: error || 'Demo sign-in could not be completed.' };
+      if (loginTargetRole && loginTargetRole !== 'dashboard' && data.user.role !== loginTargetRole) {
+        return { success: false, error: 'This account does not match the selected role.' };
+      }
 
-    setCurrentUser(user);
-    localStorage.setItem('sl_current_user', JSON.stringify(user));
-    setIsLoginModalOpen(false);
-    logAction('login_role_select', { role: user.role, name: user.name }, user.id, user.name);
+      setCurrentUser(data.user);
+      localStorage.setItem('sl_current_user', JSON.stringify(data.user));
+      localStorage.setItem('sl_token', data.token);
+      logAction('demo_login_account', { role: data.user.role }, data.user.id, data.user.name);
+      return { success: true };
+    } catch {
+      return { success: false, error: 'The authentication service is unavailable. Please try again.' };
+    }
   };
 
   const handleModalCustomLogin = async (phone: string, password?: string): Promise<{ success: boolean; error?: string }> => {
-    const matched = usersList.find(u => u.phone === phone);
-
-    if (loginTargetRole && loginTargetRole !== 'dashboard' && matched && matched.role !== loginTargetRole) {
-      return { success: false, error: 'This account does not match the selected role.' };
-    }
-
-    if (loginTargetRole === 'dashboard' && matched && matched.role !== UserRole.ADMIN) {
-      return { success: false, error: 'Only the admin account can access the dashboard.' };
-    }
-
     try {
       const { data, error } = await safeFetch<any>('/api/auth/login', {
         method: 'POST',
@@ -512,10 +443,6 @@ export default function App() {
           return { success: false, error: 'This account does not match the selected role.' };
         }
 
-        if (loginTargetRole === 'dashboard' && data.user.role !== UserRole.ADMIN) {
-          return { success: false, error: 'Only the admin account can access the dashboard.' };
-        }
-
         setCurrentUser(data.user);
         localStorage.setItem('sl_current_user', JSON.stringify(data.user));
         if (data.token) {
@@ -524,32 +451,10 @@ export default function App() {
         logAction('login_account', { phone }, data.user.id, data.user.name);
         return { success: true };
       } else {
-        // Check offline fallback
-        if (matched) {
-          if (loginTargetRole && loginTargetRole !== 'dashboard' && matched.role !== loginTargetRole) {
-            return { success: false, error: 'This account does not match the selected role.' };
-          }
-
-          if (loginTargetRole === 'dashboard' && matched.role !== UserRole.ADMIN) {
-            return { success: false, error: 'Only the admin account can access the dashboard.' };
-          }
-
-          setCurrentUser(matched);
-          localStorage.setItem('sl_current_user', JSON.stringify(matched));
-          logAction('login_account_offline', { phone }, matched.id, matched.name);
-          return { success: true };
-        }
-        return { success: false, error: error || 'Phone number not found. You can create a new account!' };
+        return { success: false, error: error || 'Login failed. Please check your credentials.' };
       }
-    } catch (err: any) {
-      const matched = usersList.find(u => u.phone === phone);
-      if (matched) {
-        setCurrentUser(matched);
-        localStorage.setItem('sl_current_user', JSON.stringify(matched));
-        logAction('login_account_offline', { phone }, matched.id, matched.name);
-        return { success: true };
-      }
-      return { success: false, error: 'User not found. Try registering!' };
+    } catch {
+      return { success: false, error: 'The authentication service is unavailable. Please try again.' };
     }
   };
 
@@ -577,33 +482,10 @@ export default function App() {
         logAction('register_account', userData, data.user.id, data.user.name);
         return { success: true };
       } else {
-        // Offline fallback
-        const offlineId = `user_${Date.now()}`;
-        const offlineUser: User = {
-          id: offlineId,
-          ...userData,
-          verified: false,
-          createdAt: new Date().toISOString()
-        };
-        setUsersList(prev => [...prev.filter(u => u.phone !== offlineUser.phone), offlineUser]);
-        setCurrentUser(offlineUser);
-        localStorage.setItem('sl_current_user', JSON.stringify(offlineUser));
-        logAction('register_account_offline', userData, offlineId, userData.name);
-        return { success: true };
+        return { success: false, error: error || 'Registration could not be completed.' };
       }
-    } catch (err: any) {
-      const offlineId = `user_${Date.now()}`;
-      const offlineUser: User = {
-        id: offlineId,
-        ...userData,
-        verified: false,
-        createdAt: new Date().toISOString()
-      };
-      setUsersList(prev => [...prev.filter(u => u.phone !== offlineUser.phone), offlineUser]);
-      setCurrentUser(offlineUser);
-      localStorage.setItem('sl_current_user', JSON.stringify(offlineUser));
-      logAction('register_account_offline', userData, offlineId, userData.name);
-      return { success: true };
+    } catch {
+      return { success: false, error: 'The authentication service is unavailable. Please try again.' };
     }
   };
 
@@ -2532,7 +2414,7 @@ export default function App() {
             onClose={() => setIsLoginModalOpen(false)}
             targetRole={loginTargetRole}
             usersList={usersList}
-            onSelectUser={handleSelectModalUser}
+            onDemoLogin={handleDemoLogin}
             onCustomLogin={handleModalCustomLogin}
             onCustomRegister={handleModalCustomRegister}
             isDarkMode={isDarkMode}
@@ -2675,6 +2557,30 @@ export default function App() {
 
       {/* Main Container Area */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 lg:mt-8 space-y-8 flex-1">
+        <nav className="flex flex-col gap-3 rounded-2xl border border-border-base bg-card-bg p-3 sm:flex-row sm:items-center sm:justify-between" aria-label="Workspace views" id="dashboard_view_navigation">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">My Farm workspace</p>
+            <p className="text-xs font-semibold text-text-base">Switch between your dashboard and marketplace without leaving the top of the page.</p>
+          </div>
+          <div className="flex w-full items-center gap-2 sm:w-auto">
+            <button
+              type="button"
+              onClick={() => setDashboardView('overview')}
+              aria-current={dashboardView === 'overview' ? 'page' : undefined}
+              className={`flex-1 rounded-lg px-4 py-2 text-xs font-bold transition-colors sm:flex-none ${dashboardView === 'overview' ? 'bg-emerald-700 text-white' : 'bg-card-bg text-text-base border border-border-base hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+            >
+              Dashboard
+            </button>
+            <button
+              type="button"
+              onClick={() => setDashboardView('listings')}
+              aria-current={dashboardView === 'listings' ? 'page' : undefined}
+              className={`flex-1 rounded-lg px-4 py-2 text-xs font-bold transition-colors sm:flex-none ${dashboardView === 'listings' ? 'bg-emerald-700 text-white' : 'bg-card-bg text-text-base border border-border-base hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+            >
+              Listings
+            </button>
+          </div>
+        </nav>
         
         {/* ROLE SPECIFIC DASHBOARDS WITH STANDARDIZED PERFORMANT FADE-IN */}
         {currentUser && (
@@ -2841,23 +2747,6 @@ export default function App() {
             )}
           </section>
         )}
-
-        <nav className="flex items-center gap-2 border-b border-border-base pb-3" aria-label="Dashboard views">
-          <button
-            type="button"
-            onClick={() => setDashboardView('overview')}
-            className={`rounded-lg px-4 py-2 text-xs font-bold transition-colors ${dashboardView === 'overview' ? 'bg-emerald-700 text-white' : 'bg-card-bg text-text-base border border-border-base hover:bg-slate-100 dark:hover:bg-slate-800'}`}
-          >
-            Dashboard
-          </button>
-          <button
-            type="button"
-            onClick={() => setDashboardView('listings')}
-            className={`rounded-lg px-4 py-2 text-xs font-bold transition-colors ${dashboardView === 'listings' ? 'bg-emerald-700 text-white' : 'bg-card-bg text-text-base border border-border-base hover:bg-slate-100 dark:hover:bg-slate-800'}`}
-          >
-            Listings
-          </button>
-        </nav>
 
         {/* Section: Market Browsing & Livestock Registry logs */}
         {dashboardView === 'listings' && <section className="dashboard-surface grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -4302,30 +4191,6 @@ export default function App() {
                   ))}
                 </div>
               )}
-            </div>
-
-            {/* Quick Farm Performance summary page at bottom of main screen */}
-            <div className="bg-white rounded-2xl border border-agri-dirt-100 shadow-xs p-6 space-y-4">
-              <div className="flex justify-between items-center pb-2 border-b">
-                <h3 className="font-bold text-xs uppercase tracking-widest text-[#2f4f1a] flex items-center gap-1.5">
-                  Kenyan Region Cultivation Indices
-                </h3>
-                <span className="text-[9px] text-[#41b045] font-extrabold uppercase bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">Live Soil Trends</span>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-semibold text-slate-700">
-                <div className="p-3 bg-[#fbfaf8] border rounded-xl leading-relaxed">
-                  <span className="font-bold text-amber-900 uppercase tracking-wide text-[9px] block">Nyandarua Zone (Loam soil)</span>
-                  <p className="text-[10px] text-slate-600 mt-1">Potatoes are currently pulling record pricing: 4,200 KES per 90kg bag in Nairobi market depots.</p>
-                </div>
-                <div className="p-3 bg-[#f9faf6] border rounded-xl leading-relaxed">
-                  <span className="font-bold text-emerald-900 uppercase tracking-wide text-[9px] block">Kiambu Milk Sheds</span>
-                  <p className="text-[10px] text-slate-600 mt-1">Brookside dairy cooperatives raised farmgate procurement pay rate to 58 KES per Liter of chilled dairy yields.</p>
-                </div>
-                <div className="p-3 bg-[#faf8f5] dark:bg-slate-900/40 border rounded-xl leading-relaxed">
-                  <span className="font-bold text-amber-900 dark:text-amber-500 uppercase tracking-wide text-[9px] block">Trans Nzoia Silages</span>
-                  <p className="text-[10px] text-slate-600 dark:text-slate-300 mt-1">Maize harvesting starts mid-September. Tractor leasing demands expected to spike by 35% in Kitale.</p>
-                </div>
-              </div>
             </div>
 
           </div>

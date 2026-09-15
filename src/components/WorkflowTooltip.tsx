@@ -56,8 +56,8 @@ export const WorkflowTooltip: React.FC<WorkflowTooltipProps> = ({
             }
           ],
           roleGuide: role === UserRole.FARMER 
-            ? '💡 Pro Tip: Your crop yield predictions are analyzed by our automated AI model to optimize land selections.' 
-            : '💡 Pro Tip: Investors can finance leaseholds and hire vetted farmers for direct management.'
+            ? 'Pro tip: Your crop yield predictions are analyzed by our automated AI model to optimize land selections.'
+            : 'Pro tip: Investors can finance leaseholds and hire vetted farmers for direct management.'
         };
 
       case 'partner_equity':
@@ -80,8 +80,8 @@ export const WorkflowTooltip: React.FC<WorkflowTooltipProps> = ({
             }
           ],
           roleGuide: role === UserRole.INVESTOR
-            ? '📈 This ensures direct, transparent exposure to Kenya’s booming food security growth without farming labor.'
-            : '💪 Farmers receive guaranteed working capital for feed concentrates and superior veterinary medicines.'
+            ? 'This ensures direct, transparent exposure to Kenya’s booming food security growth without farming labor.'
+            : 'Farmers receive guaranteed working capital for feed concentrates and superior veterinary medicines.'
         };
 
       case 'pitch_investor':
@@ -103,7 +103,7 @@ export const WorkflowTooltip: React.FC<WorkflowTooltipProps> = ({
               desc: 'Shared contracts activate, releasing veterinary/input funds to your dashboard to boost yields.'
             }
           ],
-          roleGuide: '💡 Tip: Highly complete, verified farmer portfolios achieve 4.5x faster backing rates.'
+          roleGuide: 'Tip: Highly complete, verified farmer portfolios achieve 4.5x faster backing rates.'
         };
 
       case 'propose_tenant_lease':
@@ -125,7 +125,7 @@ export const WorkflowTooltip: React.FC<WorkflowTooltipProps> = ({
               desc: 'Enjoy verified, timely lease payments guaranteed by ShambaLoop holding trusts during cultivation.'
             }
           ],
-          roleGuide: '💡 Keep in mind: Registered lands with a verified status receive premium pricing.'
+          roleGuide: 'Keep in mind: Registered lands with a verified status receive premium pricing.'
         };
 
       case 'submit_listing':
@@ -147,7 +147,7 @@ export const WorkflowTooltip: React.FC<WorkflowTooltipProps> = ({
               desc: 'Cleared listings populate the public feed, allowing matching partners to initiate investment instantly.'
             }
           ],
-          roleGuide: '🔐 Security Note: All sensitive owner data remains encrypted and is only shared with funded counterparties.'
+          roleGuide: 'Security note: All sensitive owner data remains encrypted and is only shared with funded counterparties.'
         };
 
       default:
@@ -169,7 +169,7 @@ export const WorkflowTooltip: React.FC<WorkflowTooltipProps> = ({
               desc: 'Installments clear as verification stages complete or production metrics are logged.'
             }
           ],
-          roleGuide: '💡 Trust is the seed from which yields grow.'
+          roleGuide: 'Trust is the seed from which yields grow.'
         };
     }
   };
