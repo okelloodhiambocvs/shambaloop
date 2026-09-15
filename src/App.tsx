@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   User, UserRole, Listing, ListingType, LeaseAgreement, 
   LivestockPartnership, VerificationRequest, MpesaTransaction, VeterinaryReport,
-  FarmerProposal, InvestorCriteria, FarmEvent, VeterinaryJob, TripartiteMatch, Dispute
+  FarmerProposal, InvestorCriteria, InvestorFarmerProfile, FarmEvent, VeterinaryJob, TripartiteMatch, Dispute
 } from './types';
 import ListingCard from './components/ListingCard';
 import CreateListingModal from './components/CreateListingModal';
@@ -625,6 +625,8 @@ export default function App() {
   });
   const [farmerInvestors, setFarmerInvestors] = useState<User[]>([]);
   const [farmerVeterinarians, setFarmerVeterinarians] = useState<User[]>([]);
+  const [investorFarmers, setInvestorFarmers] = useState<InvestorFarmerProfile[]>([]);
+  const [investorCriteria, setInvestorCriteria] = useState<InvestorCriteria | null>(null);
 
   // Ecosystem state for 4-role dashboards
   const [proposals, setProposals] = useState<FarmerProposal[]>([
@@ -774,21 +776,20 @@ export default function App() {
     showToast('Proposal sent to the investor.');
   };
 
-  const handleAcceptProposal = (proposalId: string) => {
-    setProposals(prev => prev.map(p => p.id === proposalId ? { ...p, status: 'ACCEPTED' as const } : p));
-    showToast('Proposal accepted! Tripartite partnership created with farmer.');
+  const handleUpdateInvestorProposal = async (proposalId: string, status: Extract<FarmerProposal['status'], 'NEGOTIATING' | 'ACCEPTED' | 'REJECTED'>) => {
+    const { data, error } = await investorFetch<FarmerProposal>(`/api/investor/proposals/${encodeURIComponent(proposalId)}`, { method: 'PATCH', body: JSON.stringify({ status }) });
+    if (error || !data) throw new Error(error || 'Could not update the proposal.');
+    setProposals(previous => previous.map(proposal => proposal.id === data.id ? data : proposal));
+    showToast(`Proposal marked ${status.toLowerCase()}.`);
   };
 
-  const handleSaveInvestorCriteria = (criteriaData: Omit<InvestorCriteria, 'id' | 'createdAt'>) => {
-    const newCrit: InvestorCriteria = {
-      ...criteriaData,
-      id: `crit_${Date.now()}`,
-      investorId: currentUser.id,
-      investorName: currentUser.name,
-      createdAt: new Date().toISOString().split('T')[0]
-    };
-    setInvestorCriteriaList(prev => [newCrit, ...prev.filter(c => c.investorId !== currentUser.id)]);
-    showToast('Investment criteria saved. Recommendation engine updated.');
+  const handleSaveInvestorCriteria = async (criteriaData: Omit<InvestorCriteria, 'id' | 'createdAt' | 'investorId' | 'investorName' | 'status'>) => {
+    const { data, error } = await investorFetch<InvestorCriteria>('/api/investor/criteria', { method: 'PUT', body: JSON.stringify(criteriaData) });
+    if (error || !data) throw new Error(error || 'Could not save the investment brief.');
+    setInvestorCriteria(data);
+    setInvestorCriteriaList(previous => [data, ...previous.filter(criteria => criteria.investorId !== data.investorId)]);
+    setCurrentUser(previous => previous ? { ...previous, investmentBudgetKES: data.budgetKES, preferredSectors: data.preferredSectors, investmentGoal: data.partnerRequirements } : previous);
+    showToast('Investment brief saved.');
   };
 
   const handleRequestVetJob = async (jobData: Pick<VeterinaryJob, 'farmId' | 'location' | 'animalOrCropType' | 'serviceType' | 'urgency' | 'assignedVetId' | 'notes'>) => {
@@ -1698,6 +1699,28 @@ export default function App() {
   }, [currentUser?.id, currentUser?.role]);
 
   useEffect(() => {
+    const token = localStorage.getItem('sl_token');
+    if (currentUser?.role !== UserRole.INVESTOR || !token) return;
+    const headers = { Authorization: `Bearer ${token}` };
+    Promise.all([
+      fetch('/api/livestock/partnerships', { headers }),
+      fetch('/api/investor/farmers', { headers }),
+      fetch('/api/investor/proposals', { headers }),
+      fetch('/api/investor/events', { headers }),
+      fetch('/api/veterinary/reports', { headers }),
+      fetch('/api/investor/criteria', { headers })
+    ]).then(async responses => {
+      const [partnershipsResponse, farmersResponse, proposalsResponse, eventsResponse, reportsResponse, criteriaResponse] = responses;
+      if (partnershipsResponse.ok) setPartnerships(await partnershipsResponse.json());
+      if (farmersResponse.ok) setInvestorFarmers(await farmersResponse.json());
+      if (proposalsResponse.ok) setProposals(await proposalsResponse.json());
+      if (eventsResponse.ok) setFarmEvents(await eventsResponse.json());
+      if (reportsResponse.ok) setVeterinaryReports(await reportsResponse.json());
+      if (criteriaResponse.ok) setInvestorCriteria(await criteriaResponse.json());
+    }).catch(() => showToast('Investor workspace data could not be refreshed.'));
+  }, [currentUser?.id, currentUser?.role]);
+
+  useEffect(() => {
     // A. Sync status event handlers
     const handleOnline = () => {
       setIsOnline(true);
@@ -2380,6 +2403,15 @@ export default function App() {
     });
   };
 
+  const investorFetch = <T,>(url: string, init: RequestInit = {}) => {
+    const token = localStorage.getItem('sl_token');
+    if (!token) return Promise.resolve({ data: null as T | null, error: 'A signed-in investor session is required.' });
+    return safeFetch<T>(url, {
+      ...init,
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, ...init.headers }
+    });
+  };
+
   const handleSaveFarmerProfile = async (input: { farmSpecialties: string[]; seekingLandAcreage: number }) => {
     const { data, error } = await farmerFetch<{ user: User }>('/api/farmer/profile', { method: 'PUT', body: JSON.stringify(input) });
     if (error || !data) throw new Error(error || 'Could not save the farm summary.');
@@ -2689,14 +2721,14 @@ export default function App() {
             {currentUser.role === UserRole.INVESTOR && (
               <InvestorDashboard
                 currentUser={currentUser}
-                usersList={usersList}
                 partnerships={partnerships}
                 veterinaryReports={veterinaryReports}
                 proposals={proposals}
                 farmEvents={farmEvents}
-                investorCriteriaList={investorCriteriaList}
+                farmers={investorFarmers}
+                criteria={investorCriteria}
                 onSaveCriteria={handleSaveInvestorCriteria}
-                onAcceptProposal={handleAcceptProposal}
+                onUpdateProposal={handleUpdateInvestorProposal}
               />
             )}
 

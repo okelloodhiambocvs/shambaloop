@@ -28,6 +28,7 @@ Object.defineProperty(global, 'navigator', {
 import App from '../App';
 import AdminPanel from '../components/AdminPanel';
 import FarmerDashboard from '../components/FarmerDashboard';
+import InvestorDashboard from '../components/InvestorDashboard';
 import { UserRole } from '../types';
 
 import { ResponsiveContainer, LineChart, Line } from 'recharts';
@@ -96,5 +97,17 @@ describe('Recharts render test', () => {
     expect(html).toContain('What needs attention');
     expect(html).toContain('Find investors');
     expect(html).not.toContain('Farm Control Center');
+  });
+
+  test('renders the investor decision workspace without simulated yield charts', () => {
+    const html = renderToString(React.createElement(InvestorDashboard, {
+      currentUser: { id: 'investor_1', phone: '0712345678', name: 'Investor One', role: UserRole.INVESTOR, verified: true, county: 'Nakuru', createdAt: '2026-01-01' },
+      partnerships: [], veterinaryReports: [], proposals: [], farmEvents: [], farmers: [], criteria: null,
+      onSaveCriteria: async () => {}, onUpdateProposal: async () => {}
+    }));
+    expect(html).toContain('Projects, opportunities, and decisions');
+    expect(html).toContain('Environmental data is unavailable');
+    expect(html).not.toContain('Capital Partner Console');
+    expect(html).not.toContain('Yield &amp; Payout Stream');
   });
 });

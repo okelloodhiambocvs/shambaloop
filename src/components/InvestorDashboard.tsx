@@ -1,659 +1,126 @@
-import React, { useState } from 'react';
-import { 
-  User, LivestockPartnership, VeterinaryReport, FarmEvent, 
-  FarmerProposal, InvestorCriteria, ProductionLog, UserRole
-} from '../types';
-import { 
-  TrendingUp, FileText, Stethoscope, AlertTriangle, ShieldCheck, 
-  DollarSign, CheckCircle2, MapPin, Briefcase, Filter, 
-  Calendar, Award, ArrowUpRight, Clock, PlusCircle
-} from 'lucide-react';
-import { 
-  ResponsiveContainer, LineChart, Line, BarChart, Bar, 
-  XAxis, YAxis, Tooltip, CartesianGrid, Legend 
-} from 'recharts';
+import React, { useEffect, useMemo, useState } from 'react';
+import { BriefcaseBusiness, ClipboardList, FileText, Search, ShieldAlert, Stethoscope, UsersRound } from 'lucide-react';
+import { FarmEvent, FarmerProposal, InvestorCriteria, InvestorFarmerProfile, LivestockPartnership, User, VeterinaryReport } from '../types';
 
-interface InvestorDashboardProps {
+interface Props {
   currentUser: User;
-  usersList: User[];
   partnerships: LivestockPartnership[];
   veterinaryReports: VeterinaryReport[];
   proposals: FarmerProposal[];
   farmEvents: FarmEvent[];
-  investorCriteriaList: InvestorCriteria[];
-  onSaveCriteria: (criteria: Omit<InvestorCriteria, 'id' | 'createdAt'>) => void;
-  onAcceptProposal?: (proposalId: string) => void;
+  farmers: InvestorFarmerProfile[];
+  criteria: InvestorCriteria | null;
+  onSaveCriteria: (criteria: Omit<InvestorCriteria, 'id' | 'createdAt' | 'investorId' | 'investorName' | 'status'>) => Promise<void>;
+  onUpdateProposal: (id: string, status: Extract<FarmerProposal['status'], 'NEGOTIATING' | 'ACCEPTED' | 'REJECTED'>) => Promise<void>;
 }
 
-export default function InvestorDashboard({
-  currentUser,
-  usersList,
-  partnerships,
-  veterinaryReports,
-  proposals,
-  farmEvents,
-  investorCriteriaList,
-  onSaveCriteria,
-  onAcceptProposal
-}: InvestorDashboardProps) {
-  const [activeTab, setActiveTab] = useState<'criteria' | 'fms_tracking' | 'events_radar' | 'vet_reports' | 'proposals'>('criteria');
+const sectors = ['Dairy', 'Crops', 'Poultry', 'Horticulture', 'Goats', 'Mixed'];
+const models: Array<{ value: InvestorCriteria['lookingFor']; label: string }> = [
+  { value: 'FARMER_WITH_LAND_NEEDING_CAPITAL', label: 'Farmer with land' },
+  { value: 'FARM_MANAGER_EXPERTISE', label: 'Farm manager' },
+  { value: 'LAND_FOR_LEASE_PROJECT', label: 'Land for a project' }
+];
+const money = (amount: number) => `KES ${amount.toLocaleString()}`;
+const date = (value: string) => new Date(value).toLocaleDateString();
 
-  // Criteria Form states
-  const [lookingFor, setLookingFor] = useState<InvestorCriteria['lookingFor']>('FARMER_WITH_LAND_NEEDING_CAPITAL');
-  const [budgetKES, setBudgetKES] = useState<number>(currentUser.investmentBudgetKES || 500000);
-  const [selectedSectors, setSelectedSectors] = useState<string[]>(currentUser.preferredSectors || ['Dairy', 'Horticulture']);
-  const [targetCounties, setTargetCounties] = useState<string[]>(['Kiambu', 'Nyandarua', 'Nakuru']);
-  const [criteriaNotes, setCriteriaNotes] = useState<string>(currentUser.investmentGoal || 'Looking for experienced dairy farmer with at least 5 acres and water supply.');
-  const [criteriaSuccessMsg, setCriteriaSuccessMsg] = useState('');
-
-  // Proposals handling
-  const [proposalFilter, setProposalFilter] = useState<'ALL' | 'Dairy' | 'Crops'>('ALL');
-  const [acceptedProposalId, setAcceptedProposalId] = useState<string | null>(null);
-
-  // Active partnerships for this investor
-  const investorPartnerships = partnerships.filter(p => p.investorId === currentUser.id || currentUser.role === UserRole.INVESTOR);
-  
-  // FMS production aggregation
-  const allProductionLogs: ProductionLog[] = investorPartnerships.flatMap(p => p.productionLogs).length > 0
-    ? investorPartnerships.flatMap(p => p.productionLogs)
-    : [
-        { id: 'log_1', date: '2026-06-08', metric: 'Milk Liters', quantity: 24, revenueKES: 1392, investorPayoutKES: 556.8, farmerPayoutKES: 835.2 },
-        { id: 'log_2', date: '2026-06-09', metric: 'Milk Liters', quantity: 26, revenueKES: 1508, investorPayoutKES: 603.2, farmerPayoutKES: 904.8 },
-        { id: 'log_3', date: '2026-06-10', metric: 'Milk Liters', quantity: 23, revenueKES: 1334, investorPayoutKES: 533.6, farmerPayoutKES: 800.4 },
-        { id: 'log_4', date: '2026-06-11', metric: 'Milk Liters', quantity: 25, revenueKES: 1450, investorPayoutKES: 580, farmerPayoutKES: 870 },
-        { id: 'log_5', date: '2026-06-12', metric: 'Milk Liters', quantity: 28, revenueKES: 1624, investorPayoutKES: 649.6, farmerPayoutKES: 974.4 }
-      ];
-
-  const totalInvestorEarningsKES = allProductionLogs.reduce((acc, cur) => acc + cur.investorPayoutKES, 0);
-  const totalVolumeProduced = allProductionLogs.reduce((acc, cur) => acc + cur.quantity, 0);
-  const totalGrossRevenueKES = allProductionLogs.reduce((acc, cur) => acc + cur.revenueKES, 0);
-
-  // Farmers and Proposals
-  const filteredProposals = proposals.filter(p => {
-    if (proposalFilter === 'ALL') return true;
-    return p.sector === proposalFilter;
+export default function InvestorDashboard(props: Props) {
+  const [view, setView] = useState<'overview' | 'farmers' | 'brief'>('overview');
+  const [query, setQuery] = useState('');
+  const [county, setCounty] = useState('');
+  const [sector, setSector] = useState('');
+  const [busy, setBusy] = useState<string | null>(null);
+  const [brief, setBrief] = useState({
+    lookingFor: props.criteria?.lookingFor || 'FARMER_WITH_LAND_NEEDING_CAPITAL' as InvestorCriteria['lookingFor'],
+    budgetKES: props.criteria?.budgetKES || props.currentUser.investmentBudgetKES || 0,
+    preferredSectors: props.criteria?.preferredSectors || props.currentUser.preferredSectors || ['Dairy'],
+    targetCounties: (props.criteria?.targetCounties || [props.currentUser.county]).join(', '),
+    resourcesProvided: props.criteria?.resourcesProvided || '',
+    partnerRequirements: props.criteria?.partnerRequirements || props.currentUser.investmentGoal || '',
+    notes: props.criteria?.notes || ''
   });
 
-  const handleSaveCriteriaSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSaveCriteria({
-      investorId: currentUser.id,
-      investorName: currentUser.name,
-      lookingFor,
-      budgetKES,
-      preferredSectors: selectedSectors,
-      targetCounties,
-      notes: criteriaNotes,
-      status: 'ACTIVE'
+  useEffect(() => {
+    if (!props.criteria) return;
+    setBrief({
+      lookingFor: props.criteria.lookingFor,
+      budgetKES: props.criteria.budgetKES,
+      preferredSectors: props.criteria.preferredSectors,
+      targetCounties: props.criteria.targetCounties.join(', '),
+      resourcesProvided: props.criteria.resourcesProvided || '',
+      partnerRequirements: props.criteria.partnerRequirements || '',
+      notes: props.criteria.notes
     });
-    setCriteriaSuccessMsg('Investment criteria saved and published to the ShambaLoop Matchmaking Engine.');
-    setTimeout(() => setCriteriaSuccessMsg(''), 4000);
+  }, [props.criteria]);
+
+  const collaborations = useMemo(() => props.partnerships.filter(item => item.investorId === props.currentUser.id), [props.partnerships, props.currentUser.id]);
+  const proposals = useMemo(() => props.proposals.filter(item => item.investorId === props.currentUser.id), [props.proposals, props.currentUser.id]);
+  const alerts = useMemo(() => [
+    ...props.farmEvents.filter(event => event.severity === 'HIGH' || event.severity === 'CRITICAL').map(event => ({ id: `event-${event.id}`, type: 'Farm event', text: event.title, at: event.date })),
+    ...props.veterinaryReports.filter(report => report.status !== 'FIT_FOR_PRODUCTION').map(report => ({ id: `report-${report.id}`, type: 'Veterinary update', text: `${report.animalTagId}: ${report.status.replaceAll('_', ' ').toLowerCase()}`, at: report.createdAt })),
+    ...collaborations.flatMap(item => item.healthLogs.filter(log => log.status === 'Sick').map(log => ({ id: `health-${item.id}-${log.id}`, type: 'Animal health concern', text: `${item.animalTagId}: ${log.notes}`, at: log.date })))
+  ].sort((a, b) => b.at.localeCompare(a.at)), [collaborations, props.farmEvents, props.veterinaryReports]);
+  const farmers = useMemo(() => props.farmers.filter(farmer => {
+    const text = `${farmer.name} ${farmer.county} ${(farmer.farmSpecialties || []).join(' ')} ${farmer.listings.map(listing => `${listing.title} ${listing.description}`).join(' ')}`.toLowerCase();
+    return (!query || text.includes(query.toLowerCase())) && (!county || farmer.county.toLowerCase() === county.toLowerCase()) && (!sector || text.includes(sector.toLowerCase()));
+  }), [props.farmers, query, county, sector]);
+  const production = collaborations.flatMap(item => item.productionLogs).slice(0, 5);
+
+  const saveBrief = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setBusy('brief');
+    try {
+      await props.onSaveCriteria({ ...brief, targetCounties: brief.targetCounties.split(',').map(item => item.trim()).filter(Boolean) });
+    } finally { setBusy(null); }
   };
-
-  const toggleSector = (sec: string) => {
-    if (selectedSectors.includes(sec)) {
-      setSelectedSectors(selectedSectors.filter(s => s !== sec));
-    } else {
-      setSelectedSectors([...selectedSectors, sec]);
-    }
+  const changeProposal = async (id: string, status: Extract<FarmerProposal['status'], 'NEGOTIATING' | 'ACCEPTED' | 'REJECTED'>) => {
+    setBusy(id);
+    try { await props.onUpdateProposal(id, status); } finally { setBusy(null); }
   };
+  const toggleSector = (value: string) => setBrief(current => ({ ...current, preferredSectors: current.preferredSectors.includes(value) ? current.preferredSectors.filter(item => item !== value) : [...current.preferredSectors, value] }));
 
-  const handleAcceptProposal = (id: string) => {
-    if (onAcceptProposal) {
-      onAcceptProposal(id);
-    }
-    setAcceptedProposalId(id);
-    setTimeout(() => setAcceptedProposalId(null), 4000);
-  };
-
-  return (
-    <div className="space-y-6" id="investor_primary_dashboard">
-      {/* Top Banner */}
-      <div className="bg-gradient-to-r from-purple-950 via-slate-900 to-indigo-950 rounded-3xl p-6 text-white shadow-sm">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-purple-400/20 text-purple-300 border border-purple-400/30">
-                Capital Partner Console
-              </span>
-              <span className="text-xs text-purple-200">
-                • {currentUser.county} Region
-              </span>
-            </div>
-            <h1 className="text-2xl font-black font-display tracking-tight text-white">
-              {currentUser.name}'s Investment Portfolio
-            </h1>
-            <p className="text-xs text-purple-100/80 max-w-2xl font-sans">
-              Deploy capital into audited smallholder farms, track daily FMS yield reports, monitor gestation/calving and climate alerts, and review certified veterinary audits.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-3 gap-3 shrink-0">
-            <div className="bg-white/10 backdrop-blur-xs rounded-2xl p-3 text-center border border-white/10">
-              <span className="block text-[10px] uppercase font-bold text-purple-200">Total Payouts</span>
-              <strong className="text-lg font-black text-amber-300">KES {totalInvestorEarningsKES.toLocaleString()}</strong>
-            </div>
-            <div className="bg-white/10 backdrop-blur-xs rounded-2xl p-3 text-center border border-white/10">
-              <span className="block text-[10px] uppercase font-bold text-purple-200">Total Yield</span>
-              <strong className="text-lg font-black">{totalVolumeProduced} L</strong>
-            </div>
-            <div className="bg-white/10 backdrop-blur-xs rounded-2xl p-3 text-center border border-white/10">
-              <span className="block text-[10px] uppercase font-bold text-purple-200">Active Herds</span>
-              <strong className="text-lg font-black">{investorPartnerships.length || 1}</strong>
-            </div>
-          </div>
-        </div>
-
-        {/* Tab Selection */}
-        <div className="flex flex-wrap gap-2 mt-6 pt-4 border-t border-white/10">
-          {[
-            { id: 'criteria', label: '1. What I Am Looking For (Criteria)', icon: Briefcase },
-            { id: 'fms_tracking', label: '2. FMS Reports & Yield Payouts', icon: TrendingUp },
-            { id: 'events_radar', label: '3. Farm Events & Birth/Drought Radar', icon: AlertTriangle },
-            { id: 'vet_reports', label: '4. Veterinary Health Audits', icon: Stethoscope },
-            { id: 'proposals', label: '5. Farmer Proposals & Pitches', icon: FileText },
-          ].map(tab => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-                  activeTab === tab.id
-                    ? 'bg-white text-purple-950 shadow-sm'
-                    : 'bg-white/10 hover:bg-white/20 text-white'
-                }`}
-              >
-                <Icon className="w-3.5 h-3.5" />
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
-        </div>
+  return <section id="investor_primary_dashboard" className="space-y-5">
+    <header className="flex flex-col gap-3 border-b border-slate-200 pb-4 dark:border-slate-800 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-wider text-violet-700 dark:text-violet-300">Investor workspace</p>
+        <h1 className="mt-1 text-2xl font-bold text-slate-950 dark:text-white">Projects, opportunities, and decisions</h1>
+        <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">See active projects, review farm records, and decide what needs your attention.</p>
       </div>
+      <nav className="flex flex-wrap gap-2" aria-label="Investor workspace views">
+        {([['overview', 'Overview'], ['farmers', 'Find farmers'], ['brief', 'Investment brief']] as const).map(([id, label]) => <button key={id} type="button" onClick={() => setView(id)} className={`rounded-lg px-3 py-2 text-xs font-semibold ${view === id ? 'bg-violet-700 text-white' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200'}`}>{label}</button>)}
+      </nav>
+    </header>
 
-      {/* TAB 1: WHAT I AM LOOKING FOR (CRITERIA LISTING) */}
-      {activeTab === 'criteria' && (
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-6">
-          <div className="border-b border-slate-100 dark:border-slate-800 pb-4">
-            <h3 className="text-base font-bold font-display uppercase tracking-wide text-slate-900 dark:text-white flex items-center gap-2">
-              <Briefcase className="w-5 h-5 text-purple-600" />
-              Define Your Ideal Agricultural Partner
-            </h3>
-            <p className="text-xs text-slate-500 mt-1 max-w-2xl font-sans">
-              List the partnership model, capital budget, and preferred sectors you are ready to finance. Farmers and district registry admins will use this to match ventures with you.
-            </p>
-          </div>
+    {view === 'overview' && <>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Metric label="Active collaborations" value={collaborations.length} note="Projects you can monitor" />
+        <Metric label="Proposals to review" value={proposals.filter(item => item.status === 'SUBMITTED' || item.status === 'NEGOTIATING').length} note="Submitted directly to you" />
+        <Metric label="Needs attention" value={alerts.length} note="Farm and veterinary records" alert={alerts.length > 0} />
+      </div>
+      <div className="grid gap-5 xl:grid-cols-[1.35fr_.65fr]">
+        <section className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-800"><h2 className="text-sm font-bold text-slate-900 dark:text-white">Active collaborations</h2><span className="text-xs text-slate-500">Authorized project records</span></div>
+          {collaborations.length ? <div className="overflow-x-auto"><table className="w-full min-w-[580px] text-left text-xs"><thead className="bg-slate-50 text-slate-500 dark:bg-slate-800/40"><tr><th className="px-4 py-2">Farm record</th><th className="px-4 py-2">Status</th><th className="px-4 py-2">Latest production</th><th className="px-4 py-2">Your share</th></tr></thead><tbody className="divide-y divide-slate-100 dark:divide-slate-800">{collaborations.map(item => { const latest = item.productionLogs[0]; return <tr key={item.id}><td className="px-4 py-3 font-semibold text-slate-900 dark:text-white">{item.animalTagId}<span className="ml-2 font-normal text-slate-500">{item.breed}</span></td><td className="px-4 py-3"><Status value={item.status} /></td><td className="px-4 py-3">{latest ? `${latest.quantity} ${latest.metric} · ${date(latest.date)}` : 'No production recorded'}</td><td className="px-4 py-3">{latest ? money(latest.investorPayoutKES) : '—'}</td></tr>; })}</tbody></table></div> : <Empty text="No active collaborations yet." action="Find a farmer" onAction={() => setView('farmers')} />}
+        </section>
+        <section className="rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"><div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800"><h2 className="text-sm font-bold text-slate-900 dark:text-white">Requires attention</h2></div>{alerts.length ? <ul className="divide-y divide-slate-100 dark:divide-slate-800">{alerts.slice(0, 5).map(item => <li key={item.id} className="flex gap-3 px-4 py-3"><ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-600"/><div><p className="text-xs font-semibold text-slate-900 dark:text-white">{item.text}</p><p className="mt-0.5 text-[11px] text-slate-500">{item.type} · {date(item.at)}</p></div></li>)}</ul> : <Empty text="No actionable farm or veterinary alerts." />}</section>
+      </div>
+      <div className="grid gap-5 lg:grid-cols-2"><RecordList title="Recent farm reports" icon={<ClipboardList className="h-4 w-4" />} records={production.map(log => ({ id: log.id, title: `${log.quantity} ${log.metric}`, detail: `${money(log.revenueKES)} gross · investor share ${money(log.investorPayoutKES)}`, at: log.date }))} empty="No production reports have been shared." /><RecordList title="Veterinary updates" icon={<Stethoscope className="h-4 w-4" />} records={props.veterinaryReports.slice(0, 5).map(report => ({ id: report.id, title: `${report.animalTagId} · ${report.visitType}`, detail: report.status.replaceAll('_', ' '), at: report.createdAt }))} empty="No veterinary reports have been shared." /></div>
+      <p className="text-xs text-slate-500">Environmental data is unavailable: no live weather or environmental feed is connected. Alerts shown here come from authorized farm and veterinary records.</p>
+      {proposals.length > 0 && <ProposalList proposals={proposals} busy={busy} onChange={changeProposal} />}
+    </>}
 
-          <form onSubmit={handleSaveCriteriaSubmit} className="space-y-6">
-            <div className="space-y-3">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 block">
-                Primary Partnership Structure
-              </label>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {[
-                  {
-                    id: 'FARMER_WITH_LAND_NEEDING_CAPITAL',
-                    title: 'Farmer With Land Needing Capital',
-                    desc: 'Partner who has fertile arable farm and experience, seeking finance for dairy cows, seeds, irrigation, or inputs.'
-                  },
-                  {
-                    id: 'FARM_MANAGER_EXPERTISE',
-                    title: 'Farm Manager Expertise',
-                    desc: 'You own or lease the shamba, seeking an experienced professional farm manager on profit-sharing or salary.'
-                  },
-                  {
-                    id: 'LAND_FOR_LEASE_PROJECT',
-                    title: 'Land for Long-Term Lease Project',
-                    desc: 'You have capital and seek to lease registered shamba for commercial horticulture, cereal, or livestock ventures.'
-                  }
-                ].map(opt => (
-                  <div
-                    key={opt.id}
-                    onClick={() => setLookingFor(opt.id as any)}
-                    className={`p-4 rounded-2xl border cursor-pointer transition flex flex-col justify-between ${
-                      lookingFor === opt.id
-                        ? 'border-purple-600 bg-purple-50/50 dark:bg-purple-950/20 shadow-xs'
-                        : 'border-slate-200 dark:border-slate-800 hover:border-purple-300'
-                    }`}
-                  >
-                    <div>
-                      <div className="flex justify-between items-start">
-                        <strong className="text-xs text-slate-900 dark:text-white">{opt.title}</strong>
-                        {lookingFor === opt.id && <CheckCircle2 className="w-4 h-4 text-purple-600 shrink-0" />}
-                      </div>
-                      <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">{opt.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+    {view === 'farmers' && <section className="space-y-4">
+      <div className="flex flex-col gap-3 sm:flex-row"><label className="flex flex-1 items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-900"><Search className="h-4 w-4 text-slate-400"/><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search farmer, county, activity, or listing" className="w-full bg-transparent text-sm outline-none" /></label><input value={county} onChange={event => setCounty(event.target.value)} placeholder="County" className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"/><select value={sector} onChange={event => setSector(event.target.value)} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"><option value="">All activities</option>{sectors.map(item => <option key={item}>{item}</option>)}</select></div>
+      <p className="text-xs text-slate-500">Showing public farmer profiles and approved listings. Private farm records are available only after a collaboration is established.</p>
+      {farmers.length ? <div className="grid gap-3 lg:grid-cols-2">{farmers.map(farmer => <article key={farmer.id} className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900"><div className="flex items-start justify-between gap-3"><div><h2 className="text-sm font-bold text-slate-900 dark:text-white">{farmer.name}</h2><p className="text-xs text-slate-500">{farmer.county}{farmer.verified ? ' · Verified profile' : ''}</p></div><UsersRound className="h-5 w-5 text-violet-600"/></div><p className="mt-3 text-xs text-slate-600 dark:text-slate-300">{farmer.farmSpecialties?.length ? farmer.farmSpecialties.join(' · ') : 'Farm details have not been added.'}</p><div className="mt-3 border-t border-slate-100 pt-3 text-xs dark:border-slate-800"><strong className="text-slate-800 dark:text-slate-100">Approved listings</strong>{farmer.listings.length ? <ul className="mt-1 space-y-1 text-slate-600 dark:text-slate-300">{farmer.listings.slice(0, 2).map(listing => <li key={listing.id}>{listing.title} · {money(listing.priceKES)}</li>)}</ul> : <p className="mt-1 text-slate-500">No approved listings.</p>}</div><p className="mt-3 text-xs text-slate-500">{proposals.some(proposal => proposal.farmerId === farmer.id) ? 'A proposal from this farmer is ready for review.' : 'No proposal has been sent to you.'}</p></article>)}</div> : <Empty text="No farmers match these filters." />}
+    </section>}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                    Allocated Investment Capital (KES)
-                  </label>
-                  <input
-                    type="number"
-                    step="10000"
-                    required
-                    value={budgetKES}
-                    onChange={(e) => setBudgetKES(parseFloat(e.target.value) || 0)}
-                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold"
-                  />
-                  <p className="text-[10px] text-slate-400">Funds escrowed safely via simulated M-Pesa or SACCO Bank Wire.</p>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                    Preferred Agricultural Sectors
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {['Dairy', 'Maize & Cereals', 'Horticulture', 'Poultry', 'Dairy Goats', 'Avocado', 'Macadamia'].map(sec => (
-                      <button
-                        type="button"
-                        key={sec}
-                        onClick={() => toggleSector(sec)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition ${
-                          selectedSectors.includes(sec)
-                            ? 'bg-purple-600 text-white'
-                            : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
-                        }`}
-                      >
-                        {selectedSectors.includes(sec) ? `✓ ${sec}` : `+ ${sec}`}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                    Investment Criteria Notes & Conditions
-                  </label>
-                  <textarea
-                    rows={4}
-                    value={criteriaNotes}
-                    onChange={(e) => setCriteriaNotes(e.target.value)}
-                    placeholder="e.g. Must have verified title deeds, perimeter electric fencing, and willing to work with ShambaLoop certified vets."
-                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs leading-relaxed"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full bg-purple-700 hover:bg-purple-800 text-white font-bold py-3 rounded-xl text-xs uppercase tracking-wider transition cursor-pointer"
-                >
-                  Publish & Broadcast Criteria to Farmers
-                </button>
-
-                {criteriaSuccessMsg && (
-                  <p className="p-2.5 bg-emerald-50 text-emerald-800 rounded-lg text-xs font-semibold border border-emerald-200">
-                    {criteriaSuccessMsg}
-                  </p>
-                )}
-              </div>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* TAB 2: FMS REPORTS & YIELD PAYOUTS */}
-      {activeTab === 'fms_tracking' && (
-        <div className="space-y-6">
-          {/* Top KPI Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
-              <div className="flex items-center justify-between text-slate-500 text-xs font-bold uppercase">
-                <span>Total Investor Earnings</span>
-                <DollarSign className="w-4 h-4 text-purple-600" />
-              </div>
-              <p className="text-2xl font-black text-purple-600 dark:text-purple-400 mt-2">
-                KES {totalInvestorEarningsKES.toLocaleString()}
-              </p>
-              <p className="text-[10px] text-slate-500 mt-1">40% automated revenue partition</p>
-            </div>
-
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
-              <div className="flex items-center justify-between text-slate-500 text-xs font-bold uppercase">
-                <span>Partner Farmer Output</span>
-                <TrendingUp className="w-4 h-4 text-emerald-600" />
-              </div>
-              <p className="text-2xl font-black text-slate-900 dark:text-white mt-2">
-                {totalVolumeProduced} <span className="text-xs font-normal text-slate-500">Liters</span>
-              </p>
-              <p className="text-[10px] text-emerald-600 font-bold mt-1">↑ Logged through Farmer FMS</p>
-            </div>
-
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
-              <div className="flex items-center justify-between text-slate-500 text-xs font-bold uppercase">
-                <span>Gross Market Value</span>
-                <Award className="w-4 h-4 text-amber-500" />
-              </div>
-              <p className="text-2xl font-black text-slate-900 dark:text-white mt-2">
-                KES {totalGrossRevenueKES.toLocaleString()}
-              </p>
-              <p className="text-[10px] text-slate-500 mt-1">Fixed Kenya Dairy Board Index</p>
-            </div>
-
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
-              <div className="flex items-center justify-between text-slate-500 text-xs font-bold uppercase">
-                <span>Active Agreements</span>
-                <ShieldCheck className="w-4 h-4 text-emerald-500" />
-              </div>
-              <p className="text-2xl font-black text-slate-900 dark:text-white mt-2">
-                {investorPartnerships.length || 1} <span className="text-xs font-normal text-slate-500">Farms</span>
-              </p>
-              <p className="text-[10px] text-slate-500 mt-1">Bound in M-Pesa Escrow Contracts</p>
-            </div>
-          </div>
-
-          {/* Performance Chart */}
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-              <div>
-                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
-                  Farm Management System (FMS) Yield & Payout Stream
-                </h3>
-                <p className="text-[11px] text-slate-500 mt-0.5">
-                  Synchronized live from the farmer's daily production console.
-                </p>
-              </div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-100 text-purple-800">
-                Verified Ledger
-              </span>
-            </div>
-
-            <div className="h-64 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={allProductionLogs}>
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                  <XAxis dataKey="date" tick={{ fontSize: 10 }} />
-                  <YAxis tick={{ fontSize: 10 }} />
-                  <Tooltip />
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Bar dataKey="investorPayoutKES" name="Investor Payout (KES)" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="farmerPayoutKES" name="Farmer Payout (KES)" fill="#10b981" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-
-            {/* Table of production logs */}
-            <div className="overflow-x-auto pt-2 border-t border-slate-100 dark:border-slate-800">
-              <table className="w-full text-left text-xs">
-                <thead>
-                  <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 font-bold uppercase text-[10px]">
-                    <th className="pb-2">Date</th>
-                    <th className="pb-2">Yield Quantity</th>
-                    <th className="pb-2">Market Gross</th>
-                    <th className="pb-2">Investor Payout (40%)</th>
-                    <th className="pb-2">Farmer Payout (60%)</th>
-                    <th className="pb-2 text-right">Escrow Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
-                  {allProductionLogs.map(log => (
-                    <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30">
-                      <td className="py-2.5 font-mono text-slate-700 dark:text-slate-300">{log.date}</td>
-                      <td className="py-2.5 font-bold text-slate-900 dark:text-white">{log.quantity} {log.metric}</td>
-                      <td className="py-2.5 text-slate-600 dark:text-slate-300">KES {log.revenueKES.toLocaleString()}</td>
-                      <td className="py-2.5 font-bold text-purple-600 dark:text-purple-400">KES {log.investorPayoutKES.toLocaleString()}</td>
-                      <td className="py-2.5 font-semibold text-emerald-600 dark:text-emerald-400">KES {log.farmerPayoutKES.toLocaleString()}</td>
-                      <td className="py-2.5 text-right">
-                        <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-emerald-100 text-emerald-800">
-                          Disbursed OK
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* TAB 3: KEY FARM EVENTS & BIRTH / DROUGHT RADAR */}
-      {activeTab === 'events_radar' && (
-        <div className="space-y-6">
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-              <div>
-                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-amber-500" />
-                  Key Life Events & Climate Risk Radar
-                </h3>
-                <p className="text-[11px] text-slate-500 mt-0.5">
-                  Proactive notifications when animals are near calving/parturition, drought alerts hit, or yield risks emerge.
-                </p>
-              </div>
-              <span className="text-[10px] font-bold text-purple-600 bg-purple-50 px-2 py-0.5 rounded">
-                Real-Time Feeds
-              </span>
-            </div>
-
-            {farmEvents.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {farmEvents.map(evt => (
-                  <div
-                    key={evt.id}
-                    className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 space-y-3"
-                  >
-                    <div className="flex justify-between items-start">
-                      <div className="flex items-center gap-2">
-                        <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${
-                          evt.severity === 'CRITICAL' ? 'bg-rose-100 text-rose-800' :
-                          evt.severity === 'HIGH' ? 'bg-amber-100 text-amber-800' :
-                          'bg-emerald-100 text-emerald-800'
-                        }`}>
-                          {evt.severity}
-                        </span>
-                        <strong className="text-xs text-slate-900 dark:text-white">{evt.title}</strong>
-                      </div>
-                      <span className="text-[10px] text-slate-400 font-mono">{evt.date}</span>
-                    </div>
-
-                    <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                      {evt.description}
-                    </p>
-
-                    <div className="space-y-1 text-xs">
-                      {evt.actionTaken && (
-                        <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300">
-                          <strong>Farmer Action:</strong> {evt.actionTaken}
-                        </div>
-                      )}
-                      {evt.impactOnProduce && (
-                        <div className="p-2 rounded-lg bg-purple-50 dark:bg-purple-950/40 text-purple-800 dark:text-purple-300">
-                          <strong>Produce Impact:</strong> {evt.impactOnProduce}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex justify-between text-[10px] text-slate-400 pt-2 border-t border-slate-200/60 dark:border-slate-800">
-                      <span>Reported By: {evt.reportedBy}</span>
-                      <span>Farm: {evt.farmerName}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="p-8 text-center text-slate-400 border border-dashed rounded-xl space-y-1">
-                <p className="text-xs font-bold text-slate-600 dark:text-slate-300">No critical events or climate hazards recorded</p>
-                <p className="text-[11px]">Your funded farms have zero pending pest alerts or drought emergencies.</p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* TAB 4: VETERINARY HEALTH AUDITS */}
-      {activeTab === 'vet_reports' && (
-        <div className="space-y-6">
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-              <div>
-                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
-                  <Stethoscope className="w-4 h-4 text-purple-600" />
-                  Certified Veterinary Health Audits ({veterinaryReports.length})
-                </h3>
-                <p className="text-[11px] text-slate-500 mt-0.5">
-                  Official clinical visits and life-event evaluations submitted by certified veterinarians.
-                </p>
-              </div>
-              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
-                KVB Accredited
-              </span>
-            </div>
-
-            {veterinaryReports.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {veterinaryReports.map(rep => (
-                  <article
-                    key={rep.id}
-                    className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 space-y-3"
-                  >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <strong className="text-xs text-slate-900 dark:text-white">{rep.animalTagId} • {rep.visitType}</strong>
-                        <p className="text-[10px] text-slate-500 font-mono mt-0.5">
-                          Officer: {rep.veterinarianName} • {new Date(rep.createdAt).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${
-                        rep.status === 'FIT_FOR_PRODUCTION' ? 'bg-emerald-100 text-emerald-800' :
-                        rep.status === 'TREATMENT_REQUIRED' ? 'bg-amber-100 text-amber-800' :
-                        'bg-rose-100 text-rose-800'
-                      }`}>
-                        {rep.status.replaceAll('_', ' ')}
-                      </span>
-                    </div>
-
-                    <div className="p-3 bg-white dark:bg-slate-900 rounded-xl space-y-1.5 text-xs border border-slate-100 dark:border-slate-800">
-                      <p className="text-slate-700 dark:text-slate-300">
-                        <strong className="text-slate-900 dark:text-white">Findings:</strong> {rep.findings}
-                      </p>
-                      <p className="text-slate-700 dark:text-slate-300">
-                        <strong className="text-slate-900 dark:text-white">Recommendations:</strong> {rep.recommendations}
-                      </p>
-                    </div>
-
-                    <div className="flex justify-between text-[10px] text-slate-400">
-                      <span>Animal ID: {rep.animalTagId}</span>
-                      <span className="text-emerald-600 font-bold">✓ Fitness Certified</span>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            ) : (
-              <div className="p-8 text-center text-slate-400 border border-dashed rounded-xl">
-                <p className="text-xs font-bold text-slate-700 dark:text-slate-200">No veterinary reports available yet</p>
-                <p className="text-[11px]">When certified veterinarians conduct visits on your funded herds, reports will stream here directly.</p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* TAB 5: FARMER PROPOSALS & PITCHES */}
-      {activeTab === 'proposals' && (
-        <div className="space-y-6">
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
-              <div>
-                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-purple-600" />
-                  Incoming Farmer Proposals ({filteredProposals.length})
-                </h3>
-                <p className="text-[11px] text-slate-500 mt-0.5">
-                  Proposals submitted by experienced farmers seeking partnership investment.
-                </p>
-              </div>
-
-              {/* Sector Filter */}
-              <div className="flex items-center gap-2 text-xs">
-                <span className="text-slate-400 font-bold text-[10px] uppercase">Sector:</span>
-                {['ALL', 'Dairy', 'Crops'].map(f => (
-                  <button
-                    key={f}
-                    onClick={() => setProposalFilter(f as any)}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-bold cursor-pointer transition ${
-                      proposalFilter === f
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
-                    }`}
-                  >
-                    {f}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {filteredProposals.length > 0 ? (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {filteredProposals.map(prop => (
-                  <div
-                    key={prop.id}
-                    className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs space-y-3 flex flex-col justify-between"
-                  >
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <strong className="text-sm text-slate-900 dark:text-white block">{prop.title}</strong>
-                          <p className="text-[11px] text-slate-500">
-                            By Farmer: {prop.farmerName} ({prop.farmerPhone}) • Sector: {prop.sector}
-                          </p>
-                        </div>
-                        <span className="text-xs font-black text-purple-600 bg-purple-50 px-2.5 py-1 rounded-xl">
-                          KES {prop.capitalRequestedKES.toLocaleString()}
-                        </span>
-                      </div>
-
-                      <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                        {prop.farmDescription}
-                      </p>
-
-                      <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl space-y-1.5 text-xs font-sans">
-                        <p>
-                          <strong className="text-slate-900 dark:text-white">Farmer Contribution:</strong> {prop.farmerContribution}
-                        </p>
-                        <p>
-                          <strong className="text-slate-900 dark:text-white">Equity / Revenue Split:</strong>{' '}
-                          <span className="text-emerald-600 font-bold">{prop.farmerSharePercent}% Farmer</span> /{' '}
-                          <span className="text-purple-600 font-bold">{prop.investorSharePercent}% Investor</span>
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="pt-2 flex items-center gap-2">
-                      <button
-                        onClick={() => handleAcceptProposal(prop.id)}
-                        className="flex-1 bg-emerald-650 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs uppercase tracking-wider transition cursor-pointer"
-                      >
-                        {acceptedProposalId === prop.id ? '✓ Partnership Initiated!' : 'Accept & Fund via Escrow'}
-                      </button>
-                      <a
-                        href={`tel:${prop.farmerPhone}`}
-                        className="px-3 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold"
-                      >
-                        Call Farmer
-                      </a>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="p-8 text-center text-slate-400 border border-dashed rounded-xl">
-                <p className="text-xs font-bold text-slate-700 dark:text-slate-200">No proposals matching this filter</p>
-                <p className="text-[11px]">Farmers draft proposals according to your published criteria.</p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
+    {view === 'brief' && <section className="grid gap-5 xl:grid-cols-[.9fr_1.1fr]"><div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900"><BriefcaseBusiness className="h-5 w-5 text-violet-700"/><h2 className="mt-3 text-sm font-bold text-slate-900 dark:text-white">Your investment opportunity</h2><p className="mt-1 text-xs leading-5 text-slate-600 dark:text-slate-300">Describe the capital or resources you provide and the partner you need. Farmers can discover these public requirements; private records are not exposed.</p><div className="mt-5 space-y-3 text-xs"><p><strong>Capital:</strong> {brief.budgetKES ? money(brief.budgetKES) : 'Not set'}</p><p><strong>Focus:</strong> {brief.preferredSectors.join(', ') || 'Not set'}</p><p><strong>Counties:</strong> {brief.targetCounties || 'Not set'}</p></div></div><form onSubmit={saveBrief} className="space-y-4 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900"><Field label="Partnership type"><select value={brief.lookingFor} onChange={event => setBrief(current => ({ ...current, lookingFor: event.target.value as InvestorCriteria['lookingFor'] }))}>{models.map(model => <option key={model.value} value={model.value}>{model.label}</option>)}</select></Field><Field label="Capital available (KES)"><input required min="1" max="100000000" type="number" value={brief.budgetKES || ''} onChange={event => setBrief(current => ({ ...current, budgetKES: Number(event.target.value) }))}/></Field><Field label="What I provide"><textarea required maxLength={1000} value={brief.resourcesProvided} onChange={event => setBrief(current => ({ ...current, resourcesProvided: event.target.value }))} placeholder="Capital, equipment, market access, land, or other resources" /></Field><Field label="What I need from a partner"><textarea required maxLength={1000} value={brief.partnerRequirements} onChange={event => setBrief(current => ({ ...current, partnerRequirements: event.target.value }))} placeholder="Experience, land, activity, management expertise, and partnership terms" /></Field><div><p className="mb-2 text-xs font-semibold text-slate-700 dark:text-slate-200">Focus areas</p><div className="flex flex-wrap gap-2">{sectors.map(item => <button key={item} type="button" onClick={() => toggleSector(item)} className={`rounded-full px-3 py-1.5 text-xs ${brief.preferredSectors.includes(item) ? 'bg-violet-700 text-white' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200'}`}>{item}</button>)}</div></div><Field label="Target counties (separate with commas)"><input required value={brief.targetCounties} onChange={event => setBrief(current => ({ ...current, targetCounties: event.target.value }))}/></Field><Field label="Additional notes"><textarea required maxLength={1500} value={brief.notes} onChange={event => setBrief(current => ({ ...current, notes: event.target.value }))} placeholder="Any other practical requirements" /></Field><button disabled={busy === 'brief'} className="rounded-lg bg-violet-700 px-4 py-2 text-xs font-semibold text-white disabled:opacity-60">{busy === 'brief' ? 'Saving...' : 'Save investment brief'}</button></form></section>}
+  </section>;
 }
+
+function Metric({ label, value, note, alert = false }: { label: string; value: number; note: string; alert?: boolean }) { return <div className="border-l-4 border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900"><p className="text-xs font-medium text-slate-500">{label}</p><p className={`mt-1 text-2xl font-bold ${alert ? 'text-amber-700 dark:text-amber-400' : 'text-slate-950 dark:text-white'}`}>{value}</p><p className="mt-1 text-[11px] text-slate-500">{note}</p></div>; }
+function Status({ value }: { value: string }) { const tone = value.includes('REJECTED') || value.includes('NOT_FIT') ? 'bg-rose-100 text-rose-800' : value.includes('ACTIVE') || value.includes('ACCEPTED') || value.includes('FIT') ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'; return <span className={`rounded-full px-2 py-1 text-[10px] font-bold uppercase ${tone}`}>{value.replaceAll('_', ' ')}</span>; }
+function Empty({ text, action, onAction }: { text: string; action?: string; onAction?: () => void }) { return <div className="px-4 py-7 text-center text-xs text-slate-500"><p>{text}</p>{action && onAction && <button type="button" onClick={onAction} className="mt-3 rounded-lg bg-violet-700 px-3 py-2 font-semibold text-white">{action}</button>}</div>; }
+function Field({ label, children }: { label: string; children: React.ReactNode }) { return <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200"><span className="mb-1.5 block">{label}</span>{React.isValidElement(children) ? React.cloneElement(children as React.ReactElement<{ className?: string }>, { className: 'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-normal text-slate-900 outline-none focus:border-violet-600 dark:border-slate-700 dark:bg-slate-950 dark:text-white' }) : children}</label>; }
+function RecordList({ title, icon, records, empty }: { title: string; icon: React.ReactNode; records: Array<{ id: string; title: string; detail: string; at: string }>; empty: string }) { return <section className="rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"><div className="flex items-center gap-2 border-b border-slate-100 px-4 py-3 text-slate-800 dark:border-slate-800 dark:text-white">{icon}<h2 className="text-sm font-bold">{title}</h2></div>{records.length ? <ul className="divide-y divide-slate-100 dark:divide-slate-800">{records.map(record => <li key={record.id} className="px-4 py-3"><div className="flex justify-between gap-3"><p className="text-xs font-semibold text-slate-900 dark:text-white">{record.title}</p><time className="shrink-0 text-[11px] text-slate-500">{date(record.at)}</time></div><p className="mt-1 text-xs text-slate-600 dark:text-slate-300">{record.detail}</p></li>)}</ul> : <Empty text={empty} />}</section>; }
+function ProposalList({ proposals, busy, onChange }: { proposals: FarmerProposal[]; busy: string | null; onChange: (id: string, status: Extract<FarmerProposal['status'], 'NEGOTIATING' | 'ACCEPTED' | 'REJECTED'>) => Promise<void> }) { return <section className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"><div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-800"><h2 className="text-sm font-bold text-slate-900 dark:text-white">Pending proposals</h2><FileText className="h-4 w-4 text-violet-700" /></div><div className="divide-y divide-slate-100 dark:divide-slate-800">{proposals.slice(0, 5).map(proposal => <article key={proposal.id} className="flex flex-col gap-3 px-4 py-3 md:flex-row md:items-center md:justify-between"><div><p className="text-sm font-semibold text-slate-900 dark:text-white">{proposal.title}</p><p className="mt-1 text-xs text-slate-500">{proposal.farmerName} · {proposal.sector} · {money(proposal.capitalRequestedKES)} requested</p><p className="mt-1 text-xs text-slate-600 dark:text-slate-300">{proposal.farmerContribution}</p></div><div className="flex items-center gap-2"><Status value={proposal.status} />{proposal.status === 'SUBMITTED' && <button disabled={busy === proposal.id} onClick={() => onChange(proposal.id, 'NEGOTIATING')} className="rounded-lg bg-violet-700 px-3 py-2 text-xs font-semibold text-white">Review</button>}{proposal.status === 'NEGOTIATING' && <><button disabled={busy === proposal.id} onClick={() => onChange(proposal.id, 'ACCEPTED')} className="rounded-lg bg-emerald-700 px-3 py-2 text-xs font-semibold text-white">Accept</button><button disabled={busy === proposal.id} onClick={() => onChange(proposal.id, 'REJECTED')} className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700">Decline</button></>}</div></article>)}</div></section>; }
