@@ -8,7 +8,7 @@ import crypto from 'crypto';
 import { 
   UserRole, User, Listing, ListingType, LeaseAgreement, 
   LivestockPartnership, VerificationRequest, MpesaTransaction,
-  HealthLog, ProductionLog, Dispute, TripartiteMatch
+  HealthLog, ProductionLog, Dispute, TripartiteMatch, FarmerProposal, FarmEvent, VeterinaryJob, VeterinaryReport
 } from './src/types.js';
 
 const app = express();
@@ -28,6 +28,10 @@ interface DatabaseSchema {
   refreshTokens: string[];
   disputes?: Dispute[];
   matches?: TripartiteMatch[];
+  proposals?: FarmerProposal[];
+  farmEvents?: FarmEvent[];
+  veterinaryJobs?: VeterinaryJob[];
+  veterinaryReports?: VeterinaryReport[];
 }
 
 const DATA_DIR = path.join(process.cwd(), 'data');
@@ -254,7 +258,11 @@ let db: DatabaseSchema = {
   passwordHashes: {},
   refreshTokens: [],
   disputes: [],
-  matches: []
+  matches: [],
+  proposals: [],
+  farmEvents: [],
+  veterinaryJobs: [],
+  veterinaryReports: []
 };
 
 // Seed initial default accounts and records
@@ -546,6 +554,10 @@ function loadDatabase() {
       db = { ...db, ...loaded };
       db.disputes ||= [];
       db.matches ||= [];
+      db.proposals ||= [];
+      db.farmEvents ||= [];
+      db.veterinaryJobs ||= [];
+      db.veterinaryReports ||= [];
       // Older persisted listings did not have a moderation state. Preserve their
       // visibility while making their administrative state explicit.
       db.listings = db.listings.map(listing => ({
@@ -1419,13 +1431,9 @@ app.post('/api/land/leases', JWTAuthMiddleware, (req: AuthenticatedRequest, res)
   res.status(201).json(newAgreement);
 });
 
-app.get('/api/land/leases', (req, res) => {
-  const { userId } = req.query;
-  if (userId) {
-    const matched = db.agreements.filter(a => a.landownerId === userId || a.farmerId === userId);
-    return res.json(matched);
-  }
-  res.json(db.agreements);
+app.get('/api/land/leases', JWTAuthMiddleware, (req: AuthenticatedRequest, res) => {
+  if (req.user!.role === UserRole.ADMIN) return res.json(db.agreements);
+  res.json(db.agreements.filter(item => item.landownerId === req.user!.id || item.farmerId === req.user!.id));
 });
 
 app.post('/api/land/leases/disburse', JWTAuthMiddleware, requireRole([UserRole.ADMIN]), (req: AuthenticatedRequest, res) => {
@@ -1478,29 +1486,31 @@ app.post('/api/livestock/partnerships', JWTAuthMiddleware, (req: AuthenticatedRe
   res.status(201).json(newPartnership);
 });
 
-app.get('/api/livestock/partnerships', (req, res) => {
-  const { userId } = req.query;
-  if (userId) {
-    const matched = db.partnerships.filter(p => p.investorId === userId || p.farmerId === userId);
-    return res.json(matched);
-  }
-  res.json(db.partnerships);
+app.get('/api/livestock/partnerships', JWTAuthMiddleware, (req: AuthenticatedRequest, res) => {
+  if (req.user!.role === UserRole.ADMIN) return res.json(db.partnerships);
+  res.json(db.partnerships.filter(item => item.investorId === req.user!.id || item.farmerId === req.user!.id));
 });
 
 // Health Logs updates
-app.post('/api/livestock/health', JWTAuthMiddleware, (req, res) => {
+app.post('/api/livestock/health', JWTAuthMiddleware, (req: AuthenticatedRequest, res) => {
   const { partnershipId, status, notes, recordedBy } = req.body;
   const item = db.partnerships.find(p => p.id === partnershipId);
   if (!item) {
     return res.status(404).json({ error: 'Livestock partnership was not found.' });
+  }
+  if (req.user!.role !== UserRole.ADMIN && item.farmerId !== req.user!.id) {
+    return res.status(403).json({ error: 'Only the farmer responsible for this livestock partnership can add a farm health activity.' });
+  }
+  if (!['Healthy', 'Sick', 'Recovering', 'Vaccinated'].includes(status) || !cleanText(notes, 1000)) {
+    return res.status(400).json({ error: 'A valid health status and activity note are required.' });
   }
 
   const log: HealthLog = {
     id: `h_log_${Date.now()}`,
     date: new Date().toISOString().split('T')[0],
     status,
-    notes,
-    recordedBy: recordedBy || 'Visiting Country Vet Officer'
+    notes: cleanText(notes, 1000)!,
+    recordedBy: req.user!.name
   };
 
   item.healthLogs.unshift(log);
@@ -1510,15 +1520,22 @@ app.post('/api/livestock/health', JWTAuthMiddleware, (req, res) => {
 });
 
 // Production Logs Updates (Real math formula implementation)
-app.post('/api/livestock/production', JWTAuthMiddleware, (req, res) => {
+app.post('/api/livestock/production', JWTAuthMiddleware, (req: AuthenticatedRequest, res) => {
   const { partnershipId, quantity, metric, pricePerUnit } = req.body;
   const item = db.partnerships.find(p => p.id === partnershipId);
   if (!item) {
     return res.status(404).json({ error: 'Livestock record was not found.' });
   }
+  if (req.user!.role !== UserRole.ADMIN && item.farmerId !== req.user!.id) {
+    return res.status(403).json({ error: 'Only the farmer responsible for this livestock partnership can add production records.' });
+  }
 
   const volume = Number(quantity);
-  const baselineCost = Number(pricePerUnit || 60); // 60 KES base index
+  const normalizedMetric = cleanText(metric, 80);
+  if (!Number.isFinite(volume) || volume <= 0 || volume > 100000 || !normalizedMetric) {
+    return res.status(400).json({ error: 'A valid production metric and quantity are required.' });
+  }
+  const baselineCost = 60; // Server-side baseline avoids client-controlled payout calculations.
   const grossInvoiced = volume * baselineCost;
   const investorShare = Math.round(grossInvoiced * (item.splitPercentInvestor / 100));
   const farmerShare = grossInvoiced - investorShare;
@@ -1526,7 +1543,7 @@ app.post('/api/livestock/production', JWTAuthMiddleware, (req, res) => {
   const log: ProductionLog = {
     id: `p_log_${Date.now()}`,
     date: new Date().toISOString().split('T')[0],
-    metric: metric || 'Milk Liters',
+    metric: normalizedMetric,
     quantity: volume,
     revenueKES: grossInvoiced,
     investorPayoutKES: investorShare,
@@ -1537,6 +1554,128 @@ app.post('/api/livestock/production', JWTAuthMiddleware, (req, res) => {
   saveDatabase();
   syncRefs();
   res.json(item);
+});
+
+// 5b. Farmer workspace. Every record is derived from the authenticated farmer,
+// never from submitted ownership IDs.
+const farmerOnly = requireRole([UserRole.FARMER]);
+const farmerPartnership = (farmerId: string, partnershipId: string) => db.partnerships.find(item => item.id === partnershipId && item.farmerId === farmerId);
+
+app.get('/api/farmer/investors', JWTAuthMiddleware, farmerOnly, (req, res) => {
+  const query = typeof req.query.q === 'string' ? req.query.q.trim().toLowerCase() : '';
+  const county = typeof req.query.county === 'string' ? req.query.county.trim().toLowerCase() : '';
+  const sector = typeof req.query.sector === 'string' ? req.query.sector.trim().toLowerCase() : '';
+  const investors = db.users.filter(user => user.role === UserRole.INVESTOR).filter(user => {
+    const searchable = `${user.name} ${user.county} ${(user.preferredSectors || []).join(' ')} ${user.investmentGoal || ''}`.toLowerCase();
+    return (!query || searchable.includes(query)) && (!county || user.county.toLowerCase() === county) && (!sector || (user.preferredSectors || []).some(item => item.toLowerCase().includes(sector)));
+  }).map(safeUser);
+  res.json(investors);
+});
+
+app.get('/api/farmer/veterinarians', JWTAuthMiddleware, farmerOnly, (req, res) => {
+  res.json(db.users.filter(user => user.role === UserRole.VETERINARIAN && user.verified).map(safeUser));
+});
+
+app.get('/api/farmer/proposals', JWTAuthMiddleware, farmerOnly, (req: AuthenticatedRequest, res) => {
+  res.json((db.proposals || []).filter(proposal => proposal.farmerId === req.user!.id));
+});
+
+app.post('/api/farmer/proposals', JWTAuthMiddleware, farmerOnly, (req: AuthenticatedRequest, res) => {
+  const { investorId, title, sector, farmDescription, capitalRequestedKES, farmerContribution, investorSharePercent } = req.body;
+  const normalizedTitle = cleanText(title, 160);
+  const normalizedDescription = cleanText(farmDescription, 2000);
+  const normalizedContribution = cleanText(farmerContribution, 1000);
+  const capital = Number(capitalRequestedKES);
+  const investorShare = Number(investorSharePercent);
+  const permittedSectors: FarmerProposal['sector'][] = ['Dairy', 'Crops', 'Poultry', 'Horticulture', 'Goats', 'Mixed'];
+  const investor = investorId === undefined || investorId === '' ? undefined : db.users.find(user => user.id === investorId && user.role === UserRole.INVESTOR);
+  if (!normalizedTitle || !normalizedDescription || !normalizedContribution || !permittedSectors.includes(sector) || !Number.isFinite(capital) || capital <= 0 || capital > 100000000 || !Number.isFinite(investorShare) || investorShare < 1 || investorShare > 99 || (investorId && !investor)) {
+    return res.status(400).json({ error: 'Provide a title, farm summary, contribution, valid sector, capital amount, and partnership split.' });
+  }
+  const proposal: FarmerProposal = {
+    id: `proposal_${Date.now()}`,
+    farmerId: req.user!.id,
+    farmerName: req.user!.name,
+    farmerPhone: req.user!.phone,
+    investorId: investor?.id,
+    investorName: investor?.name,
+    title: normalizedTitle,
+    sector,
+    farmDescription: normalizedDescription,
+    capitalRequestedKES: capital,
+    farmerContribution: normalizedContribution,
+    investorSharePercent: investorShare,
+    farmerSharePercent: 100 - investorShare,
+    status: 'SUBMITTED',
+    createdAt: new Date().toISOString()
+  };
+  db.proposals ||= [];
+  db.proposals.unshift(proposal);
+  saveDatabase();
+  writeAuditLog(req.user!.id, 'farmer_proposal_created', `proposal:${proposal.id}`, null, { investorId: proposal.investorId, sector: proposal.sector }, req.ip || '127.0.0.1');
+  res.status(201).json(proposal);
+});
+
+app.put('/api/farmer/profile', JWTAuthMiddleware, farmerOnly, (req: AuthenticatedRequest, res) => {
+  const { farmSpecialties, seekingLandAcreage } = req.body;
+  if (!Array.isArray(farmSpecialties) || farmSpecialties.length < 1 || farmSpecialties.length > 10 || !farmSpecialties.every(item => Boolean(cleanText(item, 80)))) {
+    return res.status(400).json({ error: 'Add between one and ten short descriptions of what your farm offers.' });
+  }
+  const acreage = Number(seekingLandAcreage);
+  if (!Number.isFinite(acreage) || acreage < 0 || acreage > 100000) return res.status(400).json({ error: 'Enter a valid acreage requirement.' });
+  req.user!.farmSpecialties = farmSpecialties.map(item => cleanText(item, 80)!);
+  req.user!.seekingLandAcreage = acreage;
+  saveDatabase();
+  writeAuditLog(req.user!.id, 'farmer_profile_updated', `user:${req.user!.id}`, null, { specialties: req.user!.farmSpecialties.length }, req.ip || '127.0.0.1');
+  res.json({ success: true, user: safeUser(req.user!) });
+});
+
+app.get('/api/farmer/events', JWTAuthMiddleware, farmerOnly, (req: AuthenticatedRequest, res) => {
+  res.json((db.farmEvents || []).filter(event => event.farmerId === req.user!.id));
+});
+
+app.post('/api/farmer/events', JWTAuthMiddleware, farmerOnly, (req: AuthenticatedRequest, res) => {
+  const { farmId, eventType, title, description, severity, actionTaken, impactOnProduce } = req.body;
+  const validEventTypes: FarmEvent['eventType'][] = ['CALVING_DUE', 'DROUGHT_ALERT', 'PEST_ALERT', 'VACCINATION_DUE', 'HARVEST_WINDOW', 'DISEASE_OUTBREAK'];
+  const validSeverities: FarmEvent['severity'][] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
+  const normalizedTitle = cleanText(title, 160);
+  const normalizedDescription = cleanText(description, 2000);
+  if (typeof farmId !== 'string' || (!farmerPartnership(req.user!.id, farmId) && farmId !== 'farm_primary') || !validEventTypes.includes(eventType) || !validSeverities.includes(severity) || !normalizedTitle || !normalizedDescription) {
+    return res.status(400).json({ error: 'Choose one of your farm records and provide a valid event.' });
+  }
+  const event: FarmEvent = { id: `event_${Date.now()}`, farmId, farmerId: req.user!.id, farmerName: req.user!.name, eventType, title: normalizedTitle, description: normalizedDescription, severity, date: new Date().toISOString(), actionTaken: actionTaken === undefined ? undefined : cleanText(actionTaken, 1000) || undefined, impactOnProduce: impactOnProduce === undefined ? undefined : cleanText(impactOnProduce, 1000) || undefined, reportedBy: req.user!.name };
+  db.farmEvents ||= [];
+  db.farmEvents.unshift(event);
+  saveDatabase();
+  writeAuditLog(req.user!.id, 'farm_event_created', `event:${event.id}`, null, { farmId, severity }, req.ip || '127.0.0.1');
+  res.status(201).json(event);
+});
+
+app.get('/api/farmer/veterinary-jobs', JWTAuthMiddleware, farmerOnly, (req: AuthenticatedRequest, res) => {
+  res.json((db.veterinaryJobs || []).filter(job => job.farmerName === req.user!.name && job.farmerPhone === req.user!.phone));
+});
+
+app.post('/api/farmer/veterinary-jobs', JWTAuthMiddleware, farmerOnly, (req: AuthenticatedRequest, res) => {
+  const { farmId, location, animalOrCropType, serviceType, urgency, assignedVetId, notes } = req.body;
+  const validServices: VeterinaryJob['serviceType'][] = ['CLINICAL_CHECK', 'VACCINATION', 'PREGNANCY_SCAN', 'EMERGENCY_SURGERY', 'NUTRITIONAL_AUDIT'];
+  const validUrgencies: VeterinaryJob['urgency'][] = ['NORMAL', 'URGENT', 'EMERGENCY'];
+  const vet = assignedVetId ? db.users.find(user => user.id === assignedVetId && user.role === UserRole.VETERINARIAN && user.verified) : undefined;
+  const normalizedLocation = cleanText(location, 200);
+  const normalizedSubject = cleanText(animalOrCropType, 160);
+  if (typeof farmId !== 'string' || (!farmerPartnership(req.user!.id, farmId) && farmId !== 'farm_primary') || !normalizedLocation || !normalizedSubject || !validServices.includes(serviceType) || !validUrgencies.includes(urgency) || (assignedVetId && !vet)) {
+    return res.status(400).json({ error: 'Provide your farm, service, location, subject, urgency, and an eligible veterinarian if selected.' });
+  }
+  const job: VeterinaryJob = { id: `vet_job_${Date.now()}`, farmId, farmerName: req.user!.name, farmerPhone: req.user!.phone, location: normalizedLocation, animalOrCropType: normalizedSubject, serviceType, urgency, status: vet ? 'ASSIGNED' : 'OPEN', assignedVetId: vet?.id, assignedVetName: vet?.name, requestedDate: new Date().toISOString(), notes: notes === undefined ? undefined : cleanText(notes, 1000) || undefined };
+  db.veterinaryJobs ||= [];
+  db.veterinaryJobs.unshift(job);
+  saveDatabase();
+  writeAuditLog(req.user!.id, 'veterinary_job_requested', `vet_job:${job.id}`, null, { farmId, serviceType }, req.ip || '127.0.0.1');
+  res.status(201).json(job);
+});
+
+app.get('/api/veterinary/reports', JWTAuthMiddleware, (req: AuthenticatedRequest, res) => {
+  const reports = (db.veterinaryReports || []).filter(report => req.user!.role === UserRole.ADMIN || report.farmerId === req.user!.id || report.investorId === req.user!.id || report.veterinarianId === req.user!.id);
+  res.json(reports);
 });
 
 // 6. Verification Queue & Approvals

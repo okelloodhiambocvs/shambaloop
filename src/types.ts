@@ -240,6 +240,7 @@ export interface InvestorCriteria {
 export interface FarmEvent {
   id: string;
   farmId: string;
+  farmerId?: string;
   farmerName: string;
   eventType: 'CALVING_DUE' | 'DROUGHT_ALERT' | 'PEST_ALERT' | 'VACCINATION_DUE' | 'HARVEST_WINDOW' | 'DISEASE_OUTBREAK';
   title: string;

@@ -342,4 +342,86 @@ describe('ShambaLoop End-to-End Integration Tests', () => {
       expect(data.verification.history.at(-1)).toMatchObject({ action: 'MORE_INFO', note: 'Please provide a clearer image.' });
     });
   });
+
+  describe('Farmer workspace authorization and validation', () => {
+    let secondFarmerToken = '';
+
+    test('discovers investor profiles without exposing administrative user data', async () => {
+      const response = await fetch(`${BASE_URL}/api/farmer/investors?sector=Dairy`, {
+        headers: { Authorization: `Bearer ${jwtToken}` }
+      });
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(Array.isArray(data)).toBe(true);
+      data.forEach((investor: any) => expect(investor.role).toBe(UserRole.INVESTOR));
+    });
+
+    test('derives proposal ownership from the authenticated farmer', async () => {
+      const response = await fetch(`${BASE_URL}/api/farmer/proposals`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${jwtToken}` },
+        body: JSON.stringify({
+          farmerId: 'user_admin', farmerName: 'Spoofed Admin', investorId: 'user_3', title: 'Dairy fodder expansion', sector: 'Dairy',
+          farmDescription: 'Five acres, reliable water, and two experienced dairy workers.', capitalRequestedKES: 250000,
+          farmerContribution: 'Land, labour, water, and fodder storage.', investorSharePercent: 40
+        })
+      });
+      expect(response.status).toBe(201);
+      const proposal = await response.json();
+      expect(proposal.farmerId).toBe(testUserId);
+      expect(proposal.farmerName).not.toBe('Spoofed Admin');
+    });
+
+    test('validates farmer proposal input', async () => {
+      const response = await fetch(`${BASE_URL}/api/farmer/proposals`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${jwtToken}` },
+        body: JSON.stringify({ title: '', sector: 'Invalid', capitalRequestedKES: -1, investorSharePercent: 120 })
+      });
+      expect(response.status).toBe(400);
+    });
+
+    test('creates farm events and veterinary requests under the authenticated farmer', async () => {
+      const eventResponse = await fetch(`${BASE_URL}/api/farmer/events`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${jwtToken}` },
+        body: JSON.stringify({ farmId: 'farm_primary', eventType: 'PEST_ALERT', title: 'Aphid activity', description: 'Aphids found on the greenhouse tomatoes.', severity: 'HIGH' })
+      });
+      expect(eventResponse.status).toBe(201);
+      expect((await eventResponse.json()).farmerId).toBe(testUserId);
+
+      const jobResponse = await fetch(`${BASE_URL}/api/farmer/veterinary-jobs`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${jwtToken}` },
+        body: JSON.stringify({ farmId: 'farm_primary', location: 'Kakamega farm', animalOrCropType: 'Dairy cattle', serviceType: 'CLINICAL_CHECK', urgency: 'NORMAL', notes: 'Reduced appetite in one animal.' })
+      });
+      expect(jobResponse.status).toBe(201);
+      expect((await jobResponse.json()).farmerPhone).toBe(testUserPhone);
+    });
+
+    test('prevents a second farmer from reading or altering the first farmer’s records', async () => {
+      const phone = `07${Math.floor(10000000 + Math.random() * 90000000)}`;
+      const registration = await fetch(`${BASE_URL}/api/auth/register`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, name: 'Second Farmer', role: UserRole.FARMER, county: 'Nakuru', password: 'SecondFarmerPassword99!' })
+      });
+      expect(registration.status).toBe(201);
+      secondFarmerToken = (await registration.json()).token;
+
+      const [events, jobs] = await Promise.all([
+        fetch(`${BASE_URL}/api/farmer/events`, { headers: { Authorization: `Bearer ${secondFarmerToken}` } }),
+        fetch(`${BASE_URL}/api/farmer/veterinary-jobs`, { headers: { Authorization: `Bearer ${secondFarmerToken}` } })
+      ]);
+      expect(await events.json()).toEqual([]);
+      expect(await jobs.json()).toEqual([]);
+
+      const production = await fetch(`${BASE_URL}/api/livestock/production`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${secondFarmerToken}` },
+        body: JSON.stringify({ partnershipId: 'part_xyz', metric: 'Milk Liters', quantity: 20 })
+      });
+      expect(production.status).toBe(403);
+    });
+
+    test('requires authentication for private veterinary reports', async () => {
+      const response = await fetch(`${BASE_URL}/api/veterinary/reports`);
+      expect(response.status).toBe(401);
+    });
+  });
 });
