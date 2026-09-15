@@ -53,6 +53,7 @@ describe('ShambaLoop End-to-End Integration Tests', () => {
         phone: '0700000001',
         name: 'Weak User',
         role: UserRole.FARMER,
+        county: 'Kakamega',
         password: '123'
       };
 
@@ -171,6 +172,32 @@ describe('ShambaLoop End-to-End Integration Tests', () => {
       const data = await response.json();
       expect(data.user.name).toBe('Senior Test Farmer Kiprop');
       expect(data.user.investmentBudgetKES).toBe(120000);
+    });
+
+    test('normalizes profile text and rejects malformed mutable fields', async () => {
+      const normalized = await fetch(`${BASE_URL}/api/users/profile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwtToken}`
+        },
+        body: JSON.stringify({ name: '  Integration\u0000 Farmer  ', email: ' TESTER@example.test ', county: '  Kakamega  ' })
+      });
+      expect(normalized.status).toBe(200);
+      const profile = await normalized.json();
+      expect(profile.user.name).toBe('Integration Farmer');
+      expect(profile.user.email).toBe('tester@example.test');
+      expect(profile.user.county).toBe('Kakamega');
+
+      const malformed = await fetch(`${BASE_URL}/api/users/profile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwtToken}`
+        },
+        body: JSON.stringify({ investmentBudgetKES: 'not-a-number' })
+      });
+      expect(malformed.status).toBe(400);
     });
 
     test('POST /api/auth/mfa/enroll - Should enroll user in TOTP MFA and generate backup codes', async () => {

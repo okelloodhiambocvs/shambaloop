@@ -639,8 +639,6 @@ const JWTAuthMiddleware = (req: AuthenticatedRequest, res: express.Response, nex
   next();
 };
 
-const RequireAuth = JWTAuthMiddleware;
-
 const requireRole = (allowedRoles: UserRole[]) => {
   return (req: AuthenticatedRequest, res: express.Response, next: express.NextFunction) => {
     if (!req.user) {
@@ -653,8 +651,6 @@ const requireRole = (allowedRoles: UserRole[]) => {
   };
 };
 
-const RequireRole = requireRole;
-
 const safeUser = (user: User) => {
   const { mfaSecret, mfaBackupCodes, deviceTrustExpiresAt, ...publicProfile } = user;
   return publicProfile;
@@ -662,49 +658,50 @@ const safeUser = (user: User) => {
 
 const cleanText = (value: unknown, maxLength: number): string | null => {
   if (typeof value !== 'string') return null;
-  const normalized = value.trim().replace(/[\u0000-\u001F\u007F]/g, '');
+  const normalized = value
+    .normalize('NFKC')
+    .replace(/[\u0000-\u001F\u007F]/g, '')
+    .replace(/[<>]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
   return normalized && normalized.length <= maxLength ? normalized : null;
 };
 
+const normalizeKenyanPhone = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim().replace(/[\s()-]/g, '');
+  return /^(?:\+254|0)[17]\d{8}$/.test(normalized) ? normalized : null;
+};
+
+const normalizeEmail = (value: unknown): string | null => {
+  const normalized = cleanText(value, 254)?.toLowerCase();
+  return normalized && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized) ? normalized : null;
+};
+
+const cleanIdentifier = (value: unknown, maxLength = 128): string | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  return /^[A-Za-z0-9_-]+$/.test(normalized) && normalized.length <= maxLength ? normalized : null;
+};
+
+const cleanCredential = (value: unknown, maxLength = 256): string | null => {
+  if (typeof value !== 'string' || value.length === 0 || value.length > maxLength || /[\u0000-\u001F\u007F]/.test(value)) return null;
+  return value;
+};
+
+const createSessionTokens = (user: User) => ({
+  token: generateSimulatedToken(user),
+  refreshToken: generateRefreshToken(user)
+});
+
+const createSessionPayload = (user: User) => ({
+  user: safeUser(user),
+  ...createSessionTokens(user),
+  passwordResetRequired: Boolean(user.passwordResetRequired)
+});
+
 const verificationDecisionStatuses = new Set(['APPROVED', 'REJECTED', 'MORE_INFO']);
 const listingModerationStatuses = new Set(['APPROVED', 'REJECTED', 'SUSPENDED']);
-
-const RequireOwnership = (resourceType: 'listing' | 'agreement' | 'partnership', paramName = 'id') => {
-  return (req: AuthenticatedRequest, res: express.Response, next: express.NextFunction) => {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Unauthenticated request.' });
-    }
-    if (req.user.role === UserRole.ADMIN) {
-      return next(); // Admins bypass ownership checks
-    }
-    
-    const resourceId = req.params[paramName] || req.body[paramName] || req.query[paramName];
-    if (!resourceId) {
-      return res.status(400).json({ error: 'Resource parameter not identified.' });
-    }
-    
-    if (resourceType === 'listing') {
-      const item = db.listings.find(l => l.id === resourceId);
-      if (!item) return res.status(404).json({ error: 'Listing not found.' });
-      if (item.ownerId !== req.user.id) {
-        return res.status(403).json({ error: 'Access denied: You are not the owner of this listing.' });
-      }
-    } else if (resourceType === 'agreement') {
-      const item = db.agreements.find(a => a.id === resourceId);
-      if (!item) return res.status(404).json({ error: 'Lease agreement not found.' });
-      if (item.landownerId !== req.user.id && item.farmerId !== req.user.id) {
-        return res.status(403).json({ error: 'Access denied: You are not a party to this lease agreement.' });
-      }
-    } else if (resourceType === 'partnership') {
-      const item = db.partnerships.find(p => p.id === resourceId);
-      if (!item) return res.status(404).json({ error: 'Partnership not found.' });
-      if (item.investorId !== req.user.id && item.farmerId !== req.user.id) {
-        return res.status(403).json({ error: 'Access denied: You are not a party to this partnership.' });
-      }
-    }
-    next();
-  };
-};
 
 // Precise, multi-level sliding-window rate limiter
 const createRateLimiter = (limit: number, windowMs: number) => {
@@ -722,6 +719,7 @@ const createRateLimiter = (limit: number, windowMs: number) => {
 };
 
 const authRateLimiter = createRateLimiter(20, 60000);
+const sensitiveAuthRateLimiter = createRateLimiter(5, 15 * 60 * 1000);
 
 // CORS Whitelists
 const CORS_WHITELIST = (process.env.CORS_WHITELIST || 'http://localhost:3000,http://localhost:5173').split(',');
@@ -792,21 +790,18 @@ app.use((req, res, next) => {
 // 1. Auth & Profiles Module
 app.post('/api/auth/register', authRateLimiter, (req, res) => {
   const { phone, name, email, role, county, password } = req.body;
-  if (!phone || !name || !role) {
-    return res.status(400).json({ error: 'Required subscriber fields: phone, name, and role.' });
+  const normalizedPhone = normalizeKenyanPhone(phone);
+  const normalizedName = cleanText(name, 80);
+  const normalizedEmail = email === undefined || email === '' ? undefined : normalizeEmail(email);
+  const normalizedCounty = cleanText(county, 80);
+  const normalizedPassword = cleanCredential(password);
+  if (!normalizedPhone || !normalizedName || !role || !normalizedCounty || !normalizedPassword || (email !== undefined && email !== '' && !normalizedEmail)) {
+    return res.status(400).json({ error: 'Provide a valid name, Kenyan mobile number, county, email when supplied, and password.' });
   }
 
-  // Sanitize fields
-  const normalizedPhone = phone.trim();
-  const normalizedEmail = email ? email.trim() : undefined;
   const selfServiceRoles = [UserRole.LANDOWNER, UserRole.FARMER, UserRole.INVESTOR, UserRole.VETERINARIAN, UserRole.COOPERATIVE];
   if (!selfServiceRoles.includes(role)) {
     return res.status(403).json({ error: 'This role cannot be assigned through self-service registration.' });
-  }
-
-  // Enforce phone limits
-  if (normalizedPhone.length < 9) {
-    return res.status(400).json({ error: 'Please submit a fully qualified mobile phone number.' });
   }
 
   const existing = db.users.find(u => u.phone === normalizedPhone);
@@ -815,86 +810,47 @@ app.post('/api/auth/register', authRateLimiter, (req, res) => {
   }
 
   // Password structural evaluation
-  if (password && !validatePasswordStrength(password)) {
+  if (!validatePasswordStrength(normalizedPassword)) {
     return res.status(400).json({
       error: 'Password does not meet enterprise security complexity rules. It must contain minimum 12 characters, including an uppercase letter, a lowercase letter, a number, and a special character.'
     });
-  }
-
-  let finalPassword = password;
-  let resetRequired = false;
-  if (!finalPassword) {
-    // Generate secure temporary random complex password
-    const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const lowercase = 'abcdefghijklmnopqrstuvwxyz';
-    const numbers = '0123456789';
-    const specials = '!@#$%^&*()_+~`|}{[]:;?><,./-="';
-    const getRandomChar = (str: string) => str.charAt(crypto.randomInt(0, str.length));
-    
-    let passArr = [
-      getRandomChar(uppercase), getRandomChar(uppercase),
-      getRandomChar(lowercase), getRandomChar(lowercase),
-      getRandomChar(numbers), getRandomChar(numbers),
-      getRandomChar(specials), getRandomChar(specials),
-    ];
-    for (let i = 0; i < 8; i++) {
-      passArr.push(getRandomChar(uppercase + lowercase + numbers + specials));
-    }
-    finalPassword = passArr.sort(() => crypto.randomBytes(1)[0] - 128).join('');
-    resetRequired = true;
   }
 
   const newId = `user_${Date.now()}`;
   const newUser: User = {
     id: newId,
     phone: normalizedPhone,
-    name: cleanText(name, 80) || 'Unnamed user',
+    name: normalizedName,
     email: normalizedEmail,
     role: role as UserRole,
     verified: false,
-    county: cleanText(county, 80) || 'Nairobi',
+    county: normalizedCounty,
     createdAt: new Date().toISOString(),
-    passwordResetRequired: resetRequired
+    passwordResetRequired: false
   };
 
-  db.passwordHashes[newId] = bcrypt.hashSync(finalPassword, 10);
+  db.passwordHashes[newId] = bcrypt.hashSync(normalizedPassword, 10);
   db.users.push(newUser);
   saveDatabase();
   syncRefs();
 
-  const token = generateSimulatedToken(newUser);
-  const refreshToken = generateRefreshToken(newUser);
-
   writeAuditLog(newId, 'register_account', `user:${newId}`, null, { name: newUser.name, phone: newUser.phone, role: newUser.role }, req.ip || '127.0.0.1');
-
-  res.status(201).json({
-    user: safeUser(newUser),
-    token,
-    refreshToken,
-    passwordResetRequired: resetRequired
-  });
+  res.status(201).json(createSessionPayload(newUser));
 });
 
 app.post('/api/auth/login', authRateLimiter, (req, res) => {
   const { phone, password } = req.body;
-  if (!phone) {
-    return res.status(400).json({ error: 'Please enter your phone number to proceed.' });
-  }
-
-  const normalized = phone.trim();
+  const normalized = normalizeKenyanPhone(phone);
+  const normalizedPassword = cleanCredential(password);
+  if (!normalized || !normalizedPassword) return res.status(400).json({ error: 'A valid phone number and password are required for sign-in.' });
   const matchedUser = db.users.find(u => u.phone === normalized);
 
   if (!matchedUser) {
     return res.status(404).json({ error: 'No account was found for this phone number. Please register first.' });
   }
 
-  if (!password) {
-    writeAuditLog('anonymous', 'failed_login_missing_password', `user:${matchedUser.id}`, null, null, req.ip || '127.0.0.1');
-    return res.status(400).json({ error: 'A password is required for sign-in.' });
-  }
-
   const verifiedHash = db.passwordHashes[matchedUser.id];
-  if (!verifiedHash || !bcrypt.compareSync(password, verifiedHash)) {
+  if (!verifiedHash || !bcrypt.compareSync(normalizedPassword, verifiedHash)) {
     writeAuditLog('anonymous', 'failed_login_bad_password', `user:${matchedUser.id}`, null, { phone: normalized }, req.ip || '127.0.0.1');
     return res.status(401).json({ error: 'Forbidden credentials. Verification failed.' });
   }
@@ -911,17 +867,8 @@ app.post('/api/auth/login', authRateLimiter, (req, res) => {
     });
   }
 
-  const token = generateSimulatedToken(matchedUser);
-  const refreshToken = generateRefreshToken(matchedUser);
-
   writeAuditLog(matchedUser.id, 'login_success', `user:${matchedUser.id}`, null, { phone: normalized }, req.ip || '127.0.0.1');
-
-  res.status(200).json({
-    user: safeUser(matchedUser),
-    token,
-    refreshToken,
-    passwordResetRequired: matchedUser.passwordResetRequired
-  });
+  res.status(200).json(createSessionPayload(matchedUser));
 });
 
 // Demo sessions are strictly local-development tooling. They use the same JWT
@@ -930,21 +877,19 @@ app.post('/api/auth/login', authRateLimiter, (req, res) => {
 app.post('/api/auth/demo-login', authRateLimiter, (req, res) => {
   if (!DEMO_SESSIONS_ENABLED) return res.status(404).json({ error: 'Demo accounts are not available in production.' });
 
-  const userId = typeof req.body?.userId === 'string' ? req.body.userId : '';
+  const userId = cleanIdentifier(req.body?.userId);
   if (!DEMO_ACCOUNT_IDS.has(userId)) return res.status(400).json({ error: 'Choose one of the available demo accounts.' });
 
   const user = db.users.find(candidate => candidate.id === userId);
   if (!user) return res.status(404).json({ error: 'The requested demo account is not available.' });
 
-  const token = generateSimulatedToken(user);
-  const refreshToken = generateRefreshToken(user);
   writeAuditLog(user.id, 'demo_login_success', `user:${user.id}`, null, { role: user.role }, req.ip || '127.0.0.1');
-  res.status(200).json({ user: safeUser(user), token, refreshToken, passwordResetRequired: user.passwordResetRequired });
+  res.status(200).json(createSessionPayload(user));
 });
 
 // Optional MFA challenges endpoints
-app.post('/api/auth/mfa/enroll', JWTAuthMiddleware, (req: AuthenticatedRequest, res) => {
-  const { mfaType } = req.body;
+app.post('/api/auth/mfa/enroll', JWTAuthMiddleware, sensitiveAuthRateLimiter, (req: AuthenticatedRequest, res) => {
+  const mfaType = cleanText(req.body?.mfaType, 10);
   const user = req.user;
   if (!user) return res.status(401).json({ error: 'Authentication is required.' });
 
@@ -977,25 +922,27 @@ app.post('/api/auth/mfa/enroll', JWTAuthMiddleware, (req: AuthenticatedRequest, 
   });
 });
 
-app.post('/api/auth/mfa/verify', (req, res) => {
+app.post('/api/auth/mfa/verify', sensitiveAuthRateLimiter, (req, res) => {
   const { userId, code } = req.body;
-  if (!userId || !code) {
+  const normalizedUserId = cleanIdentifier(userId);
+  const normalizedCode = cleanCredential(code, 32);
+  if (!normalizedUserId || !normalizedCode || !/^[A-Za-z0-9]+$/.test(normalizedCode)) {
     return res.status(400).json({ error: 'Verification requests require identification maps and passcodes.' });
   }
 
-  const user = db.users.find(u => u.id === userId);
+  const user = db.users.find(u => u.id === normalizedUserId);
   if (!user) return res.status(404).json({ error: 'Subscriber account does not exist.' });
 
   let valid = false;
   if (user.mfaType === 'totp' && user.mfaSecret) {
     const decSecret = decryptField(user.mfaSecret);
-    valid = verifyTOTP(code, decSecret) || verifyOTP(userId, code);
+    valid = verifyTOTP(normalizedCode, decSecret) || verifyOTP(normalizedUserId, normalizedCode);
   } else {
-    valid = verifyOTP(userId, code);
+    valid = verifyOTP(normalizedUserId, normalizedCode);
   }
 
   if (!valid) {
-    writeAuditLog(userId, 'mfa_failure', 'mfa', null, { code }, req.ip || '127.0.0.1');
+    writeAuditLog(normalizedUserId, 'mfa_failure', 'mfa', null, { reason: 'invalid_code' }, req.ip || '127.0.0.1');
     return res.status(400).json({ error: 'MFA checkpoint challenge failed. Security block triggered.' });
   }
 
@@ -1003,33 +950,26 @@ app.post('/api/auth/mfa/verify', (req, res) => {
   user.deviceTrustExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
   saveDatabase();
 
-  const token = generateSimulatedToken(user);
-  const refreshToken = generateRefreshToken(user);
-
-  writeAuditLog(userId, 'mfa_success', 'mfa', null, null, req.ip || '127.0.0.1');
-
-  res.json({
-    success: true,
-    user,
-    token,
-    refreshToken
-  });
+  writeAuditLog(normalizedUserId, 'mfa_success', 'mfa', null, null, req.ip || '127.0.0.1');
+  res.json({ success: true, ...createSessionPayload(user) });
 });
 
-app.post('/api/auth/mfa/recovery', (req, res) => {
+app.post('/api/auth/mfa/recovery', sensitiveAuthRateLimiter, (req, res) => {
   const { userId, backupCode } = req.body;
-  if (!userId || !backupCode) {
+  const normalizedUserId = cleanIdentifier(userId);
+  const normalizedBackupCode = cleanCredential(backupCode, 32);
+  if (!normalizedUserId || !normalizedBackupCode || !/^[A-Za-z0-9]+$/.test(normalizedBackupCode)) {
     return res.status(400).json({ error: 'Recovery checks require subscriber maps and dynamic backups.' });
   }
 
-  const user = db.users.find(u => u.id === userId);
+  const user = db.users.find(u => u.id === normalizedUserId);
   if (!user) return res.status(404).json({ error: 'Subscriber account does not exist.' });
 
   if (!user.mfaBackupCodes || user.mfaBackupCodes.length === 0) {
     return res.status(400).json({ error: 'Backup security checks are unconfigured.' });
   }
 
-  const matchedIndex = user.mfaBackupCodes.findIndex(hash => bcrypt.compareSync(backupCode, hash));
+  const matchedIndex = user.mfaBackupCodes.findIndex(hash => bcrypt.compareSync(normalizedBackupCode, hash));
   if (matchedIndex === -1) {
     return res.status(400).json({ error: 'Invalid backup recovery code provided.' });
   }
@@ -1038,41 +978,34 @@ app.post('/api/auth/mfa/recovery', (req, res) => {
   user.mfaBackupCodes.splice(matchedIndex, 1);
   saveDatabase();
 
-  const token = generateSimulatedToken(user);
-  const refreshToken = generateRefreshToken(user);
-
-  writeAuditLog(userId, 'mfa_recovery_success', 'mfa_backup', null, null, req.ip || '127.0.0.1');
-
-  res.json({
-    success: true,
-    user,
-    token,
-    refreshToken,
-    message: 'Security recovery verified.'
-  });
+  writeAuditLog(normalizedUserId, 'mfa_recovery_success', 'mfa_backup', null, null, req.ip || '127.0.0.1');
+  res.json({ success: true, ...createSessionPayload(user), message: 'Security recovery verified.' });
 });
 
-app.post('/api/auth/password-reset', (req, res) => {
+app.post('/api/auth/password-reset', sensitiveAuthRateLimiter, (req, res) => {
   const { phone, currentPassword, newPassword } = req.body;
-  if (!phone || !currentPassword || !newPassword) {
+  const normalizedPhone = normalizeKenyanPhone(phone);
+  const normalizedCurrentPassword = cleanCredential(currentPassword);
+  const normalizedNewPassword = cleanCredential(newPassword);
+  if (!normalizedPhone || !normalizedCurrentPassword || !normalizedNewPassword) {
     return res.status(400).json({ error: 'Please fulfill all requested phone, current, and new credentials.' });
   }
 
-  const user = db.users.find(u => u.phone === phone.trim());
+  const user = db.users.find(u => u.phone === normalizedPhone);
   if (!user) return res.status(404).json({ error: 'User account could not be found.' });
 
   const currentHash = db.passwordHashes[user.id];
-  if (!currentHash || !bcrypt.compareSync(currentPassword, currentHash)) {
+  if (!currentHash || !bcrypt.compareSync(normalizedCurrentPassword, currentHash)) {
     return res.status(401).json({ error: 'Current password verification failed. Access denied.' });
   }
 
-  if (!validatePasswordStrength(newPassword)) {
+  if (!validatePasswordStrength(normalizedNewPassword)) {
     return res.status(400).json({
       error: 'New password does not meet complexity rules. Minimum 12 characters, with an uppercase letter, a lowercase letter, a number, and a special character.'
     });
   }
 
-  db.passwordHashes[user.id] = bcrypt.hashSync(newPassword, 10);
+  db.passwordHashes[user.id] = bcrypt.hashSync(normalizedNewPassword, 10);
   user.passwordResetRequired = false;
   saveDatabase();
 
@@ -1081,8 +1014,8 @@ app.post('/api/auth/password-reset', (req, res) => {
   res.json({ success: true, message: 'Password reset completed. Authenticate using your updated credentials.' });
 });
 
-app.post('/api/auth/refresh', (req, res) => {
-  const { refreshToken } = req.body;
+app.post('/api/auth/refresh', authRateLimiter, (req, res) => {
+  const refreshToken = cleanCredential(req.body?.refreshToken, 2048);
   if (!refreshToken) {
     return res.status(400).json({ error: 'Refresh token is required.' });
   }
@@ -1094,7 +1027,7 @@ app.post('/api/auth/refresh', (req, res) => {
       const decoded = jwt.verify(refreshToken, REFRESH_SECRET) as any;
       db.refreshTokens = []; // Emergency purge all user sessions for defense in depth
       saveDatabase();
-      writeAuditLog(decoded.id, 'refresh_token_reuse_attack_detected', 'tokens', refreshToken, null, req.ip || '127.0.0.1');
+      writeAuditLog(decoded.id, 'refresh_token_reuse_attack_detected', 'tokens', null, null, req.ip || '127.0.0.1');
     } catch (_) {}
     return res.status(403).json({ error: 'Token revoked or reuse attempt detected. Security policies mandate re-authorization.' });
   }
@@ -1110,19 +1043,15 @@ app.post('/api/auth/refresh', (req, res) => {
     db.refreshTokens = db.refreshTokens.filter(t => t !== incomingHashed);
 
     // Issue rotated tokens
-    const token = generateSimulatedToken(matched);
-    const newRefreshToken = generateRefreshToken(matched);
-
     writeAuditLog(matched.id, 'token_refresh_rotated', 'tokens', null, null, req.ip || '127.0.0.1');
-
-    res.json({ token, refreshToken: newRefreshToken });
+    res.json(createSessionTokens(matched));
   } catch (err) {
     return res.status(403).json({ error: 'Expired or damaged token signature.' });
   }
 });
 
-app.post('/api/auth/logout', (req, res) => {
-  const { refreshToken } = req.body;
+app.post('/api/auth/logout', authRateLimiter, (req, res) => {
+  const refreshToken = cleanCredential(req.body?.refreshToken, 2048);
   if (refreshToken && db.refreshTokens) {
     const hashed = crypto.createHash('sha256').update(refreshToken).digest('hex');
     db.refreshTokens = db.refreshTokens.filter(t => t !== hashed);
@@ -1146,15 +1075,54 @@ app.put('/api/users/profile', JWTAuthMiddleware, (req: AuthenticatedRequest, res
   if (!user) return res.status(401).json({ error: 'Session unauthenticated.' });
 
   const { name, email, county, investmentBudgetKES, preferredSectors, investmentGoal, farmSpecialties, seekingLandAcreage } = req.body;
-  
-  if (name) user.name = name;
-  if (email !== undefined) user.email = email;
-  if (county) user.county = county;
-  if (investmentBudgetKES !== undefined) user.investmentBudgetKES = Number(investmentBudgetKES);
-  if (preferredSectors !== undefined) user.preferredSectors = preferredSectors;
-  if (investmentGoal !== undefined) user.investmentGoal = investmentGoal;
-  if (farmSpecialties !== undefined) user.farmSpecialties = farmSpecialties;
-  if (seekingLandAcreage !== undefined) user.seekingLandAcreage = Number(seekingLandAcreage);
+  const updates: Partial<User> = {};
+
+  if (name !== undefined) {
+    const normalizedName = cleanText(name, 80);
+    if (!normalizedName) return res.status(400).json({ error: 'Name must contain at most 80 printable characters.' });
+    updates.name = normalizedName;
+  }
+  if (email !== undefined) {
+    if (email === '') updates.email = undefined;
+    else {
+      const normalizedEmail = normalizeEmail(email);
+      if (!normalizedEmail) return res.status(400).json({ error: 'Provide a valid email address.' });
+      updates.email = normalizedEmail;
+    }
+  }
+  if (county !== undefined) {
+    const normalizedCounty = cleanText(county, 80);
+    if (!normalizedCounty) return res.status(400).json({ error: 'County must contain at most 80 printable characters.' });
+    updates.county = normalizedCounty;
+  }
+  if (investmentBudgetKES !== undefined) {
+    const budget = Number(investmentBudgetKES);
+    if (!Number.isFinite(budget) || budget < 0 || budget > 100000000) return res.status(400).json({ error: 'Investment budget must be a valid amount.' });
+    updates.investmentBudgetKES = budget;
+  }
+  if (preferredSectors !== undefined) {
+    const sectors = Array.isArray(preferredSectors) ? preferredSectors.map(item => cleanText(item, 80)) : [];
+    if (sectors.length < 1 || sectors.length > 10 || sectors.some(item => !item)) return res.status(400).json({ error: 'Provide between one and ten valid preferred sectors.' });
+    updates.preferredSectors = sectors as string[];
+  }
+  if (investmentGoal !== undefined) {
+    const goal = cleanText(investmentGoal, 1000);
+    if (!goal) return res.status(400).json({ error: 'Investment goal must contain at most 1000 printable characters.' });
+    updates.investmentGoal = goal;
+  }
+  if (farmSpecialties !== undefined) {
+    const specialties = Array.isArray(farmSpecialties) ? farmSpecialties.map(item => cleanText(item, 80)) : [];
+    if (specialties.length < 1 || specialties.length > 10 || specialties.some(item => !item)) return res.status(400).json({ error: 'Provide between one and ten valid farm specialties.' });
+    updates.farmSpecialties = specialties as string[];
+  }
+  if (seekingLandAcreage !== undefined) {
+    const acreage = Number(seekingLandAcreage);
+    if (!Number.isFinite(acreage) || acreage < 0 || acreage > 100000) return res.status(400).json({ error: 'Land acreage must be a valid amount.' });
+    updates.seekingLandAcreage = acreage;
+  }
+  if (!Object.keys(updates).length) return res.status(400).json({ error: 'Provide at least one editable profile field.' });
+
+  Object.assign(user, updates);
 
   saveDatabase();
   res.json({ success: true, user: safeUser(user) });

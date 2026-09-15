@@ -301,6 +301,11 @@ export default function App() {
       showToast(firstErrorMsg);
       return;
     }
+    const passwordError = validatePasswordStrength(authPassword);
+    if (passwordError) {
+      setAuthError(passwordError);
+      return;
+    }
 
     try {
       const { data, error } = await safeFetch<any>('/api/auth/register', {
@@ -311,7 +316,8 @@ export default function App() {
           name: authName,
           email: authEmail || undefined,
           role: authRole,
-          county: authCounty
+          county: authCounty,
+          password: authPassword
         })
       });
 
@@ -328,31 +334,12 @@ export default function App() {
         setAuthPhone('');
         setAuthName('');
         setAuthEmail('');
+        setAuthPassword('');
       } else {
         setAuthError(error || 'Registration failed');
       }
-    } catch (err: any) {
-      // Offline fallback
-      const offlineId = `user_${Date.now()}`;
-      const offlineUser: User = {
-        id: offlineId,
-        phone: authPhone,
-        name: authName,
-        email: authEmail || undefined,
-        role: authRole,
-        verified: false,
-        county: authCounty,
-        createdAt: new Date().toISOString()
-      };
-      setUsersList(prev => [...prev.filter(u => u.phone !== offlineUser.phone), offlineUser]);
-      setCurrentUser(offlineUser);
-      localStorage.setItem('sl_current_user', JSON.stringify(offlineUser));
-      setAuthSuccessMsg('Offline registration succeeded (In-Memory)!');
-      logAction('register_account_offline', { name: authName, phone: authPhone, role: authRole }, offlineId, authName);
-      // Reset fields
-      setAuthPhone('');
-      setAuthName('');
-      setAuthEmail('');
+    } catch {
+      setAuthError('The authentication service is unavailable. Please try again.');
     }
   };
 
@@ -464,6 +451,7 @@ export default function App() {
     email?: string;
     role: UserRole;
     county: string;
+    password: string;
   }): Promise<{ success: boolean; error?: string }> => {
     try {
       const { data, error } = await safeFetch<any>('/api/auth/register', {

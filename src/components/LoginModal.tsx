@@ -15,6 +15,7 @@ interface LoginModalProps {
     email?: string;
     role: UserRole;
     county: string;
+    password: string;
   }) => Promise<{ success: boolean; error?: string }>;
   isDarkMode?: boolean;
 }
@@ -84,8 +85,8 @@ export default function LoginModal({
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
-    if (!nameInput.trim() || !phoneInput.trim()) {
-      setErrorMsg('Name and phone number are required.');
+    if (!nameInput.trim() || !phoneInput.trim() || !passwordInput) {
+      setErrorMsg('Name, phone number, and password are required.');
       return;
     }
     setLoading(true);
@@ -94,7 +95,8 @@ export default function LoginModal({
       phone: phoneInput.trim(),
       email: emailInput.trim() || undefined,
       role: roleInput,
-      county: countyInput
+      county: countyInput,
+      password: passwordInput
     });
     setLoading(false);
     if (!result.success) {
@@ -417,6 +419,23 @@ export default function LoginModal({
                   onChange={(e) => setEmailInput(e.target.value)}
                   className="w-full p-2.5 text-xs rounded-xl border border-border-base bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   id="modal_reg_email"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  required
+                  minLength={12}
+                  autoComplete="new-password"
+                  placeholder="12+ characters with upper, lower, number, symbol"
+                  value={passwordInput}
+                  onChange={(e) => setPasswordInput(e.target.value)}
+                  className="w-full p-2.5 text-xs rounded-xl border border-border-base bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  id="modal_reg_password"
                 />
               </div>
 
