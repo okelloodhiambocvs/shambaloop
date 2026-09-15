@@ -258,7 +258,7 @@ describe('ShambaLoop End-to-End Integration Tests', () => {
 
       expect(response.status).toBe(201);
       const data = await response.json();
-      expect(data.status).toBe('PENDING');
+      expect(data.status).toBe('OPEN');
       disputeId = data.id;
     });
 

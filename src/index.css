@@ -4,225 +4,42 @@
 @import "tailwindcss";
 
 :root {
-  --color-bg-base: #ffffff;
-  --color-text-base: #000000;
+  --color-bg-base: #f8fafc;
+  --color-text-base: #0f172a;
   --color-card-bg: #ffffff;
-  --color-border-base: rgba(0, 0, 0, 0.18);
-  --color-brand-green: #2e774a;
-  --color-brand-green-soft: #a2784d;
-  --color-brand-yellow: #eeec05;
+  --color-border-base: #e2e8f0;
+  --color-brand-green: #1F6B3D;
+  --color-brand-green-soft: #8B5E3C;
+  --color-brand-yellow: #f59e0b;
+  --color-brand-primary-core: #2e774a;
+  --color-brand-earth-ochre: #a2784d;
+  --color-brand-sunflower-gold: #eeec05;
 }
 
 .dark {
-  --color-bg-base: #2e774a;
-  --color-text-base: #ffffff;
-  --color-card-bg: #2e774a;
-  --color-border-base: rgba(255, 255, 255, 0.18);
-  --color-brand-green: #2e774a;
+  --color-bg-base: #0b130e;
+  --color-text-base: #f8fafc;
+  --color-card-bg: #121e16;
+  --color-border-base: #1f3627;
+  --color-brand-green: #22c55e;
   --color-brand-green-soft: #a2784d;
-  --color-brand-yellow: #eeec05;
+  --color-brand-yellow: #f59e0b;
 }
 
-html.dark,
-html.dark body {
-  background-color: #2e774a !important;
-  color: #ffffff !important;
+html, body {
+  min-height: 100%;
 }
 
 html:not(.dark),
 html:not(.dark) body {
-  background-color: #ffffff !important;
-  color: #000000 !important;
+  background-color: #f8fafc;
+  color: #0f172a;
 }
 
-html:not(.dark) #root {
-  background-color: #ffffff;
-  color: #000000;
-}
-
-html.dark #root {
-  background-color: #2e774a;
-  color: #ffffff;
-}
-
-html.dark #root svg,
-html.dark #root svg * {
-  background-color: transparent !important;
-}
-
-html:not(.dark) #root .bg-white,
-html:not(.dark) #root .bg-card-bg,
-html:not(.dark) #root .bg-slate-50,
-html:not(.dark) #root .bg-slate-100,
-html:not(.dark) #root .bg-slate-800,
-html:not(.dark) #root .bg-slate-900,
-html:not(.dark) #root .bg-gray-50,
-html:not(.dark) #root .bg-gray-100,
-html:not(.dark) #root footer {
-  background-color: #ffffff !important;
-  color: #000000;
-}
-
-html.dark #root .bg-white,
-html.dark #root .bg-card-bg,
-html.dark #root .bg-slate-50,
-html.dark #root .bg-slate-100,
-html.dark #root .bg-slate-800,
-html.dark #root .bg-slate-900,
-html.dark #root .bg-gray-50,
-html.dark #root .bg-gray-100,
-html.dark #root footer {
-  background-color: #2e774a !important;
-  color: #ffffff;
-}
-
-html:not(.dark) #root footer * {
-  color: #000000;
-}
-
-html.dark #root footer * {
-  color: #ffffff;
-}
-
-html.dark .text-slate-900,
-html.dark .text-slate-800,
-html.dark .text-slate-700,
-html.dark .text-slate-600,
-html.dark .text-slate-500,
-html.dark .text-slate-400,
-html.dark .text-slate-300,
-html.dark .text-slate-200,
-html.dark .text-slate-100,
-html.dark .text-slate-50 {
-  color: #ffffff !important;
-}
-
-html.dark .text-brand-green,
-html.dark .text-emerald-300,
-html.dark .text-emerald-400,
-html.dark .text-emerald-500,
-html.dark .text-emerald-600,
-html.dark .text-emerald-700 {
-  color: #ffffff !important;
-}
-
-html.dark .border-border-base,
-html.dark .border-slate-200,
-html.dark .border-slate-100,
-html.dark .border-slate-700,
-html.dark .border-slate-800,
-html.dark .border-gray-200,
-html.dark .border-gray-700 {
-  border-color: rgba(255, 255, 255, 0.18) !important;
-}
-
-html:not(.dark) .border-border-base,
-html:not(.dark) .border-slate-200,
-html:not(.dark) .border-slate-100,
-html:not(.dark) .border-slate-700,
-html:not(.dark) .border-slate-800,
-html:not(.dark) .border-gray-200,
-html:not(.dark) .border-gray-700 {
-  border-color: rgba(0, 0, 0, 0.18) !important;
-}
-
-/* Final palette guard: legacy utility classes resolve to the approved brand colors. */
-[class*="purple"],
-[class*="amber"],
-[class*="yellow"],
-[class*="gold"],
-[class*="rose"],
-[class*="red-"],
-[class*="teal"],
-[class*="orange"],
-[class*="blue"],
-[class*="agri-gold"] {
-  border-color: rgba(46, 119, 74, 0.35) !important;
-}
-
-[class*="rose"],
-[class*="red-"],
-[class*="teal"],
-[class*="orange"],
-[class*="blue"] {
-  background-color: #a2784d !important;
-  color: #000000 !important;
-}
-
-[class*="emerald"],
-[class*="brand-green"],
-[class*="agri-green"] {
-  border-color: rgba(46, 119, 74, 0.45) !important;
-}
-
-[class*="bg-purple"],
-[class*="bg-amber"],
-[class*="bg-yellow"],
-[class*="bg-gold"],
-[class*="bg-emerald"],
-[class*="bg-brand-green"],
-[class*="bg-agri-green"] {
-  background-color: #2e774a !important;
-  color: #ffffff !important;
-}
-
-button[class*="bg-purple"],
-button[class*="bg-amber"],
-button[class*="bg-yellow"],
-button[class*="bg-emerald"],
-button[class*="bg-slate"],
-a[class*="bg-purple"],
-a[class*="bg-amber"],
-a[class*="bg-yellow"],
-a[class*="bg-emerald"],
-a[class*="bg-slate"] {
-  background-color: #a2784d !important;
-  color: #ffffff !important;
-}
-
-[class*="text-purple"],
-[class*="text-amber"],
-[class*="text-yellow"],
-[class*="text-gold"],
-[class*="text-emerald"],
-[class*="text-brand-green"],
-[class*="text-agri-green"] {
-  color: #2e774a !important;
-}
-
-html.dark [class*="text-purple"],
-html.dark [class*="text-amber"],
-html.dark [class*="text-yellow"],
-html.dark [class*="text-gold"],
-html.dark [class*="text-emerald"],
-html.dark [class*="text-brand-green"],
-html.dark [class*="text-agri-green"] {
-  color: #eeec05 !important;
-}
-
-html.dark [class*="bg-purple"],
-html.dark [class*="bg-amber"],
-html.dark [class*="bg-yellow"],
-html.dark [class*="bg-gold"],
-html.dark [class*="bg-emerald"],
-html.dark [class*="bg-brand-green"],
-html.dark [class*="bg-agri-green"] {
-  background-color: #2e774a !important;
-  color: #ffffff !important;
-}
-
-html:not(.dark) [class*="text-purple"],
-html:not(.dark) [class*="text-amber"],
-html:not(.dark) [class*="text-yellow"],
-html:not(.dark) [class*="text-gold"] {
-  color: #2e774a !important;
-}
-
-html.dark [class*="text-purple"],
-html.dark [class*="text-amber"],
-html.dark [class*="text-yellow"],
-html.dark [class*="text-gold"] {
-  color: #eeec05 !important;
+html.dark,
+html.dark body {
+  background-color: #0b130e;
+  color: #f8fafc;
 }
 
 @theme {
@@ -231,41 +48,41 @@ html.dark [class*="text-gold"] {
   --font-mono: "JetBrains Mono", monospace;
 
   /* Brand identity */
-  --color-brand-green: #2e774a;
-  --color-brand-green-soft: #a2784d;
-  --color-brand-green-50: #2e774a;
-  --color-brand-green-100: #2e774a;
-  --color-brand-green-200: #2e774a;
-  --color-brand-green-300: #2e774a;
-  --color-brand-green-400: #2e774a;
-  --color-brand-green-500: #2e774a;
-  --color-brand-green-600: #2e774a;
-  --color-brand-green-700: #2e774a;
-  --color-brand-green-800: #2e774a;
-  --color-brand-green-900: #2e774a;
+  --color-brand-green: #1F6B3D;
+  --color-brand-green-soft: #8B5E3C;
+  --color-brand-green-50: #edf7f0;
+  --color-brand-green-100: #d1eed8;
+  --color-brand-green-200: #a7deb5;
+  --color-brand-green-300: #71c68d;
+  --color-brand-green-400: #42a865;
+  --color-brand-green-500: #1F6B3D;
+  --color-brand-green-600: #1a5832;
+  --color-brand-green-700: #154527;
+  --color-brand-green-800: #11341e;
+  --color-brand-green-900: #0d2616;
 
   /* Compatibility mapping for existing emerald classes */
-  --color-emerald-50: var(--color-brand-green-50);
-  --color-emerald-100: var(--color-brand-green-100);
-  --color-emerald-200: var(--color-brand-green-200);
-  --color-emerald-300: var(--color-brand-green-300);
-  --color-emerald-400: var(--color-brand-green-400);
-  --color-emerald-500: var(--color-brand-green-500);
-  --color-emerald-600: var(--color-brand-green-600);
-  --color-emerald-700: var(--color-brand-green-700);
-  --color-emerald-800: var(--color-brand-green-800);
-  --color-emerald-900: var(--color-brand-green-900);
+  --color-emerald-50: #edf7f0;
+  --color-emerald-100: #d1eed8;
+  --color-emerald-200: #a7deb5;
+  --color-emerald-300: #71c68d;
+  --color-emerald-400: #42a865;
+  --color-emerald-500: #1F6B3D;
+  --color-emerald-600: #1a5832;
+  --color-emerald-700: #154527;
+  --color-emerald-800: #11341e;
+  --color-emerald-900: #0d2616;
 
   /* Brand colors: Earth Brown (#8B5E3C) */
-  --color-agri-dirt-50: #a2784d;
-  --color-agri-dirt-100: #a2784d;
-  --color-agri-dirt-600: #a2784d;
-  --color-agri-dirt-900: #a2784d;
+  --color-agri-dirt-50: #fcf9f5;
+  --color-agri-dirt-100: #f3eae0;
+  --color-agri-dirt-600: #8B5E3C;
+  --color-agri-dirt-900: #452c1a;
   
-  /* Brand colors: Warm Gold (#D4A017) */
-  --color-agri-gold-400: #eeec05;
-  --color-agri-gold-500: #eeec05;
-  --color-agri-gold-600: #eeec05;
+  /* Brand colors: Warm Gold (#F59E0B) */
+  --color-agri-gold-400: #fbbf24;
+  --color-agri-gold-500: #f59e0b;
+  --color-agri-gold-600: #d97706;
 
   /* Theme-specific custom mapping */
   --color-bg-base: var(--color-bg-base);
@@ -281,19 +98,28 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Base global transitions for theme variables to block flickering */
-body, div, header, section, footer, nav, aside, p, span, h1, h2, h3, h4, button, select, input, textarea {
-  transition-property: color, background-color, border-color, shadow;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 300ms;
-}
-
 h1, h2, h3, h4, .font-display {
   font-family: var(--font-display);
 }
 
 .mono-display {
   font-family: var(--font-mono);
+}
+
+/* Custom scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.3);
+  border-radius: 9999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.5);
 }
 
 /* Animations & interactive helpers */

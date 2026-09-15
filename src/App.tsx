@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   User, UserRole, Listing, ListingType, LeaseAgreement, 
-  LivestockPartnership, VerificationRequest, MpesaTransaction, VeterinaryReport
+  LivestockPartnership, VerificationRequest, MpesaTransaction, VeterinaryReport,
+  FarmerProposal, InvestorCriteria, FarmEvent, VeterinaryJob, TripartiteMatch, Dispute
 } from './types';
 import ListingCard from './components/ListingCard';
 import CreateListingModal from './components/CreateListingModal';
@@ -9,9 +10,12 @@ import EscrowPaymentModal from './components/EscrowPaymentModal';
 import { WorkflowTooltip } from './components/WorkflowTooltip';
 import AdminPanel from './components/AdminPanel';
 import VeterinaryDashboard from './components/VeterinaryDashboard';
+import FarmerDashboard from './components/FarmerDashboard';
+import InvestorDashboard from './components/InvestorDashboard';
 import LandingPage from './components/LandingPage';
 import LoginModal from './components/LoginModal';
 import { Logo, VerifiedBadge, BrandedEmptyState, BrandedLoader } from './components/BrandAssets';
+import { Sun, Moon } from 'lucide-react';
 import { ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Brush, Cell } from 'recharts';
 
 import { validateSchema, registrationSchema, listingSchema, leaseSchema, validatePasswordStrength } from './utils/validation';
@@ -620,6 +624,224 @@ export default function App() {
     pendingVerificationsCount: 0
   });
 
+  // Ecosystem state for 4-role dashboards
+  const [proposals, setProposals] = useState<FarmerProposal[]>([
+    {
+      id: 'prop_1',
+      farmerId: 'user_farmer_1',
+      farmerName: 'John Kamau',
+      farmerPhone: '+254712345678',
+      investorId: 'user_investor_1',
+      investorName: 'Samuel Kibet',
+      title: 'Pedigree Friesian Dairy Expansion (5 In-Calf Heifers)',
+      sector: 'Dairy',
+      farmDescription: '8 acres with permanent borehole solar pumping and 3 acres established Brachiaria & Napier fodder.',
+      capitalRequestedKES: 350000,
+      farmerContribution: '8 acres land, borehole water supply, 2 full-time herdsmen, zero-grazing unit',
+      investorSharePercent: 40,
+      farmerSharePercent: 60,
+      status: 'SUBMITTED',
+      createdAt: '2026-06-10'
+    },
+    {
+      id: 'prop_2',
+      farmerId: 'user_farmer_2',
+      farmerName: 'Wanjiku Mwangi',
+      farmerPhone: '+254723456789',
+      title: 'Commercial Greenhouse Drip Horticulture (Capsicum & Tomatoes)',
+      sector: 'Horticulture',
+      farmDescription: 'Experienced agronomist with 12 years in greenhouse production seeking capital to install 2 metallic tunnels.',
+      capitalRequestedKES: 480000,
+      farmerContribution: '4 acres fertile loam soil, water reservoir, supermarket off-take contract',
+      investorSharePercent: 45,
+      farmerSharePercent: 55,
+      status: 'UNDER_REVIEW',
+      createdAt: '2026-06-11'
+    }
+  ]);
+
+  const [farmEvents, setFarmEvents] = useState<FarmEvent[]>([
+    {
+      id: 'evt_1',
+      farmId: 'farm_kiambu_01',
+      farmerName: 'John Kamau',
+      eventType: 'CALVING_DUE',
+      title: 'Heifer SL-KE-FR-901 in Final 10-Day Gestation Window',
+      description: 'Pedigree Friesian heifer confirmed pregnant via veterinary ultrasound. Transition diet introduced.',
+      severity: 'MEDIUM',
+      actionTaken: 'Daily pelvic ligament and udder checks; Dr. Akinyi on emergency standby',
+      impactOnProduce: 'Projected +26 Liters/day milk surge upon calving',
+      date: '2026-06-12',
+      reportedBy: 'John Kamau (Farm Manager)'
+    },
+    {
+      id: 'evt_2',
+      farmId: 'farm_nyandarua_02',
+      farmerName: 'Josphat Kiprop',
+      eventType: 'DROUGHT_ALERT',
+      title: 'Delayed Short Rains Advisory in Nyandarua Plateau',
+      description: 'Sub-county meteorological department issued dry spell alert. Fodder conservation activated.',
+      severity: 'HIGH',
+      actionTaken: 'Purchased 40 bales of Rhodes grass hay and opened secondary silage bunker',
+      impactOnProduce: 'Yield maintained steady at 22L/day through preserved silage',
+      date: '2026-06-11',
+      reportedBy: 'Josphat Kiprop (Farm Manager)'
+    }
+  ]);
+
+  const [vetJobs, setVetJobs] = useState<VeterinaryJob[]>([
+    {
+      id: 'job_1',
+      farmId: 'part_xyz',
+      farmerName: 'John Kamau',
+      farmerPhone: '+254712345678',
+      location: 'Kiambu Zero-Grazing Unit, Muguga Ward',
+      animalOrCropType: 'Pedigree Friesian Heifers (SL-901 & SL-902)',
+      serviceType: 'PREGNANCY_SCAN',
+      urgency: 'NORMAL',
+      status: 'ASSIGNED',
+      assignedVetId: 'user_vet_1',
+      assignedVetName: 'Dr. Akinyi Otieno',
+      requestedDate: '2026-06-12',
+      notes: 'Day 60 post-insemination ultrasound scan and body condition score audit'
+    },
+    {
+      id: 'job_2',
+      farmId: 'farm_kisumu_03',
+      farmerName: 'Otieno Odhiambo',
+      farmerPhone: '+254734567890',
+      location: 'Riat Hills Farm, Kisumu County',
+      animalOrCropType: 'Dairy Crosses (12 Head)',
+      serviceType: 'VACCINATION',
+      urgency: 'URGENT',
+      status: 'OPEN',
+      requestedDate: '2026-06-13',
+      notes: 'County Foot and Mouth Disease (FMD) booster vaccination drive'
+    }
+  ]);
+
+  const [investorCriteriaList, setInvestorCriteriaList] = useState<InvestorCriteria[]>([
+    {
+      id: 'crit_1',
+      investorId: 'user_investor_1',
+      investorName: 'Samuel Kibet',
+      lookingFor: 'FARMER_WITH_LAND_NEEDING_CAPITAL',
+      budgetKES: 1200000,
+      preferredSectors: ['Dairy', 'Horticulture'],
+      targetCounties: ['Kiambu', 'Nyandarua', 'Nakuru'],
+      notes: 'Seeking experienced dairy farmer with verified land and reliable water source.',
+      status: 'ACTIVE',
+      createdAt: '2026-06-08'
+    }
+  ]);
+
+  const [tripartiteMatches, setTripartiteMatches] = useState<TripartiteMatch[]>([
+    {
+      id: 'match_1',
+      investorId: 'user_investor_1',
+      investorName: 'Samuel Kibet',
+      farmerId: 'user_farmer_1',
+      farmerName: 'John Kamau',
+      veterinarianId: 'user_vet_1',
+      veterinarianName: 'Dr. Akinyi Otieno',
+      sector: 'Dairy',
+      allocatedCapitalKES: 450000,
+      agreedTerms: '60% Farmer / 40% Investor split with monthly veterinary certification',
+      status: 'ACTIVE',
+      createdAt: '2026-06-09'
+    }
+  ]);
+
+  const [disputesList, setDisputesList] = useState<Dispute[]>([
+    {
+      id: 'disp_101',
+      leaseId: 'lease_abc',
+      creatorId: 'user_farmer_1',
+      creatorName: 'John Kamau',
+      reason: 'Boundary beacon adjustment dispute with neighboring parcel owner; requesting registry confirmation before second tranche disbursement.',
+      status: 'OPEN',
+      createdAt: '2026-06-10T09:30:00Z',
+      updatedAt: '2026-06-10T09:30:00Z'
+    }
+  ]);
+
+  const handleCreateProposal = (proposalData: Omit<FarmerProposal, 'id' | 'createdAt'>) => {
+    const newProp: FarmerProposal = {
+      ...proposalData,
+      id: `prop_${Date.now()}`,
+      status: 'SUBMITTED',
+      createdAt: new Date().toISOString().split('T')[0]
+    };
+    setProposals(prev => [newProp, ...prev]);
+    showToast('Proposal submitted successfully! Matching investors have been notified.');
+  };
+
+  const handleAcceptProposal = (proposalId: string) => {
+    setProposals(prev => prev.map(p => p.id === proposalId ? { ...p, status: 'ACCEPTED' as const } : p));
+    showToast('Proposal accepted! Tripartite partnership created with farmer.');
+  };
+
+  const handleSaveInvestorCriteria = (criteriaData: Omit<InvestorCriteria, 'id' | 'createdAt'>) => {
+    const newCrit: InvestorCriteria = {
+      ...criteriaData,
+      id: `crit_${Date.now()}`,
+      investorId: currentUser.id,
+      investorName: currentUser.name,
+      createdAt: new Date().toISOString().split('T')[0]
+    };
+    setInvestorCriteriaList(prev => [newCrit, ...prev.filter(c => c.investorId !== currentUser.id)]);
+    showToast('Investment criteria saved. Recommendation engine updated.');
+  };
+
+  const handleRequestVetJob = (jobData: Omit<VeterinaryJob, 'id' | 'status'>) => {
+    const newJob: VeterinaryJob = {
+      ...jobData,
+      id: `job_${Date.now()}`,
+      status: 'OPEN'
+    };
+    setVetJobs(prev => [newJob, ...prev]);
+    showToast('Veterinary dispatch request submitted to regional KVB board.');
+  };
+
+  const handleUpdateVetJobStatus = (jobId: string, status: VeterinaryJob['status']) => {
+    setVetJobs(prev => prev.map(j => j.id === jobId ? { ...j, status } : j));
+    showToast(`Job status updated to ${status}.`);
+  };
+
+  const handleLogFarmEvent = (eventData: Omit<FarmEvent, 'id'>) => {
+    const newEvent: FarmEvent = {
+      ...eventData,
+      id: `evt_${Date.now()}`
+    };
+    setFarmEvents(prev => [newEvent, ...prev]);
+    showToast('Farm management event logged to immutable health timeline.');
+  };
+
+  const handleCreateTripartiteMatch = (matchData: Omit<TripartiteMatch, 'id' | 'createdAt'>) => {
+    const newMatch: TripartiteMatch = {
+      ...matchData,
+      id: `match_${Date.now()}`,
+      createdAt: new Date().toISOString().split('T')[0]
+    };
+    setTripartiteMatches(prev => [newMatch, ...prev]);
+    showToast('Tripartite Match established in platform registry.');
+  };
+
+  const handleResolveDispute = (disputeId: string, resolution: 'refund_farmer' | 'disburse_landowner', reason: string) => {
+    setDisputesList(prev => prev.map(d => d.id === disputeId ? {
+      ...d,
+      status: 'RESOLVED' as const,
+      resolutionNotes: `Resolved: ${resolution === 'refund_farmer' ? 'Refunded to Tenant Farmer' : 'Disbursed to Landowner'}. Reason: ${reason}`,
+      updatedAt: new Date().toISOString()
+    } : d));
+    showToast(`Dispute ${disputeId} arbitrated. Audit trail updated.`);
+  };
+
+  const handleDeleteListing = (listingId: string) => {
+    setListings(prev => prev.filter(l => l.id !== listingId));
+    showToast('Listing removed from public registry by administrator.');
+  };
+
   // UI Filters
   const [selectedCounty, setSelectedCounty] = useState<string>('All Counties');
   const [selectedType, setSelectedType] = useState<string>('all');
@@ -987,18 +1209,157 @@ export default function App() {
         break;
       case 'about us':
         content = (
-          <div className="space-y-4 text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-sans">
-            <h4 className="font-extrabold text-emerald-600 dark:text-emerald-400 text-sm uppercase tracking-wider pb-1 border-b">
-              About ShambaLoop Kenya — Pioneering Agricultural Ecosystems
-            </h4>
-            <p>ShambaLoop is a revolutionary digital farming cooperative program designed exclusively for Kisumu, Lakeside Basin, and wider Kenyan agricultural belts.</p>
-            <p className="font-semibold text-slate-800 dark:text-white">Our Tri-Partite Circle of Trust:</p>
-            <ul className="list-disc pl-5 space-y-1.5">
-              <li><strong>Landowners:</strong> List idle properties to secure passive lease income from verified crop growers.</li>
-              <li><strong>Investors:</strong> Purchase premium cattle and fund high-yield seeds without needing physical land.</li>
-              <li><strong>Smallholders:</strong> Access premium seeds, veterinary supervision, and dynamic lease agreements.</li>
-            </ul>
-            <p>Based at Milimani Estate in Kisumu, ShambaLoop combines tech innovations with physical validation checks to build mutual food security.</p>
+          <div className="space-y-5 text-xs text-slate-700 dark:text-slate-200 leading-relaxed font-sans max-h-[75vh] overflow-y-auto pr-2" id="footer_about_us_modal_content">
+            <div className="border-b border-slate-200 dark:border-slate-800 pb-3">
+              <span className="bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase font-mono">
+                Official Cooperative Charter & Platform Blueprint
+              </span>
+              <h4 className="font-extrabold text-slate-900 dark:text-white text-lg mt-2 font-display">
+                About ShambaLoop Kenya — Cooperative Agricultural Digitization
+              </h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                A Unified Trust & Telemetry Ecosystem Uniting Land, Capital, Labor, and Clinical Governance
+              </p>
+            </div>
+
+            {/* Vision & Mission */}
+            <div className="space-y-2">
+              <h5 className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                Platform Vision & Institutional Mandate
+              </h5>
+              <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
+                ShambaLoop Kenya was established to eliminate the systemic friction, trust deficits, and capital barriers that have historically held back East Africa’s agricultural economy. Vast expanses of high-potential arable land lie underutilized or fallow due to absentee ownership or fears of informal encroachment. Simultaneously, millions of skilled smallholder farmers face severe liquidity constraints, while urban and diaspora Kenyans seeking agricultural returns lack trustworthy, transparent mechanisms to deploy capital safely.
+              </p>
+              <div className="p-3.5 bg-emerald-50/70 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-800/60 text-slate-800 dark:text-slate-200 space-y-1">
+                <strong className="block text-emerald-800 dark:text-emerald-300 font-bold text-xs uppercase tracking-wider">
+                  Our Core Purpose
+                </strong>
+                <p className="text-[11.5px] leading-relaxed">
+                  To provide a digital trust framework where agricultural land leases, livestock investments, and production telemetry are authenticated, audited, and protected by Kenya statutory law (Section 12 of the Kenya Land Act, Cap 490 Cooperative Societies Act, and ODPC Data Protection), supported by Safaricom Daraja M-Pesa automated escrow custody.
+                </p>
+              </div>
+            </div>
+
+            {/* The 4 Platform Roles */}
+            <div className="space-y-3">
+              <h5 className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                The 4 Operational Platform Roles
+              </h5>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {/* Admin */}
+                <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-850 space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="p-1 rounded bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 font-mono text-[10px] font-bold">ROLE 01</span>
+                    <strong className="text-slate-900 dark:text-white text-xs font-bold font-display">1. Administrator & Registry Supervisor</strong>
+                  </div>
+                  <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
+                    Acts as the neutral compliance officer and cooperative registrar. Validates Title Deeds and survey beacons against official lands databases, verifies KYC documentation, supervises tripartite agreements, arbitrates disputes, and authorizes escrow release milestones.
+                  </p>
+                </div>
+
+                {/* Farmer */}
+                <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-850 space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="p-1 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-mono text-[10px] font-bold">ROLE 02</span>
+                    <strong className="text-slate-900 dark:text-white text-xs font-bold font-display">2. Smallholder Farmer & Operator</strong>
+                  </div>
+                  <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
+                    The hands-on agricultural operator and livestock custodian. Obtains certified land leases without predatory leaseholder risks, accesses working capital, utilizes the Farm Management System (FMS) for daily milk and harvest entries, and executes veterinary directives.
+                  </p>
+                </div>
+
+                {/* Investor */}
+                <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-850 space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="p-1 rounded bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 font-mono text-[10px] font-bold">ROLE 03</span>
+                    <strong className="text-slate-900 dark:text-white text-xs font-bold font-display">3. Capital Investor & Financier</strong>
+                  </div>
+                  <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
+                    Provides asset and input financing for certified dairy herds (Friesian, Ayrshire) and horticultural projects without needing to physically own or farm land. Monitors daily yield charts, receives anomaly alerts, and earns automated dividends disbursed straight to M-Pesa.
+                  </p>
+                </div>
+
+                {/* Veterinary */}
+                <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-850 space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="p-1 rounded bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300 font-mono text-[10px] font-bold">ROLE 04</span>
+                    <strong className="text-slate-900 dark:text-white text-xs font-bold font-display">4. Veterinary & Clinical Auditor</strong>
+                  </div>
+                  <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
+                    Kenya Veterinary Board (KVB) licensed surgeons and animal health technicians. Dispatched on-demand for emergency clinical cases, routinely administers vaccinations and artificial insemination, conducts bi-weekly audits, and maintains permanent life-event health records.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Core Collaborative Processes */}
+            <div className="space-y-3">
+              <h5 className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                Core Collaborative Processes
+              </h5>
+              <div className="space-y-2.5">
+                <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                  <span className="font-bold text-slate-900 dark:text-white block text-xs">
+                    1. Tripartite Partnerships & Section 12 Land Protections
+                  </span>
+                  <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed">
+                    Landowners, investors, and farmers enter structured multi-party leases authenticated by registry supervisors. Leases comply with Section 12 of the Kenya Land Act to protect landowners from squatter claims while guaranteeing tenant farmers uninterrupted growing cycles.
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                  <span className="font-bold text-slate-900 dark:text-white block text-xs">
+                    2. Safaricom Daraja M-Pesa Escrow Custody
+                  </span>
+                  <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed">
+                    Investor capital is held in isolated escrow vaults. Funds are disbursed in milestones (e.g. initial land prep, seedling/livestock procurement, mid-cycle maintenance) upon administrative verification and veterinary confirmation, eliminating fraud.
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                  <span className="font-bold text-slate-900 dark:text-white block text-xs">
+                    3. Real-Time Telemetry & 7-Day Rolling Anomaly Detection
+                  </span>
+                  <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed">
+                    Farmers record morning and evening production daily. Our statistical analytics engine benchmarks output against rolling 7-day moving averages; if milk output drops by &gt;15%, the system immediately alerts the investor and dispatches a certified veterinary officer.
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                  <span className="font-bold text-slate-900 dark:text-white block text-xs">
+                    4. Veterinary Health Governance & Life-Event Trails
+                  </span>
+                  <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed">
+                    KVB doctors inspect herds every 14 days, verifying biosecurity, mastitis screening, and nutritional compliance. Digital records track every artificial insemination, pregnancy check, calving, and vaccination with cryptographic audit logs.
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                  <span className="font-bold text-slate-900 dark:text-white block text-xs">
+                    5. Automated Net Profit Splits & Direct M-Pesa Settlement
+                  </span>
+                  <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed">
+                    Revenues generated from milk collections or crop bulk sales are processed through platform ledgers. Agreed distributions (e.g. 60% farmer operator, 40% investor partner, or custom terms) are automatically calculated, with net funds settled electronically to registered M-Pesa phone numbers.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Regulatory and Regional Desks */}
+            <div className="p-3 bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 text-[11px] text-slate-600 dark:text-slate-300 space-y-1">
+              <strong className="block text-slate-900 dark:text-white font-bold text-xs uppercase tracking-wider">
+                Regulatory Oversight & Operational Base
+              </strong>
+              <p>
+                ShambaLoop Kenya operates under the cooperative framework of the Kenya Cooperative Societies Act (Cap 490) and is certified for citizen data privacy by the Office of the Data Protection Commissioner (ODPC Act of 2019).
+              </p>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 pt-1 border-t border-slate-200 dark:border-slate-700">
+                Headquarters: Milimani Innovation Hub, Kisumu County. Regional Extension Desks: Nyandarua (Ol Kalou), Nakuru (Njoro Basin), Kiambu (Muguga Hub). Contact Hotline: +254728606684.
+              </p>
+            </div>
           </div>
         );
         break;
@@ -2167,27 +2528,41 @@ export default function App() {
 
           {/* User Controls Panel */}
           <div className="flex items-center gap-3">
-            {/* Quick theme toggle */}
+            {/* Quick theme toggle with high-contrast icon and label */}
             <button
               onClick={toggleTheme}
-              className={`p-1.5 px-2.5 rounded-xl transition cursor-pointer ${isDarkMode ? 'bg-slate-800 hover:bg-slate-700 text-amber-450' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'}`}
-              title="Toggle Light/Dark Theme"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition cursor-pointer text-xs font-bold border shadow-2xs ${
+                isDarkMode 
+                  ? 'bg-slate-800 hover:bg-slate-700 text-amber-300 border-slate-700 hover:border-amber-400/50' 
+                  : 'bg-white hover:bg-slate-100 text-slate-800 border-slate-300 hover:border-slate-400'
+              }`}
+              title="Toggle Light / Dark Theme"
               id="header_theme_toggle_btn"
             >
-              {isDarkMode ? <span className="text-[10px] uppercase font-bold tracking-wider px-1">Light Theme</span> : <span className="text-[10px] uppercase font-bold tracking-wider px-1">Dark Theme</span>}
+              {isDarkMode ? (
+                <>
+                  <Sun className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <span className="text-[10px] uppercase font-bold tracking-wider">Light Theme</span>
+                </>
+              ) : (
+                <>
+                  <Moon className="w-3.5 h-3.5 text-slate-700 shrink-0" />
+                  <span className="text-[10px] uppercase font-bold tracking-wider">Dark Theme</span>
+                </>
+              )}
             </button>
 
             {/* Current role indicator and logout. Role changes require a new login. */}
             <div className={`flex items-center gap-2 p-1.5 rounded-xl border transition-colors duration-300 ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
-              <span className={`text-[9px] font-bold uppercase px-1.5 hidden lg:inline ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Active Trust Role:</span>
-              <span className={`px-2.5 py-1.5 rounded-lg text-xs font-bold uppercase ${isDarkMode ? 'bg-[#1f6b3d] text-white' : 'bg-white text-black'}`} id="header_current_role">
+              <span className={`text-[9px] font-bold uppercase px-1.5 hidden lg:inline ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>Active Trust Role:</span>
+              <span className={`px-2.5 py-1 rounded-lg text-xs font-bold uppercase border ${isDarkMode ? 'bg-emerald-900/80 text-emerald-200 border-emerald-700' : 'bg-emerald-100 text-emerald-900 border-emerald-300'}`} id="header_current_role">
                 {currentUser.role}
               </span>
 
               {/* Explicit logout */}
               <button
                 onClick={handleLogout}
-                className={`p-1.5 px-3 rounded-lg hover:text-rose-500 transition-colors cursor-pointer border border-transparent hover:border-rose-300 dark:hover:border-rose-800 ${isDarkMode ? 'text-slate-400 hover:bg-slate-700/50' : 'text-slate-600 hover:bg-slate-200'}`}
+                className={`p-1.5 px-3 rounded-lg hover:text-rose-500 transition-colors cursor-pointer border border-transparent hover:border-rose-300 dark:hover:border-rose-800 font-bold ${isDarkMode ? 'text-slate-300 hover:bg-slate-700/50' : 'text-slate-700 hover:bg-slate-200'}`}
                 title="Logout and return to landing page"
                 id="header_logout_btn"
               >
@@ -2241,160 +2616,81 @@ export default function App() {
         {/* ROLE SPECIFIC DASHBOARDS WITH STANDARDIZED PERFORMANT FADE-IN */}
         {currentUser && (
           <section key={currentUser.role} className="space-y-4 animate-fade-in">
+            {/* Admin Dashboard */}
+            {currentUser.role === UserRole.ADMIN && (
+              <AdminPanel
+                unverifiedListings={listings.filter(l => !l.verified)}
+                allListings={listings}
+                verificationRequests={verifications}
+                activeLeases={leases}
+                usersList={usersList}
+                disputes={disputesList}
+                partnerships={partnerships}
+                onApproveListing={handleApproveListing}
+                onApproveVerification={handleApproveVerification}
+                onDisburseEscrow={handleDisburseEscrow}
+                onApproveUser={handleApproveUser}
+                onDeleteListing={handleDeleteListing}
+                onResolveDispute={handleResolveDispute}
+                onCreateTripartiteMatch={handleCreateTripartiteMatch}
+              />
+            )}
+
             {/* Investor Dashboard */}
             {currentUser.role === UserRole.INVESTOR && (
-              <div className="bg-white rounded-2xl border border-emerald-100 dark:border-emerald-900/60 shadow-xs overflow-hidden" id="investor_dashboard_matching">
-                <div className="bg-gradient-to-r from-emerald-900 to-slate-900 text-white p-5 select-none">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 bg-purple-500/20 rounded-xl flex items-center justify-center border border-purple-400/30 font-bold text-xs">
-                        INV
-                      </div>
-                      <div>
-                        <h2 className="text-sm font-bold tracking-wide uppercase">Investor Dashboard</h2>
-                        <span className="text-[10.5px] text-purple-200">Active Partnership Recommendations • Real-time matches with verified owners</span>
-                      </div>
-                    </div>
-                    <div className="text-left sm:text-right shrink-0">
-                      <div className="text-xs font-bold text-amber-400">Budget Limit KES {currentUser.investmentBudgetKES?.toLocaleString() || '1,200,000'}</div>
-                      <div className="text-[9px] text-purple-300 uppercase">Sector priorities: {currentUser.preferredSectors?.join(', ') || 'Livestock, Leaseholds'}</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-5 space-y-4">
-                  <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                    <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Opportunity Recommendations matching your sector directives</h3>
-                    <span className="text-[10px] text-slate-400 font-mono">Found {listings.filter(l => l.verified).length} active items</span>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {listings.filter(l => l.verified).slice(0, 10).map((item) => (
-                      <div key={item.id} className="p-3.5 rounded-xl border border-slate-200/95 hover:border-emerald-500 bg-white dark:bg-slate-900 shadow-2xs space-y-2.5 transition flex flex-col justify-between">
-                        <div className="space-y-1.5">
-                          <div className="flex justify-between items-start">
-                            <span className={`px-2 py-0.5 rounded text-[8.5px] font-extrabold uppercase ${
-                              item.type === 'LAND' 
-                                ? 'bg-amber-100 text-amber-800 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900/50' 
-                                : 'bg-emerald-100 text-emerald-800 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/50'
-                            }`}>
-                              {item.type === 'LAND' ? 'LAND TO LEASE' : 'LIVESTOCK PARTNERSHIP'}
-                            </span>
-                            <span className="text-xs font-black text-slate-900 dark:text-white">KES {item.priceKES.toLocaleString()}</span>
-                          </div>
-                          
-                          <h4 className="font-bold text-xs text-slate-900 leading-tight line-clamp-1">{item.title}</h4>
-                          <p className="text-[10px] text-slate-500 line-clamp-2 leading-relaxed">{item.description}</p>
-
-                          <div className="flex items-center gap-1 text-[9.5px] text-slate-600 font-medium">
-                            <span>Location: {item.locationCounty} County, {item.locationWard}</span>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-between pt-2 border-t border-slate-100 mt-2">
-                          <span className="text-[9px] text-slate-400 font-mono">ID: {item.id.slice(0, 8)}</span>
-                          <div className="flex items-center gap-1.5">
-                            <WorkflowTooltip
-                              role={currentUser.role}
-                              actionType={item.type === 'LAND' ? 'propose_lease' : 'partner_equity'}
-                              align="right"
-                            />
-                            <button
-                              onClick={() => {
-                                setSelectedListingForAction(item);
-                                setIsPaymentModalOpen(true);
-                              }}
-                              className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-[9px] font-bold uppercase rounded-lg transition-all cursor-pointer"
-                            >
-                              {item.type === 'LAND' ? 'Propose Lease' : 'Partner Equity'}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+              <InvestorDashboard
+                currentUser={currentUser}
+                usersList={usersList}
+                partnerships={partnerships}
+                veterinaryReports={veterinaryReports}
+                proposals={proposals}
+                farmEvents={farmEvents}
+                investorCriteriaList={investorCriteriaList}
+                onSaveCriteria={handleSaveInvestorCriteria}
+                onAcceptProposal={handleAcceptProposal}
+              />
             )}
 
             {/* Farmer Dashboard */}
             {currentUser.role === UserRole.FARMER && (
-              <div className="bg-white rounded-2xl border border-emerald-100 shadow-xs overflow-hidden" id="farmer_dashboard_matching">
-                <div className="bg-gradient-to-r from-emerald-900 to-teal-850 text-white p-5 select-none">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 bg-emerald-500/20 rounded-xl flex items-center justify-center border border-emerald-400/30 font-bold text-xs">
-                        FAM
-                      </div>
-                      <div>
-                        <h2 className="text-sm font-bold tracking-wide uppercase">Farmer Matchmaking Dashboard</h2>
-                        <span className="text-[10.5px] text-emerald-200">Connect with Capital Investors looking for Profit-Sharing partnerships</span>
-                      </div>
-                    </div>
-                    <div className="text-left sm:text-right shrink-0">
-                      <div className="text-xs font-bold text-amber-400">Specialties: {currentUser.farmSpecialties?.join(', ') || 'Dairy Farming'}</div>
-                      <div className="text-[9px] text-emerald-300 uppercase">Acreage Target: {currentUser.seekingLandAcreage || '10'} Acres</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-5 space-y-4">
-                  <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                    <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Potential Investors Lookbook (Awaiting Joint Proposals)</h3>
-                    <span className="text-[10px] text-slate-400 font-mono">Found {usersList.filter(u => u.role === UserRole.INVESTOR).length} Registered Investors</span>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {usersList.filter(u => u.role === UserRole.INVESTOR).map((investor) => (
-                      <div key={investor.id} className="p-4 rounded-xl border border-slate-200 bg-white hover:border-emerald-300 hover:shadow-2xs transition-all space-y-3 flex flex-col justify-between" id={`investor_card_${investor.id}`}>
-                        <div className="space-y-2">
-                          <div className="flex justify-between items-start">
-                            <span className="text-[9px] bg-purple-100 text-purple-800 border border-purple-200 px-1.5 py-0.5 rounded uppercase font-extrabold tracking-wider">CAPITAL INVESTOR</span>
-                            {investor.verified ? (
-                              <span className="text-[8px] bg-emerald-100 text-emerald-850 px-1.5 py-0.5 rounded font-extrabold uppercase">VERIFIED_OK</span>
-                            ) : (
-                              <span className="text-[8px] bg-amber-100 text-amber-850 px-1.5 py-0.5 rounded font-semibold uppercase">AWAITING_APPROVAL</span>
-                            )}
-                          </div>
-
-                          <div>
-                            <h4 className="font-bold text-xs text-slate-900">{investor.name}</h4>
-                            <p className="text-[10px] text-slate-500 font-medium">Headquarters: {investor.county} Region</p>
-                          </div>
-
-                          <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-lg text-[10px] text-slate-600 font-sans space-y-1">
-                            <p><strong className="text-slate-800">Declared Funds:</strong> KES {investor.investmentBudgetKES?.toLocaleString()}</p>
-                            <p><strong className="text-slate-800">Objective:</strong> {investor.investmentGoal}</p>
-                          </div>
-                        </div>
-
-                        <div className="flex gap-2 items-center mt-2">
-                          <button
-                            onClick={() => alert(`Pitch successful! A formal business plan matching your "${currentUser.farmSpecialties?.join(', ') || 'Dairy Breeding'}" specialization has been transmitted to ${investor.name}. They will contact you on ${investor.phone} once the physical title deeds are audited by ShambaLoop Admins.`)}
-                            className="flex-1 bg-emerald-650 hover:bg-emerald-555 text-white text-[10px] font-bold uppercase py-2 rounded-lg transition-all tracking-wider cursor-pointer text-center"
-                          >
-                            Pitch Livestock Partnership
-                          </button>
-                          <WorkflowTooltip
-                            role={currentUser.role}
-                            actionType="pitch_investor"
-                            align="right"
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+              <FarmerDashboard
+                currentUser={currentUser}
+                usersList={usersList}
+                partnerships={partnerships}
+                veterinaryReports={veterinaryReports}
+                proposals={proposals}
+                farmEvents={farmEvents}
+                vetJobs={vetJobs}
+                onCreateProposal={handleCreateProposal}
+                onRequestVetJob={(jobData) => {
+                  handleRequestVetJob({
+                    ...jobData,
+                    requestedDate: new Date().toISOString().split('T')[0]
+                  });
+                }}
+                onLogProduction={(partnershipId, quantity, metric) => {
+                  showToast(`Yield of ${quantity} ${metric} logged for partnership.`);
+                }}
+                onLogFarmEvent={(eventData) => {
+                  handleLogFarmEvent({
+                    ...eventData,
+                    date: new Date().toISOString().split('T')[0]
+                  });
+                }}
+              />
             )}
 
+            {/* Veterinary Dashboard */}
             {currentUser.role === UserRole.VETERINARIAN && (
               <VeterinaryDashboard
                 currentUser={currentUser}
                 partnerships={partnerships}
                 usersList={usersList}
                 reports={veterinaryReports}
-                onSaveReport={handleSaveVeterinaryReport}
+                vetJobs={vetJobs}
+                onSaveReport={(rep) => handleSaveVeterinaryReport(rep)}
+                onUpdateJobStatus={handleUpdateVetJobStatus}
+                onLogLifeEvent={(evt) => handleLogFarmEvent({ ...evt, date: new Date().toISOString().split('T')[0] })}
               />
             )}
 
@@ -3759,23 +4055,6 @@ export default function App() {
 
           {/* MAIN GRID MIDDLE + RIGHT AREA (Jumia-style Browsing) */}
           <div className="lg:col-span-2 space-y-6">
-            
-            {/* Conditional Supervisor mode if active role selection is ADMIN */}
-            {currentUser.role === UserRole.ADMIN && (
-              <section className="">
-                <AdminPanel
-                  unverifiedListings={listings.filter(l => !l.verified)}
-                  verificationRequests={verifications}
-                  activeLeases={leases}
-                  usersList={usersList}
-                  onApproveListing={handleApproveListing}
-                  onApproveVerification={handleApproveVerification}
-                  onDisburseEscrow={handleDisburseEscrow}
-                  onApproveUser={handleApproveUser}
-                />
-              </section>
-            )}
-
             {/* Active Feed Section Title */}
             <div>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-agri-dirt-100 gap-2 select-none">
@@ -3981,10 +4260,10 @@ export default function App() {
 
       </main>
 
-      {/* Footer information is intentionally limited to the public landing page. */}
-      {!currentUser ? <footer className="mt-16 bg-[#1a1a1a] text-slate-300 select-none border-t border-slate-800 text-xs font-sans" id="shambaloop_custom_footer">
+      {/* High-Contrast Cooperative Footer */}
+      <footer className="mt-16 bg-slate-900 text-slate-300 select-none border-t border-slate-800 text-xs font-sans" id="shambaloop_custom_footer">
         {/* Newsletter Section */}
-        <div className="bg-[#222] py-8 border-b border-slate-800" id="newsletter_section">
+        <div className="bg-slate-950/80 py-8 border-b border-slate-800" id="newsletter_section">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
               <div className="space-y-2">
@@ -4001,7 +4280,7 @@ export default function App() {
                 
                 {/* Checkboxes & Legal Agreement Text */}
                 <div className="space-y-2.5 pt-3 max-w-xl">
-                  <label className="flex items-start gap-2.5 cursor-pointer text-[11px] text-slate-400 select-none">
+                  <label className="flex items-start gap-2.5 cursor-pointer text-[11px] text-slate-300 select-none">
                     <input 
                       type="checkbox" 
                       checked={newsLegalAgreed} 
@@ -4019,7 +4298,7 @@ export default function App() {
                     </span>
                   </label>
 
-                  <label className="flex items-start gap-2.5 cursor-pointer text-[11px] text-slate-400 select-none">
+                  <label className="flex items-start gap-2.5 cursor-pointer text-[11px] text-slate-300 select-none">
                     <input 
                       type="checkbox" 
                       checked={newsPrivacyAgreed} 
@@ -4039,7 +4318,7 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Email Form & Gender selection like ShambaLoop's actual footer */}
+              {/* Email Form & Gender selection */}
               <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row gap-2">
                   <input 
@@ -4050,7 +4329,7 @@ export default function App() {
                       setNewsEmail(e.target.value);
                       setNewsSuccessMsg('');
                     }}
-                    className="flex-1 p-3 rounded-lg border border-slate-700 bg-slate-900 text-slate-100 text-xs placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+                    className="flex-1 p-3 rounded-lg border border-slate-700 bg-slate-900 text-white text-xs placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
                   />
                   <div className="flex gap-2">
                     <button 
@@ -4087,7 +4366,7 @@ export default function App() {
                 </div>
 
                 {newsSuccessMsg && (
-                  <div className={`p-3 rounded-lg text-xs font-bold border ${newsSuccessMsg.startsWith('Error') ? 'bg-red-950/40 text-red-400 border-red-900/60' : 'bg-emerald-950/40 text-emerald-400 border-emerald-900/60'}`}>
+                  <div className={`p-3 rounded-lg text-xs font-bold border ${newsSuccessMsg.startsWith('Error') ? 'bg-red-950/60 text-red-300 border-red-800' : 'bg-emerald-950/60 text-emerald-300 border-emerald-800'}`}>
                     {newsSuccessMsg}
                   </div>
                 )}
@@ -4103,60 +4382,62 @@ export default function App() {
             {/* COLUMN 1: NEED HELP? */}
             <div className="space-y-3">
               <h4 className="text-white font-bold text-xs uppercase tracking-wider">NEED HELP?</h4>
-              <ul className="space-y-2 text-slate-400 font-medium font-sans">
+              <ul className="space-y-2 text-slate-300 font-medium font-sans">
                 <li><button onClick={() => openFooterDoc('Chat with us')} className="hover:text-emerald-400 transition hover:underline text-left cursor-pointer">Chat with us</button></li>
                 <li><button onClick={() => openFooterDoc('Help Center')} className="hover:text-emerald-400 transition hover:underline text-left cursor-pointer">Help Center</button></li>
                 <li className="text-slate-300">
-                  <span className="block text-[10px] text-slate-500 uppercase font-extrabold tracking-wider">Contact Us Via:</span>
-                  <a href="tel:+254728606684" className="font-mono text-white text-[11.5px] block mt-0.5 tracking-wide hover:text-emerald-400 transition">+254728606684</a>
+                  <span className="block text-[10px] text-slate-400 uppercase font-extrabold tracking-wider">Contact Us Via:</span>
+                  <a href="tel:+254728606684" className="font-mono text-emerald-400 font-bold text-xs block mt-0.5 tracking-wide hover:underline transition">+254728606684</a>
                 </li>
-                <li className="text-slate-300 text-[11px] leading-relaxed pt-1 border-t border-slate-800/60">
-                  <span className="block text-[10px] text-slate-500 uppercase font-extrabold tracking-wider">Visit Us:</span>
-                  <span className="font-bold text-slate-300 block text-[11px]">Kisumu & Lakeside Basin</span>
+                <li className="text-slate-300 text-[11px] leading-relaxed pt-1 border-t border-slate-800">
+                  <span className="block text-[10px] text-slate-400 uppercase font-extrabold tracking-wider">Visit Us:</span>
+                  <span className="font-bold text-white block text-[11px]">Kisumu & Lakeside Basin Hub</span>
                   Milimani Estate, Riat Hills, Kisumu CBD, Yacht Club, Tom Mboya.
                 </li>
               </ul>
             </div>
 
-            {/* COLUMN 2: ABOUT SHAMBALUKE */}
+            {/* COLUMN 2: ABOUT SHAMBALOOP */}
             <div className="space-y-3">
-              <h4 className="text-white font-bold text-xs uppercase tracking-wider">ABOUT SHAMBALUKE</h4>
-              <ul className="space-y-1.5 text-slate-400 font-medium text-left">
-                <li><button onClick={() => openFooterDoc('About Us')} className="hover:text-brand-green transition hover:underline text-left cursor-pointer">About us</button></li>
+              <h4 className="text-white font-bold text-xs uppercase tracking-wider">ABOUT SHAMBALOOP</h4>
+              <ul className="space-y-2 text-slate-300 font-medium text-left">
+                <li><button onClick={() => openFooterDoc('About Us')} className="hover:text-emerald-400 transition hover:underline text-left cursor-pointer">About Us & Cooperative Charter</button></li>
                 <li>
                   <button 
                     onClick={() => openFooterDoc('FAQ')} 
-                    className="text-brand-green font-bold hover:text-brand-green-600 transition hover:underline text-left cursor-pointer"
+                    className="text-emerald-400 font-bold hover:text-emerald-300 transition hover:underline text-left cursor-pointer"
                     id="footer_faq_link_btn"
                   >
                     Frequently Asked Questions (FAQ)
                   </button>
                 </li>
+                <li><button onClick={() => openFooterDoc('Terms and Conditions')} className="hover:text-emerald-400 transition hover:underline text-left cursor-pointer">Terms & Conditions</button></li>
+                <li><button onClick={() => openFooterDoc('Privacy Notice')} className="hover:text-emerald-400 transition hover:underline text-left cursor-pointer">Privacy & Data Notice</button></li>
               </ul>
             </div>
 
             {/* COLUMN 3: CONTACT US */}
-            <div className="space-y-3 bg-[#111111]/30 p-4 rounded-xl border border-slate-800">
-              <h4 className="text-white font-bold text-xs uppercase tracking-wider border-b border-slate-800 pb-1">Contact us</h4>
-              <div className="space-y-2 text-slate-300">
+            <div className="space-y-3 bg-slate-800/60 p-4 rounded-xl border border-slate-700/80">
+              <h4 className="text-white font-bold text-xs uppercase tracking-wider border-b border-slate-700/80 pb-1.5">Contact Us</h4>
+              <div className="space-y-2.5 text-slate-300">
                 <div>
-                  <span className="block text-[8px] text-slate-500 uppercase font-extrabold tracking-wider">Business Name</span>
-                  <p className="font-bold text-white text-[11px]">ShambaLoop Kenya</p>
+                  <span className="block text-[9px] text-slate-400 uppercase font-extrabold tracking-wider">Business Entity</span>
+                  <p className="font-bold text-white text-xs">ShambaLoop Kenya Ltd.</p>
                 </div>
                 <div>
-                  <span className="block text-[8px] text-slate-500 uppercase font-extrabold tracking-wider">Address</span>
-                  <p className="text-[11px] text-slate-400 leading-normal">
-                    Milimani Estate, Riat Hills, Kisumu CBD, Yacht Club, Tom Mboya.<br />
-                    Address: 1178-4011 kisumu kenya
+                  <span className="block text-[9px] text-slate-400 uppercase font-extrabold tracking-wider">Headquarters</span>
+                  <p className="text-[11px] text-slate-300 leading-normal">
+                    Milimani Estate, Riat Hills, Kisumu CBD<br />
+                    Postal: P.O. Box 1178-40100 Kisumu, Kenya
                   </p>
                 </div>
                 <div>
-                  <span className="block text-[8px] text-slate-500 uppercase font-extrabold tracking-wider">Phone Number</span>
-                  <a href="tel:+254728606684" className="font-mono text-white text-[11px] font-semibold hover:text-emerald-400 transition block">+254728606684</a>
+                  <span className="block text-[9px] text-slate-400 uppercase font-extrabold tracking-wider">Phone Support</span>
+                  <a href="tel:+254728606684" className="font-mono text-emerald-400 text-xs font-bold hover:underline transition block">+254728606684</a>
                 </div>
                 <div>
-                  <span className="block text-[8px] text-slate-500 uppercase font-extrabold tracking-wider">WhatsApp</span>
-                  <a href="https://wa.me/254728606684" target="_blank" rel="noreferrer" className="font-mono text-emerald-400 text-[11.5px] font-bold hover:underline block">+254728606684</a>
+                  <span className="block text-[9px] text-slate-400 uppercase font-extrabold tracking-wider">WhatsApp Business</span>
+                  <a href="https://wa.me/254728606684" target="_blank" rel="noreferrer" className="font-mono text-emerald-400 text-xs font-bold hover:underline block">+254728606684</a>
                 </div>
               </div>
             </div>
@@ -4165,18 +4446,18 @@ export default function App() {
         </div>
 
         {/* Bottom copyright section with Logo & Tagline */}
-        <div className="bg-[#111] py-8 border-t border-slate-900 text-slate-500">
+        <div className="bg-slate-950 py-8 border-t border-slate-800 text-slate-400">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">
-              <Logo size={36} variant="footer" />
+              <Logo size={38} variant="footer" isDarkMode={true} />
             </div>
             <div className="text-center md:text-right space-y-1">
-              <p className="text-[11px] text-slate-400">© 2026 ShambaLoop. All Rights Reserved. Kenya's Premier Agritech Trust Ecosystem.</p>
-              <p className="text-[10px] text-slate-600 font-extrabold uppercase tracking-widest font-display">Connecting People, Land, Livestock, and Opportunity</p>
+              <p className="text-xs text-slate-300">© 2026 ShambaLoop. All Rights Reserved. Kenya's Premier Agritech Trust Ecosystem.</p>
+              <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest font-display">Connecting People, Land, Livestock, and Opportunity</p>
             </div>
           </div>
         </div>
-      </footer> : null}
+      </footer>
 
       {/* RENDER MODAL: Catalog asset creation */}
       {isListingModalOpen && (

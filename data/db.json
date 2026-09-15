@@ -115,6 +115,310 @@
         "$2b$10$E.2rYpcb.qnicpstfUGkBu6yzIbOqIRDAz5wZ43P.tusMG3v98VF.",
         "$2b$10$SVzHqj3hFcxeXG/4F5ZW5uTnh2CiC0bDUWFePn8/kSQ.PGwwozDUu"
       ]
+    },
+    {
+      "id": "user_1789471458911",
+      "phone": "0782413667",
+      "name": "Senior Test Farmer Kiprop",
+      "email": "tester_0782413667@shambaloop.test",
+      "role": "farmer",
+      "verified": false,
+      "county": "Kakamega",
+      "createdAt": "2026-09-15T11:24:18.911Z",
+      "passwordResetRequired": false,
+      "investmentBudgetKES": 120000,
+      "mfaSecret": "enc_v1:4d4082e125c020cf2bf650f4:c7947732595daeb699db9aecd1ab9206:ab9943c8f9dfc8418a79cc3d45783536dcea88cc",
+      "mfaType": "totp",
+      "mfaEnabled": true,
+      "mfaBackupCodes": [
+        "$2b$10$bzYf3pFpuqy6hAlYTfsbl.50eTAiMHfPfhJPqm0KDgiaWFBjlQSYW",
+        "$2b$10$oTbo/iQaqJvhZMp7gTTc9.FML1LwaxfqXrkLKVzL8y.Fx1NW3ieG6",
+        "$2b$10$pV0wWtSLbznmtZdDXo1V5O5e4ADfZwlBfhabHoip1G1jiOnjF1Sqi",
+        "$2b$10$mqcPXIq6yUiokH1mYzDcqORBAirH.LG4SvQt/t7OkSvn0/.97daIS",
+        "$2b$10$2HdCidmTU4ZmW7Wex6v0qOeUdlG88k5OlfzRuYU4/85JwDjd7U1fy"
+      ]
+    },
+    {
+      "id": "user_1789471525786",
+      "phone": "0787808215",
+      "name": "Senior Test Farmer Kiprop",
+      "email": "tester_0787808215@shambaloop.test",
+      "role": "farmer",
+      "verified": false,
+      "county": "Kakamega",
+      "createdAt": "2026-09-15T11:25:25.786Z",
+      "passwordResetRequired": false,
+      "investmentBudgetKES": 120000,
+      "mfaSecret": "enc_v1:781d45d5f9fd9d935a00db87:29233c7bbe10276fbb38e8d725bc2cfd:6800c7758720f81961f6840d411db8493944e8bf",
+      "mfaType": "totp",
+      "mfaEnabled": true,
+      "mfaBackupCodes": [
+        "$2b$10$9BvnJOTthEY9bzToP8bQEui1diDL67Qpcaag/aSfCLK1K6Jklbdgu",
+        "$2b$10$jlSFVxOnW1y6waThko/C2OVoXVizL3r4hh881HURd6EGjbGIikmfi",
+        "$2b$10$F0t/9QqvPPYdO764H86hieKhzmSBOqJdcARiuGXwDHbILaNu9x1wy",
+        "$2b$10$rerng28n3qnQu.HRpmNG8epmH4LBlDOopxbay9NZ8eRwCUbcZbgOK",
+        "$2b$10$emrJ5v0FBrlY7m/dhbx3qePNNdfHf3mqefwZOxiw935W9zb/whTRi"
+      ]
+    },
+    {
+      "id": "user_1789471553879",
+      "phone": "0756592053",
+      "name": "Hon. Test Josphat Kiprop",
+      "email": "kiprop.test@shamba.com",
+      "role": "farmer",
+      "verified": false,
+      "county": "Uasin Gishu",
+      "createdAt": "2026-09-15T11:25:53.879Z",
+      "passwordResetRequired": false,
+      "investmentBudgetKES": 850000
+    },
+    {
+      "id": "user_1789472206149",
+      "phone": "0767814737",
+      "name": "Senior Test Farmer Kiprop",
+      "email": "tester_0767814737@shambaloop.test",
+      "role": "farmer",
+      "verified": false,
+      "county": "Kakamega",
+      "createdAt": "2026-09-15T11:36:46.149Z",
+      "passwordResetRequired": false,
+      "investmentBudgetKES": 120000,
+      "mfaSecret": "enc_v1:5e22888236c030618e3b7d07:58ebdea6315c015e366755af86f4c197:3e4d6aff9470a1d908ba599605637cf875a386a6",
+      "mfaType": "totp",
+      "mfaEnabled": true,
+      "mfaBackupCodes": [
+        "$2b$10$Ey6ykRAcOh9VINw5CnH9n.1B49gD0ITAnWoWt5s00yMOu3XAA/PVm",
+        "$2b$10$Cy6M2mlZ48Njnf0aM0kUEeXP2kz9CyW5TLfv4kJ.BXCH6mUFUkGxm",
+        "$2b$10$9b0L6DmwwKF4dmhoTSGMf.p8.63HxGAjuXbxjAoSZRgThv6hxAaDq",
+        "$2b$10$kRmsqXLH6hw9.deXB2ywcuCIeDTlmggD1xXKPU0xiCfynFS8gPMra",
+        "$2b$10$.CuFG57MaHgFPx/EAVM0Qewd.F28yRbUM5PFP53uGOyG9dKXxufz."
+      ]
+    },
+    {
+      "id": "user_1789472223823",
+      "phone": "0737506103",
+      "name": "Hon. Test Josphat Kiprop",
+      "email": "kiprop.test@shamba.com",
+      "role": "farmer",
+      "verified": false,
+      "county": "Uasin Gishu",
+      "createdAt": "2026-09-15T11:37:03.823Z",
+      "passwordResetRequired": false,
+      "investmentBudgetKES": 850000
+    },
+    {
+      "id": "user_1789472367360",
+      "phone": "0786100166",
+      "name": "Senior Test Farmer Kiprop",
+      "email": "tester_0786100166@shambaloop.test",
+      "role": "farmer",
+      "verified": false,
+      "county": "Kakamega",
+      "createdAt": "2026-09-15T11:39:27.360Z",
+      "passwordResetRequired": false,
+      "investmentBudgetKES": 120000,
+      "mfaSecret": "enc_v1:1d0b5e56db36bf3fe8bee131:89fd169bad6157201553f2c18a6d1a6e:87df45776d5fc4fe6e3f3f0c7f628c2048e69bea",
+      "mfaType": "totp",
+      "mfaEnabled": true,
+      "mfaBackupCodes": [
+        "$2b$10$ajRvYW8G8lFtIsTGbzWvzunS4TNzT4ad1A42ze81YDQ/FH86sswDa",
+        "$2b$10$oqDV.9MKFYLId8iQJUjj0eH0m6p2cC9bSEkjfUVFZq8p.cRMY4hDm",
+        "$2b$10$PP7WHHXo6dGcnVeUX41sNuN0WBjN65rJ.pkb7ZCMXfVd1kjsxyT6C",
+        "$2b$10$Ui1w8P.TsLJRdS3K/nz61eI0q2uVZSioRMaSzZy8sHedho7JSCc12",
+        "$2b$10$.WQmFQUh4uaOMf4sCJAe8OB23yX2ZOtbNYSFOC6FYktqyTNHVjouK"
+      ]
+    },
+    {
+      "id": "user_1789472395979",
+      "phone": "0768618112",
+      "name": "Senior Test Farmer Kiprop",
+      "email": "tester_0768618112@shambaloop.test",
+      "role": "farmer",
+      "verified": false,
+      "county": "Kakamega",
+      "createdAt": "2026-09-15T11:39:55.979Z",
+      "passwordResetRequired": false,
+      "investmentBudgetKES": 120000,
+      "mfaSecret": "enc_v1:4cb7d1202eca54a2570fe067:3299f9f6aa478afc6364a6c9edceca54:6e40b9a69010def176ffc75a1b194b8f1ca68470",
+      "mfaType": "totp",
+      "mfaEnabled": true,
+      "mfaBackupCodes": [
+        "$2b$10$4Tdfw81afe6rda4SzeuBq.k5B7VbegZn7.QUa88X0IqRsOYtTA8.K",
+        "$2b$10$wdAc.n9KsuxU.HQDxgn.leM8.EeMUJ7ug5BI3n8aIYFpwoLwpT9Pa",
+        "$2b$10$Y1gvz.VnVECU6.AvspHtR.xa4EjbcHZPazS3Qbnbbfr/8JApFUOsO",
+        "$2b$10$jKeRNsVyKADcIPH7ya0f9uy8tNnS9bMOofVEQwe3zR6SE0yOQQhJq",
+        "$2b$10$bQGVkmRMqUbf2/PprnWBl.LNKoGhgWvfSsTNXRgudRPXjeIfPk2CC"
+      ]
+    },
+    {
+      "id": "user_1789472400464",
+      "phone": "0729981446",
+      "name": "Hon. Test Josphat Kiprop",
+      "email": "kiprop.test@shamba.com",
+      "role": "farmer",
+      "verified": false,
+      "county": "Uasin Gishu",
+      "createdAt": "2026-09-15T11:40:00.464Z",
+      "passwordResetRequired": false,
+      "investmentBudgetKES": 850000
+    },
+    {
+      "id": "user_1789472778827",
+      "phone": "0723605202",
+      "name": "Senior Test Farmer Kiprop",
+      "email": "tester_0723605202@shambaloop.test",
+      "role": "farmer",
+      "verified": false,
+      "county": "Kakamega",
+      "createdAt": "2026-09-15T11:46:18.827Z",
+      "passwordResetRequired": false,
+      "investmentBudgetKES": 120000,
+      "mfaSecret": "enc_v1:62a9923ebc58e60596cfcfef:bcbf7d3e03cb287a20a63daa1e14bef2:866886daec7c2fce48516a24595b0a7de9792659",
+      "mfaType": "totp",
+      "mfaEnabled": true,
+      "mfaBackupCodes": [
+        "$2b$10$sxvB.mrc7iklfY9YZH4mj.RnDHRn9i5suZ6/c3xl0h3e4iUTCPsNG",
+        "$2b$10$3SXEvpuZ2wKJaP2aGI15JOo8Zg.Arw5816eMlW/9q5IoOjbaDCEoe",
+        "$2b$10$RTn54ZuloCzRerIGKLZYUOB0zaY.heXowpdPIZ42PyTF/J0Xx9Pg2",
+        "$2b$10$a/34v9w/jgizuI8Ma0XOiev/iGtMQC1ljnw0BVAEkjl6sLBBPngzW",
+        "$2b$10$MFMhmVg8/U77Asls8G3TyeemVzh8Adml1A3ISm.SRE4TwbkxmLiaa"
+      ]
+    },
+    {
+      "id": "user_1789472783599",
+      "phone": "0792324524",
+      "name": "Hon. Test Josphat Kiprop",
+      "email": "kiprop.test@shamba.com",
+      "role": "farmer",
+      "verified": false,
+      "county": "Uasin Gishu",
+      "createdAt": "2026-09-15T11:46:23.599Z",
+      "passwordResetRequired": false,
+      "investmentBudgetKES": 850000
+    },
+    {
+      "id": "user_1789472872746",
+      "phone": "0780966702",
+      "name": "Senior Test Farmer Kiprop",
+      "email": "tester_0780966702@shambaloop.test",
+      "role": "farmer",
+      "verified": false,
+      "county": "Kakamega",
+      "createdAt": "2026-09-15T11:47:52.746Z",
+      "passwordResetRequired": false,
+      "investmentBudgetKES": 120000,
+      "mfaSecret": "enc_v1:bafb2bdac9edd5f004ca9f9b:33c66c3f964d64d5908979b4cdbe8042:6224c3420ffe999fe2d969e579c6c7409ed69f41",
+      "mfaType": "totp",
+      "mfaEnabled": true,
+      "mfaBackupCodes": [
+        "$2b$10$zZ38/xbBp6zJkKh9zkwyTOODQJBjmuyMwnFjbyzG1JTOSWpMcdQOq",
+        "$2b$10$/lRXRLnw0LbiwdEIAoeyTOEK3zT/asvR0THlDYdHbE4mDUv/w9Nuu",
+        "$2b$10$oFUTlbnAzWHrvKR/s75cKevCEL25876jd8qjzY2Lk9Hrr/PeEuMmi",
+        "$2b$10$AY0F7vQxdAAwpt378i1jcOaGkGgkbkRRvHmESwDqysqG7pvxVThMy",
+        "$2b$10$opODQNpi1iGMPLz7ePYbUORbjhkkkcAZ.Y2y0xh8siTiWVUQpha7e"
+      ]
+    },
+    {
+      "id": "user_1789472877505",
+      "phone": "0783370568",
+      "name": "Hon. Test Josphat Kiprop",
+      "email": "kiprop.test@shamba.com",
+      "role": "farmer",
+      "verified": false,
+      "county": "Uasin Gishu",
+      "createdAt": "2026-09-15T11:47:57.505Z",
+      "passwordResetRequired": false,
+      "investmentBudgetKES": 850000
+    },
+    {
+      "id": "user_1789473409521",
+      "phone": "0724866448",
+      "name": "Senior Test Farmer Kiprop",
+      "email": "tester_0724866448@shambaloop.test",
+      "role": "farmer",
+      "verified": false,
+      "county": "Kakamega",
+      "createdAt": "2026-09-15T11:56:49.521Z",
+      "passwordResetRequired": false,
+      "investmentBudgetKES": 120000,
+      "mfaSecret": "enc_v1:e6bb8b94879c44e6b93878cd:c4bd6b81cedd189183c2084d4865e1a4:bdac797c5d05c7f7fdca0f06fdc962d6ed83cda6",
+      "mfaType": "totp",
+      "mfaEnabled": true,
+      "mfaBackupCodes": [
+        "$2b$10$o3xKJiEZG3tJJz943CvrFeuz/PRNss6vneJedcN/gxcwv9OlaIeaS",
+        "$2b$10$6NYxMGw5DZEbUNQKTivWNOYngchkDP7ZVmVj0u2UKm9Q8kUDaY6t6",
+        "$2b$10$sblFWpStLUt.5P4sZBAPY.fkKG9o4EPVXwGdT3cmrtx22Y1Rynape",
+        "$2b$10$C030bCqnqKGgRVvWVGEGFOuK/6nvaa/WJVcd8cUBQE50eNFqGs/Ym",
+        "$2b$10$rb7.08mtXdj7AGgc6sW4eu3ArQunMo3ZL8PTdM0gNuQbZCgOUBU2."
+      ]
+    },
+    {
+      "id": "user_1789473418775",
+      "phone": "0725428970",
+      "name": "Hon. Test Josphat Kiprop",
+      "email": "kiprop.test@shamba.com",
+      "role": "farmer",
+      "verified": false,
+      "county": "Uasin Gishu",
+      "createdAt": "2026-09-15T11:56:58.775Z",
+      "passwordResetRequired": false,
+      "investmentBudgetKES": 850000
+    },
+    {
+      "id": "user_1789473529912",
+      "phone": "0796325948",
+      "name": "Senior Test Farmer Kiprop",
+      "email": "tester_0796325948@shambaloop.test",
+      "role": "farmer",
+      "verified": false,
+      "county": "Kakamega",
+      "createdAt": "2026-09-15T11:58:49.912Z",
+      "passwordResetRequired": false,
+      "investmentBudgetKES": 120000,
+      "mfaSecret": "enc_v1:288e1a90c8ca49b20e519de2:f2fc48f6b5b6bafcb164fc1145b52819:629f84b58fcb2a491f530fc4be549183ba4737b6",
+      "mfaType": "totp",
+      "mfaEnabled": true,
+      "mfaBackupCodes": [
+        "$2b$10$0DgQoDWFaWodj5FRMZvns.SwvdNDzXFh.8qQHitKu0N36Buxb.gPK",
+        "$2b$10$DLuevkCFZPj9d00QS9NL1OKu.lnKxbxUXloiqfVF2Pl3pH.VN9Vkq",
+        "$2b$10$4q5PsT1hNAyJPDRlXT/cdehNxpGgp9sXliymls5Wve2sh5b/gq6De",
+        "$2b$10$Te8xqyd8D3GJFeL8a/PghOmJUKDejtRjUbOebIHDVqIKGqJASnxX2",
+        "$2b$10$TYRCxywsPy6UpfN9xPtiNubvwamIqmB/jYNUwv2Xd/VmZCPOKcKuW"
+      ]
+    },
+    {
+      "id": "user_1789473535390",
+      "phone": "0732249757",
+      "name": "Hon. Test Josphat Kiprop",
+      "email": "kiprop.test@shamba.com",
+      "role": "farmer",
+      "verified": false,
+      "county": "Uasin Gishu",
+      "createdAt": "2026-09-15T11:58:55.390Z",
+      "passwordResetRequired": false,
+      "investmentBudgetKES": 850000
+    },
+    {
+      "id": "user_1789474031712",
+      "phone": "0798692532",
+      "name": "Senior Test Farmer Kiprop",
+      "email": "tester_0798692532@shambaloop.test",
+      "role": "farmer",
+      "verified": false,
+      "county": "Kakamega",
+      "createdAt": "2026-09-15T12:07:11.712Z",
+      "passwordResetRequired": false,
+      "investmentBudgetKES": 120000,
+      "mfaSecret": "enc_v1:56ad94c6bee4f062a57a8130:b7ee684139fbd2c7af6c027b07b62695:c03e21f822108cdb2fe2b4809c8aeed418795818",
+      "mfaType": "totp",
+      "mfaEnabled": true,
+      "mfaBackupCodes": [
+        "$2b$10$mtaRaKqxxh4tP50EHq.KTuqmDtjUcdQik1.NsqitnRehphY7/x18C",
+        "$2b$10$tI9z1BjZwI3yLDYqkE3azuczU8KbxiUJZTn.qcb08LGyrujrCzanK",
+        "$2b$10$tCecB51ueWDO3VzpwA9Ml.VhlRLCVhd4ei5bkUYHglvjvovoIQL9G",
+        "$2b$10$P.5ARS8Qfu8laDxk9LhbhecVv5XVXvh6AF.CnTc6MUMJpxGbnZ8ja",
+        "$2b$10$TuqD9stVhkBRFmZk2ZcvsO6s5ndQkJt3Y4qtdAjnz3Oy1VGWm8CqC"
+      ]
     }
   ],
   "listings": [
@@ -242,6 +546,227 @@
       "status": "SIGNED",
       "mpesaEscrowStatus": "DISPUTED",
       "paymentsMade": 60000
+    },
+    {
+      "id": "lease_1789471459810",
+      "listingId": "list_1",
+      "landownerId": "user_1",
+      "farmerId": "user_1789471458911",
+      "acreageLeased": 5,
+      "pricePerAcreKES": 12000,
+      "durationMonths": 12,
+      "startDate": "2026-09-15",
+      "status": "SIGNED",
+      "mpesaEscrowStatus": "DISPUTED",
+      "paymentsMade": 60000
+    },
+    {
+      "id": "lease_1789471526626",
+      "listingId": "list_1",
+      "landownerId": "user_1",
+      "farmerId": "user_1789471525786",
+      "acreageLeased": 5,
+      "pricePerAcreKES": 12000,
+      "durationMonths": 12,
+      "startDate": "2026-09-15",
+      "status": "SIGNED",
+      "mpesaEscrowStatus": "DISPUTED",
+      "paymentsMade": 60000
+    },
+    {
+      "id": "lease_1789471554149",
+      "listingId": "list_1789471554126",
+      "landownerId": "user_1",
+      "farmerId": "user_1789471553879",
+      "acreageLeased": 5,
+      "pricePerAcreKES": 14000,
+      "durationMonths": 12,
+      "startDate": "2026-09-15",
+      "status": "SIGNED",
+      "mpesaEscrowStatus": "ESCROWED",
+      "paymentsMade": 840000
+    },
+    {
+      "id": "lease_1789472207051",
+      "listingId": "list_1",
+      "landownerId": "user_1",
+      "farmerId": "user_1789472206149",
+      "acreageLeased": 5,
+      "pricePerAcreKES": 12000,
+      "durationMonths": 12,
+      "startDate": "2026-09-15",
+      "status": "SIGNED",
+      "mpesaEscrowStatus": "DISPUTED",
+      "paymentsMade": 60000
+    },
+    {
+      "id": "lease_1789472224139",
+      "listingId": "list_1789472224113",
+      "landownerId": "user_1",
+      "farmerId": "user_1789472223823",
+      "acreageLeased": 5,
+      "pricePerAcreKES": 14000,
+      "durationMonths": 12,
+      "startDate": "2026-09-15",
+      "status": "SIGNED",
+      "mpesaEscrowStatus": "ESCROWED",
+      "paymentsMade": 840000
+    },
+    {
+      "id": "lease_1789472368320",
+      "listingId": "list_1",
+      "landownerId": "user_1",
+      "farmerId": "user_1789472367360",
+      "acreageLeased": 5,
+      "pricePerAcreKES": 12000,
+      "durationMonths": 12,
+      "startDate": "2026-09-15",
+      "status": "SIGNED",
+      "mpesaEscrowStatus": "DISPUTED",
+      "paymentsMade": 60000
+    },
+    {
+      "id": "lease_1789472396846",
+      "listingId": "list_1",
+      "landownerId": "user_1",
+      "farmerId": "user_1789472395979",
+      "acreageLeased": 5,
+      "pricePerAcreKES": 12000,
+      "durationMonths": 12,
+      "startDate": "2026-09-15",
+      "status": "SIGNED",
+      "mpesaEscrowStatus": "DISPUTED",
+      "paymentsMade": 60000
+    },
+    {
+      "id": "lease_1789472400816",
+      "listingId": "list_1789472400786",
+      "landownerId": "user_1",
+      "farmerId": "user_1789472400464",
+      "acreageLeased": 5,
+      "pricePerAcreKES": 14000,
+      "durationMonths": 12,
+      "startDate": "2026-09-15",
+      "status": "SIGNED",
+      "mpesaEscrowStatus": "ESCROWED",
+      "paymentsMade": 840000
+    },
+    {
+      "id": "lease_1789472779688",
+      "listingId": "list_1",
+      "landownerId": "user_1",
+      "farmerId": "user_1789472778827",
+      "acreageLeased": 5,
+      "pricePerAcreKES": 12000,
+      "durationMonths": 12,
+      "startDate": "2026-09-15",
+      "status": "SIGNED",
+      "mpesaEscrowStatus": "DISPUTED",
+      "paymentsMade": 60000
+    },
+    {
+      "id": "lease_1789472783872",
+      "listingId": "list_1789472783848",
+      "landownerId": "user_1",
+      "farmerId": "user_1789472783599",
+      "acreageLeased": 5,
+      "pricePerAcreKES": 14000,
+      "durationMonths": 12,
+      "startDate": "2026-09-15",
+      "status": "SIGNED",
+      "mpesaEscrowStatus": "ESCROWED",
+      "paymentsMade": 840000
+    },
+    {
+      "id": "lease_1789472873587",
+      "listingId": "list_1",
+      "landownerId": "user_1",
+      "farmerId": "user_1789472872746",
+      "acreageLeased": 5,
+      "pricePerAcreKES": 12000,
+      "durationMonths": 12,
+      "startDate": "2026-09-15",
+      "status": "SIGNED",
+      "mpesaEscrowStatus": "DISPUTED",
+      "paymentsMade": 60000
+    },
+    {
+      "id": "lease_1789472877780",
+      "listingId": "list_1789472877757",
+      "landownerId": "user_1",
+      "farmerId": "user_1789472877505",
+      "acreageLeased": 5,
+      "pricePerAcreKES": 14000,
+      "durationMonths": 12,
+      "startDate": "2026-09-15",
+      "status": "SIGNED",
+      "mpesaEscrowStatus": "ESCROWED",
+      "paymentsMade": 840000
+    },
+    {
+      "id": "lease_1789473410443",
+      "listingId": "list_1",
+      "landownerId": "user_1",
+      "farmerId": "user_1789473409521",
+      "acreageLeased": 5,
+      "pricePerAcreKES": 12000,
+      "durationMonths": 12,
+      "startDate": "2026-09-15",
+      "status": "SIGNED",
+      "mpesaEscrowStatus": "DISPUTED",
+      "paymentsMade": 60000
+    },
+    {
+      "id": "lease_1789473419056",
+      "listingId": "list_1789473419031",
+      "landownerId": "user_1",
+      "farmerId": "user_1789473418775",
+      "acreageLeased": 5,
+      "pricePerAcreKES": 14000,
+      "durationMonths": 12,
+      "startDate": "2026-09-15",
+      "status": "SIGNED",
+      "mpesaEscrowStatus": "ESCROWED",
+      "paymentsMade": 840000
+    },
+    {
+      "id": "lease_1789473530741",
+      "listingId": "list_1",
+      "landownerId": "user_1",
+      "farmerId": "user_1789473529912",
+      "acreageLeased": 5,
+      "pricePerAcreKES": 12000,
+      "durationMonths": 12,
+      "startDate": "2026-09-15",
+      "status": "SIGNED",
+      "mpesaEscrowStatus": "DISPUTED",
+      "paymentsMade": 60000
+    },
+    {
+      "id": "lease_1789473535676",
+      "listingId": "list_1789473535652",
+      "landownerId": "user_1",
+      "farmerId": "user_1789473535390",
+      "acreageLeased": 5,
+      "pricePerAcreKES": 14000,
+      "durationMonths": 12,
+      "startDate": "2026-09-15",
+      "status": "SIGNED",
+      "mpesaEscrowStatus": "ESCROWED",
+      "paymentsMade": 840000
+    },
+    {
+      "id": "lease_1789474032637",
+      "listingId": "list_1",
+      "landownerId": "user_1",
+      "farmerId": "user_1789474031712",
+      "acreageLeased": 5,
+      "pricePerAcreKES": 12000,
+      "durationMonths": 12,
+      "startDate": "2026-09-15",
+      "status": "SIGNED",
+      "mpesaEscrowStatus": "DISPUTED",
+      "paymentsMade": 60000
     }
   ],
   "partnerships": [
@@ -291,6 +816,223 @@
           "farmerPayoutKES": 900
         }
       ]
+    },
+    {
+      "id": "part_1789471554153",
+      "listingId": "list_2",
+      "investorId": "user_1789471553879",
+      "farmerId": "user_2",
+      "animalTagId": "SL-KE-TAG-680",
+      "animalType": "dairy",
+      "breed": "Pedigree Ayrshire",
+      "splitPercentInvestor": 40,
+      "status": "ACTIVE",
+      "healthLogs": [
+        {
+          "id": "h_init_1789471554153",
+          "date": "2026-09-15",
+          "status": "Healthy",
+          "notes": "Partnership initiated and registered onto ShambaLoop audits.",
+          "recordedBy": "Vet Inspector Bot"
+        }
+      ],
+      "productionLogs": [
+        {
+          "id": "p_log_1789471554156",
+          "date": "2026-09-15",
+          "metric": "Milk Liters",
+          "quantity": 10,
+          "revenueKES": 600,
+          "investorPayoutKES": 240,
+          "farmerPayoutKES": 360
+        }
+      ]
+    },
+    {
+      "id": "part_1789472224144",
+      "listingId": "list_2",
+      "investorId": "user_1789472223823",
+      "farmerId": "user_2",
+      "animalTagId": "SL-KE-TAG-369",
+      "animalType": "dairy",
+      "breed": "Pedigree Ayrshire",
+      "splitPercentInvestor": 40,
+      "status": "ACTIVE",
+      "healthLogs": [
+        {
+          "id": "h_init_1789472224144",
+          "date": "2026-09-15",
+          "status": "Healthy",
+          "notes": "Partnership initiated and registered onto ShambaLoop audits.",
+          "recordedBy": "Vet Inspector Bot"
+        }
+      ],
+      "productionLogs": [
+        {
+          "id": "p_log_1789472224150",
+          "date": "2026-09-15",
+          "metric": "Milk Liters",
+          "quantity": 10,
+          "revenueKES": 600,
+          "investorPayoutKES": 240,
+          "farmerPayoutKES": 360
+        }
+      ]
+    },
+    {
+      "id": "part_1789472400821",
+      "listingId": "list_2",
+      "investorId": "user_1789472400464",
+      "farmerId": "user_2",
+      "animalTagId": "SL-KE-TAG-415",
+      "animalType": "dairy",
+      "breed": "Pedigree Ayrshire",
+      "splitPercentInvestor": 40,
+      "status": "ACTIVE",
+      "healthLogs": [
+        {
+          "id": "h_init_1789472400821",
+          "date": "2026-09-15",
+          "status": "Healthy",
+          "notes": "Partnership initiated and registered onto ShambaLoop audits.",
+          "recordedBy": "Vet Inspector Bot"
+        }
+      ],
+      "productionLogs": [
+        {
+          "id": "p_log_1789472400827",
+          "date": "2026-09-15",
+          "metric": "Milk Liters",
+          "quantity": 10,
+          "revenueKES": 600,
+          "investorPayoutKES": 240,
+          "farmerPayoutKES": 360
+        }
+      ]
+    },
+    {
+      "id": "part_1789472783877",
+      "listingId": "list_2",
+      "investorId": "user_1789472783599",
+      "farmerId": "user_2",
+      "animalTagId": "SL-KE-TAG-800",
+      "animalType": "dairy",
+      "breed": "Pedigree Ayrshire",
+      "splitPercentInvestor": 40,
+      "status": "ACTIVE",
+      "healthLogs": [
+        {
+          "id": "h_init_1789472783877",
+          "date": "2026-09-15",
+          "status": "Healthy",
+          "notes": "Partnership initiated and registered onto ShambaLoop audits.",
+          "recordedBy": "Vet Inspector Bot"
+        }
+      ],
+      "productionLogs": [
+        {
+          "id": "p_log_1789472783882",
+          "date": "2026-09-15",
+          "metric": "Milk Liters",
+          "quantity": 10,
+          "revenueKES": 600,
+          "investorPayoutKES": 240,
+          "farmerPayoutKES": 360
+        }
+      ]
+    },
+    {
+      "id": "part_1789472877785",
+      "listingId": "list_2",
+      "investorId": "user_1789472877505",
+      "farmerId": "user_2",
+      "animalTagId": "SL-KE-TAG-154",
+      "animalType": "dairy",
+      "breed": "Pedigree Ayrshire",
+      "splitPercentInvestor": 40,
+      "status": "ACTIVE",
+      "healthLogs": [
+        {
+          "id": "h_init_1789472877785",
+          "date": "2026-09-15",
+          "status": "Healthy",
+          "notes": "Partnership initiated and registered onto ShambaLoop audits.",
+          "recordedBy": "Vet Inspector Bot"
+        }
+      ],
+      "productionLogs": [
+        {
+          "id": "p_log_1789472877790",
+          "date": "2026-09-15",
+          "metric": "Milk Liters",
+          "quantity": 10,
+          "revenueKES": 600,
+          "investorPayoutKES": 240,
+          "farmerPayoutKES": 360
+        }
+      ]
+    },
+    {
+      "id": "part_1789473419060",
+      "listingId": "list_2",
+      "investorId": "user_1789473418775",
+      "farmerId": "user_2",
+      "animalTagId": "SL-KE-TAG-485",
+      "animalType": "dairy",
+      "breed": "Pedigree Ayrshire",
+      "splitPercentInvestor": 40,
+      "status": "ACTIVE",
+      "healthLogs": [
+        {
+          "id": "h_init_1789473419060",
+          "date": "2026-09-15",
+          "status": "Healthy",
+          "notes": "Partnership initiated and registered onto ShambaLoop audits.",
+          "recordedBy": "Vet Inspector Bot"
+        }
+      ],
+      "productionLogs": [
+        {
+          "id": "p_log_1789473419065",
+          "date": "2026-09-15",
+          "metric": "Milk Liters",
+          "quantity": 10,
+          "revenueKES": 600,
+          "investorPayoutKES": 240,
+          "farmerPayoutKES": 360
+        }
+      ]
+    },
+    {
+      "id": "part_1789473535681",
+      "listingId": "list_2",
+      "investorId": "user_1789473535390",
+      "farmerId": "user_2",
+      "animalTagId": "SL-KE-TAG-397",
+      "animalType": "dairy",
+      "breed": "Pedigree Ayrshire",
+      "splitPercentInvestor": 40,
+      "status": "ACTIVE",
+      "healthLogs": [
+        {
+          "id": "h_init_1789473535681",
+          "date": "2026-09-15",
+          "status": "Healthy",
+          "notes": "Partnership initiated and registered onto ShambaLoop audits.",
+          "recordedBy": "Vet Inspector Bot"
+        }
+      ],
+      "productionLogs": [
+        {
+          "id": "p_log_1789473535685",
+          "date": "2026-09-15",
+          "metric": "Milk Liters",
+          "quantity": 10,
+          "revenueKES": 600,
+          "investorPayoutKES": 240,
+          "farmerPayoutKES": 360
+        }
+      ]
     }
   ],
   "verifications": [
@@ -304,6 +1046,83 @@
       "notes": "Submitting verification for 15-Acre mechanized cotton tillage zone listed on marketplace.",
       "status": "PENDING",
       "submittedAt": "2026-06-15T08:43:58.211Z"
+    },
+    {
+      "id": "verify_req_1789471554162",
+      "userId": "user_1789471553879",
+      "userName": "Hon. Test Josphat Kiprop",
+      "userRole": "farmer",
+      "documentType": "TITLE_DEED",
+      "documentNumber": "enc_v1:368cdd84fc9c5fbfe54c4075:dd75f8ea1e3aaf668ac3a07e6af05712:5c5d2b27704e1641aadfc5c3ed4388c1fe8726",
+      "notes": "Verification for wheat fields",
+      "status": "PENDING",
+      "submittedAt": "2026-09-15T11:25:54.162Z"
+    },
+    {
+      "id": "verify_req_1789472224156",
+      "userId": "user_1789472223823",
+      "userName": "Hon. Test Josphat Kiprop",
+      "userRole": "farmer",
+      "documentType": "TITLE_DEED",
+      "documentNumber": "enc_v1:98fb75fb8cfdb2571d6b2afb:e4c968751163dc4e1d059f79b8d364f4:840b336b840b635922b713bf9164ac802eb3c0",
+      "notes": "Verification for wheat fields",
+      "status": "PENDING",
+      "submittedAt": "2026-09-15T11:37:04.156Z"
+    },
+    {
+      "id": "verify_req_1789472400832",
+      "userId": "user_1789472400464",
+      "userName": "Hon. Test Josphat Kiprop",
+      "userRole": "farmer",
+      "documentType": "TITLE_DEED",
+      "documentNumber": "enc_v1:62fadb5a044bff51c2aaef58:65ae2177ebc6ee6b9aa8f1afa7cf86ba:1ba2e78119a55b9dc9e25b626fcc049e493c71",
+      "notes": "Verification for wheat fields",
+      "status": "PENDING",
+      "submittedAt": "2026-09-15T11:40:00.832Z"
+    },
+    {
+      "id": "verify_req_1789472783888",
+      "userId": "user_1789472783599",
+      "userName": "Hon. Test Josphat Kiprop",
+      "userRole": "farmer",
+      "documentType": "TITLE_DEED",
+      "documentNumber": "enc_v1:1caa6ee52ee25a9cd57b54ec:d9e7f9fe2eaece64d1db341a0f3800f8:ebfd9061f5f570e0fc4f9f92e6970f838950a5",
+      "notes": "Verification for wheat fields",
+      "status": "PENDING",
+      "submittedAt": "2026-09-15T11:46:23.888Z"
+    },
+    {
+      "id": "verify_req_1789472877795",
+      "userId": "user_1789472877505",
+      "userName": "Hon. Test Josphat Kiprop",
+      "userRole": "farmer",
+      "documentType": "TITLE_DEED",
+      "documentNumber": "enc_v1:1af6b0598043751f30f7b5bc:4329ca3b89fa197203ec5487f158f8f0:819ff028397e9f667590c5303c54e2f1ed198c",
+      "notes": "Verification for wheat fields",
+      "status": "PENDING",
+      "submittedAt": "2026-09-15T11:47:57.795Z"
+    },
+    {
+      "id": "verify_req_1789473419069",
+      "userId": "user_1789473418775",
+      "userName": "Hon. Test Josphat Kiprop",
+      "userRole": "farmer",
+      "documentType": "TITLE_DEED",
+      "documentNumber": "enc_v1:ae5500999a35fa37e7ef166a:ab6b8e80e2442c5e3eca62f3a998c6ab:238f416be5e5ca2caf21799c8fc3344f0a0a57",
+      "notes": "Verification for wheat fields",
+      "status": "PENDING",
+      "submittedAt": "2026-09-15T11:56:59.069Z"
+    },
+    {
+      "id": "verify_req_1789473535690",
+      "userId": "user_1789473535390",
+      "userName": "Hon. Test Josphat Kiprop",
+      "userRole": "farmer",
+      "documentType": "TITLE_DEED",
+      "documentNumber": "enc_v1:2a69eddcfa5dcbec27580a9d:ad76ef64d959fd10355114d2f565dfe0:57f3701c9d86388850b00dee31297aa146d076",
+      "notes": "Verification for wheat fields",
+      "status": "PENDING",
+      "submittedAt": "2026-09-15T11:58:55.690Z"
     }
   ],
   "transactions": [
@@ -351,6 +1170,159 @@
       "purpose": "Integration Test Lease Deposit",
       "status": "SUCCESS",
       "timestamp": "2026-09-15T09:15:51.732Z"
+    },
+    {
+      "id": "tx_1789471459792",
+      "transactionId": "UGL9220HJK",
+      "phoneNumber": "0782413667",
+      "amountKES": 2500,
+      "purpose": "Integration Test Lease Deposit",
+      "status": "SUCCESS",
+      "timestamp": "2026-09-15T11:24:19.792Z"
+    },
+    {
+      "id": "tx_1789471526610",
+      "transactionId": "SGL6429HJK",
+      "phoneNumber": "0787808215",
+      "amountKES": 2500,
+      "purpose": "Integration Test Lease Deposit",
+      "status": "SUCCESS",
+      "timestamp": "2026-09-15T11:25:26.610Z"
+    },
+    {
+      "id": "tx_1789471554140",
+      "transactionId": "SGL1976HJK",
+      "phoneNumber": "0756592053",
+      "amountKES": 2000,
+      "purpose": "Escrow Lock for Lease Demo",
+      "status": "SUCCESS",
+      "timestamp": "2026-09-15T11:25:54.140Z"
+    },
+    {
+      "id": "tx_1789472207034",
+      "transactionId": "XGL7403HJK",
+      "phoneNumber": "0767814737",
+      "amountKES": 2500,
+      "purpose": "Integration Test Lease Deposit",
+      "status": "SUCCESS",
+      "timestamp": "2026-09-15T11:36:47.034Z"
+    },
+    {
+      "id": "tx_1789472224127",
+      "transactionId": "XGL5909HJK",
+      "phoneNumber": "0737506103",
+      "amountKES": 2000,
+      "purpose": "Escrow Lock for Lease Demo",
+      "status": "SUCCESS",
+      "timestamp": "2026-09-15T11:37:04.127Z"
+    },
+    {
+      "id": "tx_1789472368306",
+      "transactionId": "ZGL1818HJK",
+      "phoneNumber": "0786100166",
+      "amountKES": 2500,
+      "purpose": "Integration Test Lease Deposit",
+      "status": "SUCCESS",
+      "timestamp": "2026-09-15T11:39:28.306Z"
+    },
+    {
+      "id": "tx_1789472396826",
+      "transactionId": "ZGL3229HJK",
+      "phoneNumber": "0768618112",
+      "amountKES": 2500,
+      "purpose": "Integration Test Lease Deposit",
+      "status": "SUCCESS",
+      "timestamp": "2026-09-15T11:39:56.826Z"
+    },
+    {
+      "id": "tx_1789472400805",
+      "transactionId": "TGL8267HJK",
+      "phoneNumber": "0729981446",
+      "amountKES": 2000,
+      "purpose": "Escrow Lock for Lease Demo",
+      "status": "SUCCESS",
+      "timestamp": "2026-09-15T11:40:00.805Z"
+    },
+    {
+      "id": "tx_1789472779670",
+      "transactionId": "XGL8002HJK",
+      "phoneNumber": "0723605202",
+      "amountKES": 2500,
+      "purpose": "Integration Test Lease Deposit",
+      "status": "SUCCESS",
+      "timestamp": "2026-09-15T11:46:19.670Z"
+    },
+    {
+      "id": "tx_1789472783860",
+      "transactionId": "ZGL4191HJK",
+      "phoneNumber": "0792324524",
+      "amountKES": 2000,
+      "purpose": "Escrow Lock for Lease Demo",
+      "status": "SUCCESS",
+      "timestamp": "2026-09-15T11:46:23.860Z"
+    },
+    {
+      "id": "tx_1789472873573",
+      "transactionId": "TGL4012HJK",
+      "phoneNumber": "0780966702",
+      "amountKES": 2500,
+      "purpose": "Integration Test Lease Deposit",
+      "status": "SUCCESS",
+      "timestamp": "2026-09-15T11:47:53.573Z"
+    },
+    {
+      "id": "tx_1789472877770",
+      "transactionId": "XGL9883HJK",
+      "phoneNumber": "0783370568",
+      "amountKES": 2000,
+      "purpose": "Escrow Lock for Lease Demo",
+      "status": "SUCCESS",
+      "timestamp": "2026-09-15T11:47:57.770Z"
+    },
+    {
+      "id": "tx_1789473410422",
+      "transactionId": "ZGL8846HJK",
+      "phoneNumber": "0724866448",
+      "amountKES": 2500,
+      "purpose": "Integration Test Lease Deposit",
+      "status": "SUCCESS",
+      "timestamp": "2026-09-15T11:56:50.422Z"
+    },
+    {
+      "id": "tx_1789473419046",
+      "transactionId": "ZGL5529HJK",
+      "phoneNumber": "0725428970",
+      "amountKES": 2000,
+      "purpose": "Escrow Lock for Lease Demo",
+      "status": "SUCCESS",
+      "timestamp": "2026-09-15T11:56:59.046Z"
+    },
+    {
+      "id": "tx_1789473530728",
+      "transactionId": "UGL1236HJK",
+      "phoneNumber": "0796325948",
+      "amountKES": 2500,
+      "purpose": "Integration Test Lease Deposit",
+      "status": "SUCCESS",
+      "timestamp": "2026-09-15T11:58:50.728Z"
+    },
+    {
+      "id": "tx_1789473535665",
+      "transactionId": "UGL1445HJK",
+      "phoneNumber": "0732249757",
+      "amountKES": 2000,
+      "purpose": "Escrow Lock for Lease Demo",
+      "status": "SUCCESS",
+      "timestamp": "2026-09-15T11:58:55.665Z"
+    },
+    {
+      "id": "tx_1789474032617",
+      "transactionId": "ZGL4182HJK",
+      "phoneNumber": "0798692532",
+      "amountKES": 2500,
+      "purpose": "Integration Test Lease Deposit",
+      "status": "SUCCESS",
+      "timestamp": "2026-09-15T12:07:12.617Z"
     }
   ],
   "passwordHashes": {
@@ -361,7 +1333,24 @@
     "user_1781515857278": "$2b$10$7opPen/Djoy4LMrjSVEjr.5PQi/EiKoyqrJx1WKPCpPhRQZw6Dyne",
     "user_1781515906493": "$2b$10$iuDMVCPg4yp/AK58bXKikeoHnBpWb7/mDOE6rgDZDWoPtHvZQR532",
     "user_1781516088575": "$2b$10$97gKLq6Xgs1Qvuy4jWwECeq4X/TGg7Vcgvvjpz31QQrl4Zi3kguVe",
-    "user_1789463750818": "$2b$10$EWlOErt1KmD4QCf0WX978.firSSQxGlgmH3Yndz92DE.2oYHAdp8W"
+    "user_1789463750818": "$2b$10$EWlOErt1KmD4QCf0WX978.firSSQxGlgmH3Yndz92DE.2oYHAdp8W",
+    "user_1789471458911": "$2b$10$IGxOoZgLGT2Je2y8UUk3Iux2vXmjE4ksFW4xLKIH1QWj4W4hxRzzm",
+    "user_1789471525786": "$2b$10$7rPh6caB8vLkj/x31XOdPeFz/sRkAhdbdbKWe9e47v7Bv4pbJSSLG",
+    "user_1789471553879": "$2b$10$zAe7F5.IVQeHoTZgsNxmoOJsw2RoG6XuDAnDAQtEfff22M8Z.TPUy",
+    "user_1789472206149": "$2b$10$SyZvAFJtZoiaA3rnOUbFce6/pmlTbHGlzQmrbhrdj7YqSDyAWMcoW",
+    "user_1789472223823": "$2b$10$Krt7uA1hUKJkL.iHeuBpx.gqL3zUefYVrMVYAWx/zkup.ehZeNrSS",
+    "user_1789472367360": "$2b$10$hbsjCy7NKyo8EBWwDtiQDexRy9lj466S/AFNFGnEJrprzQ9/Aay0q",
+    "user_1789472395979": "$2b$10$3f4.R3ptMd9yBMJKImAIn.0aB4cCIhl.dlgcbbnqERNP2hlLkhXXO",
+    "user_1789472400464": "$2b$10$HyEXDx/WFIiES4YhWQWGb.YQgK6V9wBG8OQFW4Xgmwdk17jXB6sBa",
+    "user_1789472778827": "$2b$10$fBR.iIMai0WmpUMfZcSusut.4VFXsXJbR2ya8HDS3QMCMouFMSpN.",
+    "user_1789472783599": "$2b$10$lm3kdfTnB6PcDKGmJV4s2OWOYHl6SWtnSssNAjPzNLR1sMdeHrAAu",
+    "user_1789472872746": "$2b$10$arrdjV.qxil1mQWWuWJ4A.W1fdwDbFrmwciMC/5U7LGOapI2UOGtO",
+    "user_1789472877505": "$2b$10$BU41BXs8qetGzGwj78PhLeW1Bul0.6nCq2MfvgKYtqOqqqIYb0Gv.",
+    "user_1789473409521": "$2b$10$nbRMUJvB4.edk1xBrx.vEupiAFujBuH7Je5/nSuZAwY34W2sGmegm",
+    "user_1789473418775": "$2b$10$Qj005wuXLNNjKmVfGLOZV.fWiZO9ON5D6ZBN4oDXh0QhSTnYuMQ4u",
+    "user_1789473529912": "$2b$10$C1wfsoJCSmz7j1THWY.MwuEdh/EAWFYsJS1iXIFHVesvamS7HLALu",
+    "user_1789473535390": "$2b$10$P6VrwuM5kK6W7mh/NYdVxOpn3EpdnxYpaMGvJTu4IZUVNpXabbBeG",
+    "user_1789474031712": "$2b$10$KJMt.ZS9dgGMs39763QBSOZqn/vLoU9hxo8DDjEfJF7VRvWNWSR6S"
   },
   "refreshTokens": [
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InVzZXJfMiIsImlhdCI6MTc4MTUxNTU3MCwiZXhwIjoxNzgyMTIwMzcwfQ.oBUC3PUhaTAOvmfSF5IbMyQO1yJ_bA-DijbFQzQgYx8",
@@ -372,7 +1361,41 @@
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InVzZXJfMTc4MTUxNjA4ODU3NSIsImlhdCI6MTc4MTUxNjA4OCwiZXhwIjoxNzgyMTIwODg4fQ.YV2FCaJh8D9UIMANBO02xJPUEMi5rI5ojhUOdbmywPU",
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InVzZXJfMTc4MTUxNjA4ODU3NSIsImlhdCI6MTc4MTUxNjA4OCwiZXhwIjoxNzgyMTIwODg4fQ.YV2FCaJh8D9UIMANBO02xJPUEMi5rI5ojhUOdbmywPU",
     "4db46f9bd9fe22c1403ba7c3fbb460b1f11a089579a09b96019a1b4bbb32d0d4",
-    "37846b9f442eb067a0c26f332e6173ae89f4a80fe623ab454833da855bbe55ec"
+    "37846b9f442eb067a0c26f332e6173ae89f4a80fe623ab454833da855bbe55ec",
+    "37cbeb1a5af2466177f1327ffa42931dd712caf8a2d0e77005d0f92863d0a398",
+    "37cbeb1a5af2466177f1327ffa42931dd712caf8a2d0e77005d0f92863d0a398",
+    "584cf174d92bebfa700d137e51f5b7dd9cca2a64bd099e1b635e66056db312d1",
+    "04a1a66c4fa743afe6db9d2008ae7e859bafa12f5c8df50c7bce4ee8298f7c8f",
+    "ef7cb9e3c0d38f1d0a5f8184d0274f300feb584e0db6b8898e2d84e697bf7680",
+    "8ba30f0e1b485e4be49d02aa77317df71e3674bfd000296a0945cdd3e5ffd0e8",
+    "c7699644a6deaa6082a76c835bae4b3cd845dd2dca62137f70bf4a41a0352fbc",
+    "c7699644a6deaa6082a76c835bae4b3cd845dd2dca62137f70bf4a41a0352fbc",
+    "ab9ff4f04fbe6cd69c9610e8f7588eff83feb6e3b145a7523969df7a4be48df4",
+    "c3fe9035295a3bf0100cfa21f95fa4e303800adbefb313e0ff40f2ba8d4eba76",
+    "9b6535d5399b0804dbebd693696417e6a35e254e3cbc70719bf62bd9dd572dc3",
+    "9b6535d5399b0804dbebd693696417e6a35e254e3cbc70719bf62bd9dd572dc3",
+    "652d1ad6a1190c0a9d612052d50e2302de641a1bd1c7831c64bb7ec3024c56d9",
+    "652d1ad6a1190c0a9d612052d50e2302de641a1bd1c7831c64bb7ec3024c56d9",
+    "e5f2220979f593a1d2738d9d17e0b37bbb5e86beaa65ea15f03f6ff42138f92b",
+    "e5f2220979f593a1d2738d9d17e0b37bbb5e86beaa65ea15f03f6ff42138f92b",
+    "adf76acdf40eaf7a7dbf409fde7495ec1b0377305738b4fa575a2727c4f1a4fd",
+    "fa03af5c19ef4bc4fce3c1cb3a9fcfccebf8a01cbcd454708d6e8579a5ac2af5",
+    "473864d6bef06a57704cfa70b913651968daeaf73d70152b9e4cdf27e9cec25d",
+    "473864d6bef06a57704cfa70b913651968daeaf73d70152b9e4cdf27e9cec25d",
+    "7d6473002c179ec964d40122f38e0ea3d7a81639f70b69432e540fc18f9cfe41",
+    "7d6473002c179ec964d40122f38e0ea3d7a81639f70b69432e540fc18f9cfe41",
+    "a248ed7be8c241dc85781363dc6a63ea74e0e970f0fb133cf4d6c4c6c6c41f42",
+    "a248ed7be8c241dc85781363dc6a63ea74e0e970f0fb133cf4d6c4c6c6c41f42",
+    "93cb6e833d471ae62c8d5e9cbafa0c0a8c15ea57f67edb4395127e89862d1e10",
+    "93cb6e833d471ae62c8d5e9cbafa0c0a8c15ea57f67edb4395127e89862d1e10",
+    "a5da9ef07066432f24506d58a1dfc3cff29436abbb50769e2d65249398cbed9f",
+    "a80c5e07f33c86f030dd7790005cd2f8a26346bea16485b45a5f838946d5abb7",
+    "ea01a8dd81052f669e47d1862ba80e574e5c92c05c5499933443235de587f483",
+    "ea01a8dd81052f669e47d1862ba80e574e5c92c05c5499933443235de587f483",
+    "d55e84b9546e265c4142510b4a5eeddf77b131aabeae52a3ed0c1fc2a5658c93",
+    "d55e84b9546e265c4142510b4a5eeddf77b131aabeae52a3ed0c1fc2a5658c93",
+    "63cf0c84c0154694c1a19c4f264ccd4d90f550d3110f9891c5a83b4fe9547eb2",
+    "b759084739676098db6cd024175359ba2e9b1adba6acab0f6821e7d418b5dc9e"
   ],
   "disputes": [
     {
@@ -384,6 +1407,106 @@
       "status": "OPEN",
       "createdAt": "2026-09-15T09:15:51.758Z",
       "updatedAt": "2026-09-15T09:15:51.758Z"
+    },
+    {
+      "id": "disp_1789471459816",
+      "leaseId": "lease_1789471459810",
+      "creatorId": "user_1789471458911",
+      "creatorName": "Senior Test Farmer Kiprop",
+      "reason": "Landowner denied deep tractor plowing access, violating verbal agreements.",
+      "status": "OPEN",
+      "createdAt": "2026-09-15T11:24:19.816Z",
+      "updatedAt": "2026-09-15T11:24:19.816Z"
+    },
+    {
+      "id": "disp_1789471526631",
+      "leaseId": "lease_1789471526626",
+      "creatorId": "user_1789471525786",
+      "creatorName": "Senior Test Farmer Kiprop",
+      "reason": "Landowner denied deep tractor plowing access, violating verbal agreements.",
+      "status": "OPEN",
+      "createdAt": "2026-09-15T11:25:26.631Z",
+      "updatedAt": "2026-09-15T11:25:26.631Z"
+    },
+    {
+      "id": "disp_1789472207056",
+      "leaseId": "lease_1789472207051",
+      "creatorId": "user_1789472206149",
+      "creatorName": "Senior Test Farmer Kiprop",
+      "reason": "Landowner denied deep tractor plowing access, violating verbal agreements.",
+      "status": "OPEN",
+      "createdAt": "2026-09-15T11:36:47.056Z",
+      "updatedAt": "2026-09-15T11:36:47.056Z"
+    },
+    {
+      "id": "disp_1789472368325",
+      "leaseId": "lease_1789472368320",
+      "creatorId": "user_1789472367360",
+      "creatorName": "Senior Test Farmer Kiprop",
+      "reason": "Landowner denied deep tractor plowing access, violating verbal agreements.",
+      "status": "OPEN",
+      "createdAt": "2026-09-15T11:39:28.325Z",
+      "updatedAt": "2026-09-15T11:39:28.325Z"
+    },
+    {
+      "id": "disp_1789472396851",
+      "leaseId": "lease_1789472396846",
+      "creatorId": "user_1789472395979",
+      "creatorName": "Senior Test Farmer Kiprop",
+      "reason": "Landowner denied deep tractor plowing access, violating verbal agreements.",
+      "status": "OPEN",
+      "createdAt": "2026-09-15T11:39:56.851Z",
+      "updatedAt": "2026-09-15T11:39:56.851Z"
+    },
+    {
+      "id": "disp_1789472779691",
+      "leaseId": "lease_1789472779688",
+      "creatorId": "user_1789472778827",
+      "creatorName": "Senior Test Farmer Kiprop",
+      "reason": "Landowner denied deep tractor plowing access, violating verbal agreements.",
+      "status": "OPEN",
+      "createdAt": "2026-09-15T11:46:19.691Z",
+      "updatedAt": "2026-09-15T11:46:19.691Z"
+    },
+    {
+      "id": "disp_1789472873592",
+      "leaseId": "lease_1789472873587",
+      "creatorId": "user_1789472872746",
+      "creatorName": "Senior Test Farmer Kiprop",
+      "reason": "Landowner denied deep tractor plowing access, violating verbal agreements.",
+      "status": "OPEN",
+      "createdAt": "2026-09-15T11:47:53.592Z",
+      "updatedAt": "2026-09-15T11:47:53.592Z"
+    },
+    {
+      "id": "disp_1789473410455",
+      "leaseId": "lease_1789473410443",
+      "creatorId": "user_1789473409521",
+      "creatorName": "Senior Test Farmer Kiprop",
+      "reason": "Landowner denied deep tractor plowing access, violating verbal agreements.",
+      "status": "OPEN",
+      "createdAt": "2026-09-15T11:56:50.455Z",
+      "updatedAt": "2026-09-15T11:56:50.455Z"
+    },
+    {
+      "id": "disp_1789473530746",
+      "leaseId": "lease_1789473530741",
+      "creatorId": "user_1789473529912",
+      "creatorName": "Senior Test Farmer Kiprop",
+      "reason": "Landowner denied deep tractor plowing access, violating verbal agreements.",
+      "status": "OPEN",
+      "createdAt": "2026-09-15T11:58:50.746Z",
+      "updatedAt": "2026-09-15T11:58:50.746Z"
+    },
+    {
+      "id": "disp_1789474032642",
+      "leaseId": "lease_1789474032637",
+      "creatorId": "user_1789474031712",
+      "creatorName": "Senior Test Farmer Kiprop",
+      "reason": "Landowner denied deep tractor plowing access, violating verbal agreements.",
+      "status": "OPEN",
+      "createdAt": "2026-09-15T12:07:12.642Z",
+      "updatedAt": "2026-09-15T12:07:12.642Z"
     }
   ]
 }

@@ -179,3 +179,89 @@ export interface Dispute {
   updatedAt: string;
   resolutionNotes?: string;
 }
+
+// ==========================================
+// 4-DASHBOARD CORE EXTENSIONS (SHAMBALOOP)
+// ==========================================
+
+export interface FarmerProposal {
+  id: string;
+  farmerId: string;
+  farmerName: string;
+  farmerPhone: string;
+  investorId?: string;
+  investorName?: string;
+  title: string;
+  sector: 'Dairy' | 'Crops' | 'Poultry' | 'Horticulture' | 'Goats' | 'Mixed';
+  farmDescription: string;
+  capitalRequestedKES: number;
+  farmerContribution: string; // e.g., "5 acres arable land, water reservoir, daily labor"
+  investorSharePercent: number; // e.g. 40
+  farmerSharePercent: number; // e.g. 60
+  status: 'DRAFT' | 'SUBMITTED' | 'NEGOTIATING' | 'ACCEPTED' | 'REJECTED';
+  createdAt: string;
+}
+
+export interface InvestorCriteria {
+  id: string;
+  investorId: string;
+  investorName: string;
+  lookingFor: 'FARMER_WITH_LAND_NEEDING_CAPITAL' | 'FARM_MANAGER_EXPERTISE' | 'LAND_FOR_LEASE_PROJECT';
+  budgetKES: number;
+  preferredSectors: string[];
+  targetCounties: string[];
+  notes: string;
+  status: 'ACTIVE' | 'MATCHED' | 'PAUSED';
+  createdAt: string;
+}
+
+export interface FarmEvent {
+  id: string;
+  farmId: string;
+  farmerName: string;
+  eventType: 'CALVING_DUE' | 'DROUGHT_ALERT' | 'PEST_ALERT' | 'VACCINATION_DUE' | 'HARVEST_WINDOW' | 'DISEASE_OUTBREAK';
+  title: string;
+  description: string;
+  severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  date: string;
+  actionTaken?: string;
+  reportedBy: string;
+  impactOnProduce?: string;
+}
+
+export interface VeterinaryJob {
+  id: string;
+  farmId: string;
+  farmerName: string;
+  farmerPhone: string;
+  location: string;
+  animalOrCropType: string;
+  serviceType: 'CLINICAL_CHECK' | 'VACCINATION' | 'PREGNANCY_SCAN' | 'EMERGENCY_SURGERY' | 'NUTRITIONAL_AUDIT';
+  urgency: 'NORMAL' | 'URGENT' | 'EMERGENCY';
+  status: 'OPEN' | 'ASSIGNED' | 'IN_PROGRESS' | 'COMPLETED';
+  assignedVetId?: string;
+  assignedVetName?: string;
+  requestedDate: string;
+  notes?: string;
+}
+
+export interface TripartiteMatch {
+  id: string;
+  investorId: string;
+  investorName: string;
+  farmerId: string;
+  farmerName: string;
+  vetId?: string;
+  vetName?: string;
+  veterinarianId?: string;
+  veterinarianName?: string;
+  agreementTitle?: string;
+  sector: string;
+  capitalKES?: number;
+  allocatedCapitalKES?: number;
+  agreedTerms?: string;
+  status: 'PROPOSED' | 'ACTIVE' | 'REVIEW' | 'COMPLETED';
+  startDate?: string;
+  createdAt?: string;
+}
+

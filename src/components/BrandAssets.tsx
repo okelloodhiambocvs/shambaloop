@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 
 interface LogoProps {
   className?: string;
@@ -12,6 +12,7 @@ interface LogoProps {
  * - Design concept: Interlooping circular rings signifying connected ecosystems (Loop)
  * - Woven together with a fresh sprout (Shamba) for agriculture & land
  * - Embedded with a glowing seed of opportunity in Gold
+ * - Identical and vibrant in both Light and Dark mode for consistent brand identity
  */
 export const Logo: React.FC<LogoProps> = ({
   className = '',
@@ -19,51 +20,56 @@ export const Logo: React.FC<LogoProps> = ({
   variant = 'full',
   isDarkMode = false
 }) => {
+  const uniqueId = useId().replace(/:/g, '_');
+  const greenGradId = `logo_green_${uniqueId}`;
+  const brownGradId = `logo_brown_${uniqueId}`;
+  const goldGradId = `logo_gold_${uniqueId}`;
+
+  const isDark = isDarkMode || variant === 'footer';
+
   return (
     <div className={`flex items-center gap-2.5 select-none ${className}`} id="shambaloop_brand_logo_comp">
-      {/* SVG Emblem Mark */}
+      {/* SVG Emblem Mark - High-contrast theme-aware styling */}
       <svg
         width={size}
         height={size}
         viewBox="0 0 100 100"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className="shrink-0 transition-transform duration-300 hover:scale-105"
+        className="shrink-0 transition-transform duration-300 hover:scale-105 drop-shadow-xs"
         id="shambaloop_logo_svg"
+        role="img"
+        aria-label="ShambaLoop Logo"
       >
         <defs>
-          <linearGradient id="logo-green-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor={isDarkMode ? '#a2784d' : '#2e774a'} />
-            <stop offset="100%" stopColor={isDarkMode ? '#a2784d' : '#2e774a'} />
+          <linearGradient id={greenGradId} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor={isDark ? "#34d399" : "#1F6B3D"} />
+            <stop offset="100%" stopColor={isDark ? "#10b981" : "#2E774A"} />
           </linearGradient>
-          <linearGradient id="logo-brown-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor={isDarkMode ? '#eeec05' : '#a2784d'} />
-            <stop offset="100%" stopColor={isDarkMode ? '#eeec05' : '#a2784d'} />
+          <linearGradient id={brownGradId} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor={isDark ? "#fbbf24" : "#8B5E3C"} />
+            <stop offset="100%" stopColor={isDark ? "#f59e0b" : "#A2784D"} />
           </linearGradient>
-          <linearGradient id="logo-gold-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#eeec05" />
-            <stop offset="100%" stopColor="#eeec05" />
+          <linearGradient id={goldGradId} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#F59E0B" />
+            <stop offset="100%" stopColor="#EAB308" />
           </linearGradient>
-          <filter id="logo-glow" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="3" result="blur" />
-            <feComposite in="SourceGraphic" in2="blur" operator="over" />
-          </filter>
         </defs>
 
-        {/* Outer Organic Land/Crop Circle (Shamba) in brand Green */}
+        {/* Outer Organic Land/Crop Circle (Shamba) in theme-aware brand Green */}
         <path
           d="M 50 12 C 73 12, 88 28, 88 50 C 88 72, 72 88, 50 88 C 28 88, 12 72, 12 50 C 12 28, 27 12, 50 12 Z"
-          stroke="url(#logo-green-grad)"
+          stroke={`url(#${greenGradId})`}
           strokeWidth="8"
           strokeLinecap="round"
           fill="none"
         />
 
-        {/* Inner Moebius-Inspired Connection Loop (Ecosystem Loop) in brand Earth Brown */}
+        {/* Inner Moebius-Inspired Connection Loop (Ecosystem Loop) in theme-aware brand Earth/Gold */}
         <path
           d="M 32 50 C 32 36, 46 36, 50 50 C 54 64, 68 64, 68 50 C 68 36, 54 36, 50 50 C 46 64, 32 64, 32 50 Z"
-          stroke="url(#logo-brown-grad)"
-          strokeWidth="6"
+          stroke={`url(#${brownGradId})`}
+          strokeWidth="6.5"
           strokeLinecap="round"
           fill="none"
         />
@@ -72,26 +78,29 @@ export const Logo: React.FC<LogoProps> = ({
         <circle
           cx="50"
           cy="50"
-          r="9"
-          fill="url(#logo-gold-grad)"
-          filter="url(#logo-glow)"
+          r="8.5"
+          fill={`url(#${goldGradId})`}
         />
 
         {/* Small rising sprout helper leaf on the top-right */}
         <path
           d="M 72 28 C 76 18, 86 14, 86 14 C 86 14, 80 23, 70 26 Z"
-          fill="url(#logo-gold-grad)"
+          fill={`url(#${goldGradId})`}
         />
       </svg>
 
-      {/* Typography Layout */}
+      {/* Typography Layout with strict contrast */}
       {variant !== 'symbol' && (
         <div className="flex flex-col leading-none text-left">
-          <div className="flex items-baseline" id="logo_title_words">
-            <span className="text-xl font-extrabold font-display tracking-tight text-[#2e774a] dark:text-white">Shamba</span>
-            <span className="text-xl font-bold font-display tracking-tight text-[#a2784d] dark:text-white">Loop</span>
+          <div className="flex items-baseline gap-0.5" id="logo_title_words">
+            <span className={`text-xl font-extrabold font-display tracking-tight ${isDark ? 'text-emerald-400' : 'text-[#1F6B3D]'}`}>
+              Shamba
+            </span>
+            <span className={`text-xl font-bold font-display tracking-tight ${isDark ? 'text-amber-400' : 'text-[#8B5E3C]'}`}>
+              Loop
+            </span>
           </div>
-          <span className="text-[9px] text-slate-600 dark:text-white/80 font-bold tracking-wider uppercase mt-0.5">
+          <span className={`text-[9px] font-bold tracking-wider uppercase mt-0.5 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
             {variant === 'footer' ? 'Connecting people, land, and opportunity.' : 'Ecosystem Trust Marketplace'}
           </span>
         </div>

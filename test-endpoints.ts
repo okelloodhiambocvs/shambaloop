@@ -255,8 +255,11 @@ async function runTests() {
   }
 }
 
+import { fileURLToPath } from 'url';
+import path from 'path';
+
 // Runnable from terminal or file loaders
-if (require.main === module) {
+if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
   runTests();
 }
 
