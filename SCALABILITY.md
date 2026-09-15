@@ -2,11 +2,11 @@
 
 ## Current architecture
 
-ShambaLoop currently runs as one Express process with a Vite-served React client in development. `server.ts` reads and writes `data/db.json` synchronously. Audit records are appended to `data/audit_log.json`. The process owns in-memory OTP and rate-limit registries. Farmer proposals, farm events, veterinary jobs, and veterinary reports now use the same JSON store. Uploaded files and external payment processing are not implemented as durable services in this codebase.
+ShambaLoop currently runs as one Express process with a Vite-served React client in development. `server.ts` reads and writes `data/db.json` synchronously. Audit records are appended to `data/audit_log.json`. The process owns in-memory OTP and rate-limit registries. Farmer proposals, farm events, veterinary jobs, veterinary reports, and investor opportunity briefs use the same JSON store. Uploaded files and external payment processing are not implemented as durable services in this codebase.
 
 ## Current constraints
 
-- A JSON file is loaded and rewritten by one process; concurrent writers can overwrite each other and multiple instances do not share state. This now includes farmer proposals, farm events, veterinary jobs, and reports.
+- A JSON file is loaded and rewritten by one process; concurrent writers can overwrite each other and multiple instances do not share state. This now includes farmer proposals, farm events, veterinary jobs, reports, and investor opportunity briefs.
 - Synchronous file I/O and JSON aggregation make API latency proportional to data size.
 - OTP state and rate-limit buckets are lost on restart and are not coordinated between instances.
 - Audit records are local files with no retention, query, tamper-evidence, or alerting service.
@@ -30,7 +30,7 @@ Keep the current route boundaries while splitting Express routers by domain when
 
 ## Frontend scaling
 
-The current admin screen keeps one compact queue per area. When queues become large, preserve that model but fetch paginated tables on demand, debounce search, and invalidate only the affected query after a decision. Avoid returning KYC detail in list endpoints. Existing client state can remain the integration layer until independent data fetching is justified.
+The dashboards keep compact, decision-oriented views. When collections become large, fetch paginated tables on demand, debounce farmer/listing search, and invalidate only the affected query after a decision. Keep private farm monitoring server-filtered and avoid returning KYC detail in list endpoints. Existing client state can remain the integration layer until independent data fetching is justified.
 
 ## Caching
 
