@@ -145,7 +145,6 @@ const COUNTIES_LIST = ['All Counties', 'Nyandarua', 'Kiambu', 'Nakuru', 'Uasin G
 export const CANONICAL_SEED_USERS = DEMO_ACCOUNT_PROFILES;
 
 const seedUsers: User[] = [
-  CANONICAL_SEED_USERS[UserRole.LANDOWNER],
   CANONICAL_SEED_USERS[UserRole.FARMER],
   CANONICAL_SEED_USERS[UserRole.INVESTOR],
   CANONICAL_SEED_USERS[UserRole.ADMIN],
@@ -382,7 +381,7 @@ export default function App() {
     localStorage.removeItem('sl_token');
   };
 
-  const handleSaveVeterinaryReport = async (input: { partnershipId: string; visitType: string; findings: string; recommendations: string; status: VeterinaryReport['status'] }) => {
+  const handleSaveVeterinaryReport = async (input: { partnershipId: string; jobId: string; visitType: string; findings: string; recommendations: string; status: VeterinaryReport['status'] }) => {
     const { data, error } = await veterinaryFetch<VeterinaryReport>('/api/veterinary/reports', { method: 'POST', body: JSON.stringify(input) });
     if (error || !data) throw new Error(error || 'Could not publish the veterinary report.');
     setVeterinaryReports(previous => [data, ...previous]);
@@ -742,7 +741,7 @@ export default function App() {
   const [selectedType, setSelectedType] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('default');
-  const [dashboardView, setDashboardView] = useState<'overview' | 'listings'>('overview');
+  const [dashboardView, setDashboardView] = useState<'overview'>('overview');
 
   // -------------------------------------------------------------
   // Offline & Data Sync Service Worker Infrastructure state
@@ -2546,7 +2545,7 @@ export default function App() {
         <nav className="flex flex-col gap-3 rounded-2xl border border-border-base bg-card-bg p-3 sm:flex-row sm:items-center sm:justify-between" aria-label="Workspace views" id="dashboard_view_navigation">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">My Farm workspace</p>
-            <p className="text-xs font-semibold text-text-base">Switch between your dashboard and marketplace without leaving the top of the page.</p>
+            <p className="text-xs font-semibold text-text-base">Your authenticated dashboard workspace.</p>
           </div>
           <div className="flex w-full items-center gap-2 sm:w-auto">
             <button
@@ -2556,14 +2555,6 @@ export default function App() {
               className={`flex-1 rounded-lg px-4 py-2 text-xs font-bold transition-colors sm:flex-none ${dashboardView === 'overview' ? 'bg-emerald-700 text-white' : 'bg-card-bg text-text-base border border-border-base hover:bg-slate-100 dark:hover:bg-slate-800'}`}
             >
               Dashboard
-            </button>
-            <button
-              type="button"
-              onClick={() => setDashboardView('listings')}
-              aria-current={dashboardView === 'listings' ? 'page' : undefined}
-              className={`flex-1 rounded-lg px-4 py-2 text-xs font-bold transition-colors sm:flex-none ${dashboardView === 'listings' ? 'bg-emerald-700 text-white' : 'bg-card-bg text-text-base border border-border-base hover:bg-slate-100 dark:hover:bg-slate-800'}`}
-            >
-              Listings
             </button>
           </div>
         </nav>
@@ -2672,7 +2663,7 @@ export default function App() {
             )}
 
             {/* Landowner Dashboard */}
-            {currentUser.role === UserRole.LANDOWNER && (
+            {false && (
               <div className="bg-white rounded-2xl border border-emerald-100 dark:border-emerald-900/60 shadow-xs overflow-hidden" id="landowner_dashboard_matching">
                 <div className="bg-gradient-to-r from-emerald-900 to-emerald-950 text-white p-5 select-none">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -4019,7 +4010,7 @@ export default function App() {
                 
                 {/* Reordering Sorting controls */}
                 <div className="flex items-center gap-2 text-xs">
-                  {(currentUser.role === UserRole.LANDOWNER || currentUser.role === UserRole.FARMER || currentUser.role === UserRole.ADMIN) && (
+                  {(currentUser.role === UserRole.FARMER || currentUser.role === UserRole.ADMIN) && (
                     <button
                       type="button"
                       onClick={() => setIsListingModalOpen(true)}
