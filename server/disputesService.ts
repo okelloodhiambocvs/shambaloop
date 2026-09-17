@@ -16,7 +16,7 @@ export function registerDisputesRoutes(
     db.disputes ||= [];
 
     let disputes: Dispute[] = [];
-    if (user.role === UserRole.ADMIN || user.role === UserRole.SUPPORT) {
+    if (user.role === UserRole.ADMIN) {
       disputes = db.disputes;
     } else {
       disputes = db.disputes.filter((d: Dispute) => 
@@ -46,7 +46,7 @@ export function registerDisputesRoutes(
     } = req.body;
 
     const targetLeaseId = leaseId || agreementId;
-    if (!reason || (!title && !reason && !targetLeaseId)) {
+    if (!respondentId || !title || !reason) {
       return res.status(400).json({ error: 'Dispute title and detailed reason are required.' });
     }
 
@@ -71,10 +71,13 @@ export function registerDisputesRoutes(
 
     if (respondentId) {
       const respUser = db.users.find((u: any) => u.id === respondentId);
-      if (respUser) {
-        targetRespondentName ||= respUser.name;
-        targetRespondentRole ||= respUser.role;
-      }
+      if (!respUser || respondentId === user.id) return res.status(400).json({ error: 'A dispute must name a different, valid platform participant.' });
+      const isRelated = db.partnerships?.some((p: any) => (p.id === partnershipId || p.id === targetLeaseId) && [p.farmerId, p.investorId].includes(user.id) && [p.farmerId, p.investorId].includes(respondentId)) ||
+        db.veterinaryJobs?.some((j: any) => (j.id === jobId) && [j.farmerId, j.assignedVetId].includes(user.id) && [j.farmerId, j.assignedVetId].includes(respondentId)) ||
+        linkedAgreement && [linkedAgreement.landownerId, linkedAgreement.farmerId].includes(respondentId);
+      if (!isRelated && user.role !== UserRole.ADMIN) return res.status(403).json({ error: 'Disputes must be linked to a shared agreement, partnership, or job.' });
+      targetRespondentName = respUser.name;
+      targetRespondentRole = respUser.role;
     }
 
     const disputeId = `disp_${Date.now()}`;
@@ -196,7 +199,7 @@ export function registerDisputesRoutes(
   // Admin resolution of dispute
   app.post('/api/disputes/:id/resolve', authMiddleware, (req: AuthenticatedRequest, res) => {
     const user = req.user!;
-    if (user.role !== UserRole.ADMIN && user.role !== UserRole.SUPPORT) {
+    if (user.role !== UserRole.ADMIN) {
       return res.status(403).json({ error: 'Only administrators or accredited mediators can resolve disputes.' });
     }
 
