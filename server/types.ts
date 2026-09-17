@@ -32,4 +32,5 @@ export interface DatabaseSchema {
   ledgerTransactions?: LedgerTransaction[];
   reviews?: Review[];
   uploadedFiles?: UploadedFile[];
+  schemaVersion?: number;
 }
