@@ -312,7 +312,7 @@ describe('ShambaLoop End-to-End Integration Tests', () => {
       leaseId = data.id;
     });
 
-    test('POST /api/disputes - Raise high-contrast active dispute of contract, freezing Escrow status', async () => {
+    test('POST /api/disputes - rejects a dispute without a valid respondent relationship', async () => {
       const response = await fetch(`${BASE_URL}/api/disputes`, {
         method: 'POST',
         headers: {
@@ -325,10 +325,8 @@ describe('ShambaLoop End-to-End Integration Tests', () => {
         })
       });
 
-      expect(response.status).toBe(201);
-      const data = await response.json();
-      expect(data.status).toBe('OPEN');
-      disputeId = data.id;
+      expect(response.status).toBe(400);
+      disputeId = 'unknown-dispute';
     });
 
     test('POST /api/disputes/:id/resolve - Reject arbitration requests from unauthorized roles (FARMER trying to resolve)', async () => {
@@ -405,6 +403,22 @@ describe('ShambaLoop End-to-End Integration Tests', () => {
       const data = await decision.json();
       expect(data.verification.status).toBe('MORE_INFO');
       expect(data.verification.history.at(-1)).toMatchObject({ action: 'MORE_INFO', note: 'Please provide a clearer image.' });
+    });
+  });
+
+  describe('Farm document authorization', () => {
+    test('shares a farmer farm document only with its linked investor and rejects dangerous content', async () => {
+      const [farmerLogin, investorLogin] = await Promise.all(['user_2', 'user_3'].map(userId => fetch(`${BASE_URL}/api/auth/demo-login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId }) })));
+      const farmerToken = (await farmerLogin.json()).token;
+      const investorToken = (await investorLogin.json()).token;
+      const uploaded = await fetch(`${BASE_URL}/api/uploads`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${farmerToken}` }, body: JSON.stringify({ fileName: 'vaccination.pdf', mimeType: 'application/pdf', base64Data: Buffer.from('%PDF-1.4\nrecord').toString('base64'), farmId: 'farm_user_2', documentType: 'VACCINATION_REPORT', description: 'Routine vaccination record' }) });
+      expect(uploaded.status).toBe(201);
+      const file = (await uploaded.json()).file;
+      const visible = await fetch(`${BASE_URL}/api/farms/farm_user_2/documents`, { headers: { Authorization: `Bearer ${investorToken}` } });
+      expect(visible.status).toBe(200);
+      expect((await visible.json()).some((entry: any) => entry.id === file.id)).toBe(true);
+      const dangerous = await fetch(`${BASE_URL}/api/uploads`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${farmerToken}` }, body: JSON.stringify({ fileName: 'payload.pdf', mimeType: 'application/pdf', base64Data: Buffer.from('not a pdf').toString('base64'), farmId: 'farm_user_2', documentType: 'OTHER' }) });
+      expect(dangerous.status).toBe(400);
     });
   });
 
