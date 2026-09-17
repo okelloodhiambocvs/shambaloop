@@ -22,6 +22,7 @@ import { registerDisputesRoutes } from './server/disputesService.js';
 import { registerReviewsRoutes } from './server/reviewsService.js';
 import { registerAuthExtensionRoutes } from './server/authExtensionService.js';
 import { readRecentAuditLogs } from './server/audit.js';
+import { applyMigrations } from './server/migrations.js';
 
 const app = express();
 const PORT = 3000;
@@ -49,6 +50,7 @@ interface DatabaseSchema {
   ledgerTransactions?: LedgerTransaction[];
   reviews?: Review[];
   uploadedFiles?: UploadedFile[];
+  schemaVersion?: number;
 }
 
 const DATA_DIR = path.join(process.cwd(), 'data');
@@ -531,12 +533,14 @@ function loadDatabase() {
         ...listing,
         moderationStatus: listing.moderationStatus || (listing.verified ? 'APPROVED' : 'PENDING')
       }));
+      if (applyMigrations(db)) saveDatabase();
     } catch (err) {
       console.error('Failed to parse database file. Initializing default seeds:', err);
       seedDefaultData();
     }
   } else {
     seedDefaultData();
+    applyMigrations(db);
     saveDatabase();
   }
 }
@@ -814,7 +818,7 @@ app.post('/api/auth/register', authRateLimiter, (req, res) => {
     return res.status(400).json({ error: 'Provide a valid name, Kenyan mobile number, county, email when supplied, and password.' });
   }
 
-  const selfServiceRoles = [UserRole.LANDOWNER, UserRole.FARMER, UserRole.INVESTOR, UserRole.VETERINARIAN, UserRole.COOPERATIVE];
+  const selfServiceRoles = [UserRole.FARMER, UserRole.INVESTOR, UserRole.VETERINARIAN];
   if (!selfServiceRoles.includes(role)) {
     return res.status(403).json({ error: 'This role cannot be assigned through self-service registration.' });
   }
