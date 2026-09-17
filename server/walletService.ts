@@ -99,21 +99,6 @@ export function registerWalletRoutes(
       }
     }
 
-    // Default starting seed balances if new user with zero records
-    if (userTxns.length === 0) {
-      if (user.role === UserRole.INVESTOR) {
-        availableBalanceKES = 2500000;
-        investmentCapitalKES = 2500000;
-      } else if (user.role === UserRole.FARMER) {
-        operationalFarmFundsKES = 120000;
-        farmerEarningsKES = 45000;
-        availableBalanceKES = 45000;
-      } else if (user.role === UserRole.VETERINARIAN) {
-        earningsKES = 35000;
-        availableBalanceKES = 35000;
-      }
-    }
-
     const summary: WalletSummary = {
       userId: user.id,
       role: user.role,
@@ -137,7 +122,7 @@ export function registerWalletRoutes(
     res.json(summary);
   });
 
-  // Deposit funds into wallet (e.g. M-Pesa / Card / Bank transfer)
+  // Creates a payment intent. Only a verified provider callback may credit a wallet.
   app.post('/api/wallet/deposit', authMiddleware, (req: AuthenticatedRequest, res) => {
     const user = req.user;
     if (!user) return res.status(401).json({ error: 'Authentication required.' });
@@ -173,11 +158,11 @@ export function registerWalletRoutes(
       currency: 'KES',
       type: 'DEPOSIT',
       category: user.role === UserRole.INVESTOR ? 'INVESTMENT_CAPITAL' : 'PERSONAL_EARNINGS',
-      status: 'COMPLETED',
-      description: `Direct deposit via M-Pesa ${phoneNumber || user.phone}`,
+      status: 'PENDING',
+      description: `Payment intent via M-Pesa ${phoneNumber || user.phone}`,
       payerId: user.id,
       payerName: user.name,
-      paymentProviderRef: `MPESA-${crypto.randomBytes(5).toString('hex').toUpperCase()}`,
+      paymentProviderRef: undefined,
       idempotencyKey: idempotencyKey || ref,
       timestamp: new Date().toISOString()
     };
@@ -196,7 +181,7 @@ export function registerWalletRoutes(
 
     res.status(201).json({
       success: true,
-      message: `Deposit of KES ${amount.toLocaleString()} successfully credited.`,
+      message: `Payment intent for KES ${amount.toLocaleString()} created. Funds remain pending until provider confirmation.`,
       transaction: txn
     });
   });
@@ -235,9 +220,15 @@ export function registerWalletRoutes(
     }
 
     const targetFarmer = db.users.find((u: any) => u.id === farmerId);
-    if (!targetFarmer) {
+    if (!targetFarmer || targetFarmer.role !== UserRole.FARMER) {
       return res.status(404).json({ error: 'Target farmer account not found.' });
     }
+    if (user.role === UserRole.INVESTOR && !db.partnerships?.some((p: any) => p.investorId === user.id && p.farmerId === farmerId && (!farmId || p.id === farmId || `farm_${p.farmerId}` === farmId))) {
+      return res.status(403).json({ error: 'You may only release funds to a farmer in your own active collaboration.' });
+    }
+    const confirmedCapital = db.ledgerTransactions.filter((t: LedgerTransaction) => t.userId === user.id && t.status === 'COMPLETED' && (t.type === 'DEPOSIT' || t.type === 'RETURN')).reduce((sum: number, t: LedgerTransaction) => sum + t.amountKES, 0);
+    const previouslyReleased = db.ledgerTransactions.filter((t: LedgerTransaction) => t.payerId === user.id && t.status === 'COMPLETED' && t.type === 'RELEASE').reduce((sum: number, t: LedgerTransaction) => sum + t.amountKES, 0);
+    if (user.role === UserRole.INVESTOR && amount > confirmedCapital - previouslyReleased) return res.status(409).json({ error: 'Insufficient confirmed wallet funds for this release.' });
 
     const ref = `REL_${Date.now()}_${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
     const txn: LedgerTransaction = {
@@ -279,7 +270,7 @@ export function registerWalletRoutes(
     });
   });
 
-  // Request payout from personal earnings or vet earnings
+  // Creates a payout request. A payment provider/admin workflow must settle it.
   app.post('/api/wallet/payout', authMiddleware, (req: AuthenticatedRequest, res) => {
     const user = req.user;
     if (!user) return res.status(401).json({ error: 'Authentication required.' });
@@ -293,6 +284,9 @@ export function registerWalletRoutes(
 
     const db = getDb();
     db.ledgerTransactions ||= [];
+    const earned = db.ledgerTransactions.filter((t: LedgerTransaction) => t.userId === user.id && t.status === 'COMPLETED' && (t.category === 'PERSONAL_EARNINGS' || t.payeeId === user.id) && t.type !== 'PAYOUT').reduce((sum: number, t: LedgerTransaction) => sum + t.amountKES, 0);
+    const paidOut = db.ledgerTransactions.filter((t: LedgerTransaction) => t.userId === user.id && t.status !== 'FAILED' && t.type === 'PAYOUT').reduce((sum: number, t: LedgerTransaction) => sum + t.amountKES, 0);
+    if (amount > earned - paidOut) return res.status(409).json({ error: 'Payout amount exceeds confirmed earnings.' });
 
     const ref = `WD_${Date.now()}_${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
     const txn: LedgerTransaction = {
@@ -303,7 +297,7 @@ export function registerWalletRoutes(
       currency: 'KES',
       type: 'PAYOUT',
       category: 'PERSONAL_EARNINGS',
-      status: 'COMPLETED',
+      status: 'PENDING',
       description: `Disbursement to M-Pesa ${phoneNumber || user.phone}`,
       payerId: 'SHAMBALOOP_LEDGER',
       payerName: 'ShambaLoop Escrow & Ledger',
@@ -326,7 +320,7 @@ export function registerWalletRoutes(
 
     res.json({
       success: true,
-      message: `Payout of KES ${amount.toLocaleString()} disbursed to ${phoneNumber || user.phone}.`,
+      message: `Payout request for KES ${amount.toLocaleString()} is pending provider settlement.`,
       transaction: txn
     });
   });
