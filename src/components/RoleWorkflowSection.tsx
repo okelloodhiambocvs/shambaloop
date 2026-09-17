@@ -14,7 +14,6 @@ import {
   Briefcase,
   FileCheck2,
   CheckCircle2,
-  ArrowRight,
   ChevronRight,
   Layers,
   HeartPulse,
@@ -290,11 +289,6 @@ export default function RoleWorkflowSection({
       <div className="max-w-7xl mx-auto space-y-12">
         {/* Section Heading & Intro */}
         <div className="text-center space-y-3 max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-[11px] font-extrabold uppercase tracking-widest">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
-            Transparent, Tripartite Model
-          </div>
-
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-black font-display text-slate-900 dark:text-white tracking-tight">
             How Shamba Loop Works
           </h2>
@@ -315,7 +309,7 @@ export default function RoleWorkflowSection({
             aria-label="Workflow participant roles"
             tabIndex={0}
             onKeyDown={handleKeyDown}
-            className="w-full max-w-md p-1.5 bg-slate-100 dark:bg-slate-800/90 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 grid grid-cols-3 gap-1 shadow-inner focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-full max-w-sm p-1 bg-slate-100 dark:bg-slate-800/90 rounded-xl border border-slate-200/80 dark:border-slate-700/80 grid grid-cols-3 gap-1 shadow-inner focus:outline-none focus:ring-2 focus:ring-emerald-500"
             id="how_it_works_role_switcher"
           >
             {(['investor', 'farmer', 'veterinary'] as WorkflowRole[]).map((roleKey) => {
@@ -330,16 +324,13 @@ export default function RoleWorkflowSection({
                   aria-controls={`panel-${roleKey}`}
                   tabIndex={isSelected ? 0 : -1}
                   onClick={() => setActiveRole(roleKey)}
-                  className={`relative py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold uppercase tracking-wider transition-all duration-200 select-none cursor-pointer flex items-center justify-center gap-1.5 ${
+                    className={`relative py-1.5 px-2 rounded-lg text-[11px] sm:text-xs font-medium tracking-wide transition-all duration-200 select-none cursor-pointer flex items-center justify-center gap-1 ${
                     isSelected
                       ? 'bg-white dark:bg-slate-900 text-[#1F6B3D] dark:text-emerald-400 shadow-md ring-1 ring-black/5 dark:ring-white/10 scale-[1.02]'
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-700/50'
                   }`}
                 >
                   <span>{roleData.label}</span>
-                  {isSelected && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 shrink-0" />
-                  )}
                 </button>
               );
             })}
@@ -372,51 +363,45 @@ export default function RoleWorkflowSection({
 
             <button
               onClick={() => onLoginClick(currentWorkflow.userRoleTarget)}
-              className="shrink-0 px-4 py-2.5 rounded-xl bg-[#1F6B3D] hover:bg-[#185530] text-white text-xs font-extrabold uppercase tracking-wider shadow-sm hover:shadow transition-all flex items-center gap-1.5 cursor-pointer"
+              className="shrink-0 px-2 py-1 rounded-md bg-[#1F6B3D] hover:bg-[#185530] text-white text-[11px] font-medium tracking-wide shadow-sm transition-all cursor-pointer"
               id={`join_as_${currentWorkflow.role}_btn`}
             >
               <span>Join as {currentWorkflow.label}</span>
-              <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
 
           {/* Workflow Steps Grid */}
           <div
-            className={`grid gap-5 ${
+            className={`grid gap-3 ${
               currentWorkflow.steps.length === 6
                 ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
                 : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5'
             }`}
           >
             {currentWorkflow.steps.map((step, idx) => {
-              const Icon = step.icon;
+              const selected = activeTimelineStep === idx;
               return (
-                <div
+                <button
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => setActiveTimelineStep(idx)}
                   key={`${currentWorkflow.role}-step-${step.stepNumber}`}
-                  className="relative p-5 sm:p-6 rounded-2xl border border-border-base bg-bg-base hover:border-emerald-500/50 dark:hover:border-emerald-500/50 transition-all duration-200 shadow-xs flex flex-col justify-between group"
+                  className={`relative p-3 rounded-lg border bg-bg-base text-left transition-colors duration-200 ${selected ? 'border-slate-700 dark:border-slate-300' : 'border-border-base hover:border-slate-400 dark:hover:border-slate-500'}`}
                 >
-                  <div className="space-y-3">
-                    {/* Top Row: Step Number & Icon */}
-                    <div className="flex items-center justify-between">
-                      <span className="mono-display text-xs font-black px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                        Step {step.stepNumber}
-                      </span>
-                      <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center transition-colors group-hover:bg-emerald-600 group-hover:text-white">
-                        <Icon className="w-4 h-4" />
-                      </div>
-                    </div>
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Step {step.stepNumber}</p>
 
                     {/* Step Content */}
-                    <h4 className="text-sm font-bold text-slate-900 dark:text-white font-display tracking-tight leading-snug">
+                    <h4 className="text-xs font-medium text-slate-900 dark:text-white font-display tracking-tight leading-snug">
                       {step.heading}
                     </h4>
 
-                    <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-normal">
+                    <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed font-normal">
                       {step.description}
                     </p>
 
                     {/* Optional Verification Status States */}
-                    {step.statusStates && (
+                    {false && step.statusStates && (
                       <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 space-y-1.5">
                         <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 block uppercase tracking-wider">
                           Supported KYC States:
@@ -443,7 +428,7 @@ export default function RoleWorkflowSection({
                     )}
 
                     {/* Highlights Bullet List */}
-                    {step.highlights && (
+                    {false && step.highlights && (
                       <ul className="pt-2 border-t border-slate-100 dark:border-slate-800/80 space-y-1.5 text-[11px] text-slate-600 dark:text-slate-400">
                         {step.highlights.map((point, pIdx) => (
                           <li key={pIdx} className="flex items-start gap-1.5">
@@ -454,21 +439,8 @@ export default function RoleWorkflowSection({
                       </ul>
                     )}
 
-                    {/* Quick Tags */}
-                    {step.tags && (
-                      <div className="pt-2 flex flex-wrap gap-1">
-                        {step.tags.map((tag, tIdx) => (
-                          <span
-                            key={tIdx}
-                            className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 border border-slate-200/60 dark:border-slate-700/60"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>
