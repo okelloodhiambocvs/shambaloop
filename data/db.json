@@ -1,22 +1,6 @@
 {
   "users": [
     {
-      "id": "user_1",
-      "phone": "0712345678",
-      "name": "Wanjiku Kamau",
-      "email": "wanjiku@shambaloop.co.ke",
-      "role": "landowner",
-      "verified": true,
-      "county": "Nyandarua",
-      "avatarUrl": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150",
-      "createdAt": "2026-06-14T22:37:18.047Z",
-      "farmSpecialties": [
-        "Potato Farming",
-        "Cabbage Farm leasing"
-      ],
-      "seekingLandAcreage": 12
-    },
-    {
       "id": "user_2",
       "phone": "0722111222",
       "name": "Josphat Kiprop",
@@ -895,6 +879,586 @@
       "county": "Nairobi",
       "createdAt": "2026-09-17T12:02:32.618Z",
       "passwordResetRequired": false
+    },
+    {
+      "id": "user_1789649643651",
+      "phone": "0745088075",
+      "name": "Integration Farmer",
+      "email": "tester@example.test",
+      "role": "farmer",
+      "verified": false,
+      "county": "Kakamega",
+      "createdAt": "2026-09-17T12:54:03.652Z",
+      "passwordResetRequired": false,
+      "investmentBudgetKES": 120000,
+      "mfaSecret": "enc_v1:f1a80ce3fcace53bd68325c8:fc683d6b7113b7bb47c5e9bcf3f43be7:d5b3a3a609f77fc5af0894d80c01baab3881ddc4",
+      "mfaType": "totp",
+      "mfaEnabled": true,
+      "mfaBackupCodes": [
+        "$2b$10$5myQnFJwWUgtzrMa5jpOPOoPWySp.6TC/JDEoa5VEcqmxYL0bgtKq",
+        "$2b$10$IC7ashgMScUgvHs7.tKj0e0LymKJ3mRBqaDHLDVTpjaj8yJnkWY52",
+        "$2b$10$/S3gCqGJDCjs4.HK.uQic.OLK7BF1.wa5.rmaAA2qC492428Sf7dC",
+        "$2b$10$RWIMNefMIOu6z.OznjzjAOZ6BUSgJeD.QbvF1OsTNDTiCu3jrRIXK",
+        "$2b$10$ksTfqNMO3FrnbNsBI9m1i.rapknjLn5lqylqkFgJDmT6NPT3Icgf2"
+      ],
+      "verificationStatus": "PENDING"
+    },
+    {
+      "id": "user_1789649645678",
+      "phone": "0784484202",
+      "name": "Second Farmer",
+      "role": "farmer",
+      "verified": false,
+      "county": "Nakuru",
+      "createdAt": "2026-09-17T12:54:05.678Z",
+      "passwordResetRequired": false
+    },
+    {
+      "id": "user_1789649645878",
+      "phone": "0742674184",
+      "name": "Integration Investor",
+      "role": "investor",
+      "verified": false,
+      "county": "Nakuru",
+      "createdAt": "2026-09-17T12:54:05.878Z",
+      "passwordResetRequired": false,
+      "investmentBudgetKES": 300000,
+      "preferredSectors": [
+        "Dairy"
+      ],
+      "investmentGoal": "Experienced dairy farmer with land."
+    },
+    {
+      "id": "user_1789649646122",
+      "phone": "0718655357",
+      "name": "Second Investor",
+      "role": "investor",
+      "verified": false,
+      "county": "Nairobi",
+      "createdAt": "2026-09-17T12:54:06.122Z",
+      "passwordResetRequired": false
+    },
+    {
+      "id": "user_1789649741393",
+      "phone": "0765072818",
+      "name": "Integration Farmer",
+      "email": "tester@example.test",
+      "role": "farmer",
+      "verified": false,
+      "county": "Kakamega",
+      "createdAt": "2026-09-17T12:55:41.393Z",
+      "passwordResetRequired": false,
+      "investmentBudgetKES": 120000,
+      "mfaSecret": "enc_v1:21deb6c058fd88a0eab7a7d6:01d9f6b364c529fb2a6509afaa6b00ac:3ad9075b7caf5ebf457012a9a3814c7b01266af3",
+      "mfaType": "totp",
+      "mfaEnabled": true,
+      "mfaBackupCodes": [
+        "$2b$10$ynwbUxzNWU/7hIq/YmHbUOf8QcU951AkDh5.fE/S85xyXE3yVJEzO",
+        "$2b$10$fLz4WeO/aJpN9RHe54zEreTnkxF.9k.Bkx06KrmXr6N.buNgWBx6m",
+        "$2b$10$M4tP4/dBsTa8UziwX7xJtOEjCX7EnYhVyRE3spNRkwPgabb1h7yDG",
+        "$2b$10$2mXtcOl0PeUXsVUXatpGruDAo2UXenffhLQ4aZtijuAybmtzIuspK",
+        "$2b$10$38cLEr4t/mGnhpzQO80xj.5ACZgxhFdqdlmC/Lx/tzNQJWP63xAXK"
+      ],
+      "verificationStatus": "PENDING"
+    },
+    {
+      "id": "user_1789649743972",
+      "phone": "0790177815",
+      "name": "Second Farmer",
+      "role": "farmer",
+      "verified": false,
+      "county": "Nakuru",
+      "createdAt": "2026-09-17T12:55:43.972Z",
+      "passwordResetRequired": false
+    },
+    {
+      "id": "user_1789649744270",
+      "phone": "0716535956",
+      "name": "Integration Investor",
+      "role": "investor",
+      "verified": false,
+      "county": "Nakuru",
+      "createdAt": "2026-09-17T12:55:44.270Z",
+      "passwordResetRequired": false,
+      "investmentBudgetKES": 300000,
+      "preferredSectors": [
+        "Dairy"
+      ],
+      "investmentGoal": "Experienced dairy farmer with land."
+    },
+    {
+      "id": "user_1789649744530",
+      "phone": "0726942587",
+      "name": "Second Investor",
+      "role": "investor",
+      "verified": false,
+      "county": "Nairobi",
+      "createdAt": "2026-09-17T12:55:44.530Z",
+      "passwordResetRequired": false
+    },
+    {
+      "id": "user_1789650008101",
+      "phone": "0755238820",
+      "name": "Integration Farmer",
+      "email": "tester@example.test",
+      "role": "farmer",
+      "verified": false,
+      "county": "Kakamega",
+      "createdAt": "2026-09-17T13:00:08.101Z",
+      "passwordResetRequired": false,
+      "investmentBudgetKES": 120000,
+      "mfaSecret": "enc_v1:32c112d2069cbb40c213bc45:2b7940f9cb800ead95ee25841c10ce3b:cb045a0403ca5c2a30d94b730508d775246c6fbc",
+      "mfaType": "totp",
+      "mfaEnabled": true,
+      "mfaBackupCodes": [
+        "$2b$10$6KzxlhhMdeTPP2akPl5cJew1QJrpsYHEjShy9l8AyJ5AQhAbv/t6K",
+        "$2b$10$oy3ipWWocW7xrn9aciKlp.HH5cnDayRreyyWKUyZzaL1nmtN/NQ6O",
+        "$2b$10$nTXfkagT/phk/pjrp.3bTOSf08Rzo5hY5W51kX.0A7yjVPU3jJubG",
+        "$2b$10$pNFTBjsttmqU1issscmv2./peoJ5ulZd9202Ql6BBI0we7ULkczOO",
+        "$2b$10$BoUXOcf70fHdBoBAuLc2Yei56koZQGBsQvpYGykSlrx2OZr1KN/kS"
+      ],
+      "verificationStatus": "PENDING"
+    },
+    {
+      "id": "user_1789650010463",
+      "phone": "0791648976",
+      "name": "Second Farmer",
+      "role": "farmer",
+      "verified": false,
+      "county": "Nakuru",
+      "createdAt": "2026-09-17T13:00:10.463Z",
+      "passwordResetRequired": false
+    },
+    {
+      "id": "user_1789650010698",
+      "phone": "0765684129",
+      "name": "Integration Investor",
+      "role": "investor",
+      "verified": false,
+      "county": "Nakuru",
+      "createdAt": "2026-09-17T13:00:10.698Z",
+      "passwordResetRequired": false,
+      "investmentBudgetKES": 300000,
+      "preferredSectors": [
+        "Dairy"
+      ],
+      "investmentGoal": "Experienced dairy farmer with land."
+    },
+    {
+      "id": "user_1789650010938",
+      "phone": "0780848349",
+      "name": "Second Investor",
+      "role": "investor",
+      "verified": false,
+      "county": "Nairobi",
+      "createdAt": "2026-09-17T13:00:10.938Z",
+      "passwordResetRequired": false
+    },
+    {
+      "id": "user_1789650075051",
+      "phone": "0782978139",
+      "name": "Integration Farmer",
+      "email": "tester@example.test",
+      "role": "farmer",
+      "verified": false,
+      "county": "Kakamega",
+      "createdAt": "2026-09-17T13:01:15.051Z",
+      "passwordResetRequired": false,
+      "investmentBudgetKES": 120000,
+      "mfaSecret": "enc_v1:93eb2f1d3a3a7d9dc0f627d5:020df8badbdeac862a74c1df82412bd2:8ed4b8cbf5bb2f697510bec062c5d757ae3dc07d",
+      "mfaType": "totp",
+      "mfaEnabled": true,
+      "mfaBackupCodes": [
+        "$2b$10$RNcvGJ9G/qbQlq9kanw.Neq0Dl.m5XaeNBU1sNG65tfpczrQ6zqIe",
+        "$2b$10$zd931C.TZrZ1vGacxFcgD.TnmqtLwXkWUY2FeAqRBMyT6oeFJjFkO",
+        "$2b$10$kQsMzSeRdiLFlJolQEwJcOigpTCpz.AfmSeqvjhDhSBl5yHBSG7AS",
+        "$2b$10$sRW5YK526/5aAjDI97Clx.oYVOe36SXWHXn4AbqoRQ0iopT81apgu",
+        "$2b$10$OlckW.7pHLe8WMeiby1CWexgu1h7Etn/3HztzjyNn/enp.t.2iZM."
+      ],
+      "verificationStatus": "PENDING"
+    },
+    {
+      "id": "user_1789650077104",
+      "phone": "0770828749",
+      "name": "Second Farmer",
+      "role": "farmer",
+      "verified": false,
+      "county": "Nakuru",
+      "createdAt": "2026-09-17T13:01:17.104Z",
+      "passwordResetRequired": false
+    },
+    {
+      "id": "user_1789650077406",
+      "phone": "0717522642",
+      "name": "Integration Investor",
+      "role": "investor",
+      "verified": false,
+      "county": "Nakuru",
+      "createdAt": "2026-09-17T13:01:17.406Z",
+      "passwordResetRequired": false,
+      "investmentBudgetKES": 300000,
+      "preferredSectors": [
+        "Dairy"
+      ],
+      "investmentGoal": "Experienced dairy farmer with land."
+    },
+    {
+      "id": "user_1789650077679",
+      "phone": "0720376441",
+      "name": "Second Investor",
+      "role": "investor",
+      "verified": false,
+      "county": "Nairobi",
+      "createdAt": "2026-09-17T13:01:17.679Z",
+      "passwordResetRequired": false
+    },
+    {
+      "id": "user_1789651475155",
+      "phone": "0779271939",
+      "name": "Integration Farmer",
+      "email": "tester@example.test",
+      "role": "farmer",
+      "verified": false,
+      "county": "Kakamega",
+      "createdAt": "2026-09-17T13:24:35.155Z",
+      "passwordResetRequired": false,
+      "investmentBudgetKES": 120000,
+      "mfaSecret": "enc_v1:fa875e7c047569c8f392fea1:4025c75864ceba5b8f5857b6254aa1af:455b5a9c3eb00f8d77a57b7c1838bdf0e8a13382",
+      "mfaType": "totp",
+      "mfaEnabled": true,
+      "mfaBackupCodes": [
+        "$2b$10$o5PC8dnFRG2t/AA3KF.nYOHw.E8auV2/g2cBd3phx82vbBlU2tCYy",
+        "$2b$10$u8pjisG4nSagLDj9vdG1E.mRyQ6giHcxdCxhktmXQYbLkh7iFXeRy",
+        "$2b$10$utd/c9.Wcm96ed8Ja2uhLuzTqreyQ6JRCShE9olG2WVYUvP0oA8ti",
+        "$2b$10$ViZX4vrADu/L4aptQ97OaezIZOH31LTE8cZn/W9iaHkgeryLO6xxe",
+        "$2b$10$3QZodsqB7vFjEBJnKzyKJ.APaWBmcOEwKISKC4GKLlMMXweX/fflu"
+      ],
+      "verificationStatus": "PENDING"
+    },
+    {
+      "id": "user_1789651477365",
+      "phone": "0736672768",
+      "name": "Second Farmer",
+      "role": "farmer",
+      "verified": false,
+      "county": "Nakuru",
+      "createdAt": "2026-09-17T13:24:37.365Z",
+      "passwordResetRequired": false
+    },
+    {
+      "id": "user_1789651477586",
+      "phone": "0786245959",
+      "name": "Integration Investor",
+      "role": "investor",
+      "verified": false,
+      "county": "Nakuru",
+      "createdAt": "2026-09-17T13:24:37.586Z",
+      "passwordResetRequired": false,
+      "investmentBudgetKES": 300000,
+      "preferredSectors": [
+        "Dairy"
+      ],
+      "investmentGoal": "Experienced dairy farmer with land."
+    },
+    {
+      "id": "user_1789651477906",
+      "phone": "0741098470",
+      "name": "Second Investor",
+      "role": "investor",
+      "verified": false,
+      "county": "Nairobi",
+      "createdAt": "2026-09-17T13:24:37.906Z",
+      "passwordResetRequired": false
+    },
+    {
+      "id": "user_1789651528125",
+      "phone": "0716301675",
+      "name": "Integration Farmer",
+      "email": "tester@example.test",
+      "role": "farmer",
+      "verified": false,
+      "county": "Kakamega",
+      "createdAt": "2026-09-17T13:25:28.125Z",
+      "passwordResetRequired": false,
+      "investmentBudgetKES": 120000,
+      "mfaSecret": "enc_v1:98b2a490cf16b8d4f72977d1:381b0d4d7b4e1f30fc37eae544a55cbf:e6584ca4e661a377c52bd00ee1161b5d9344a7e6",
+      "mfaType": "totp",
+      "mfaEnabled": true,
+      "mfaBackupCodes": [
+        "$2b$10$cXB0TY4lApEuD8rFzb1sm.dOxK1JgtdMAFQsStpEEuu8hi8pDcODi",
+        "$2b$10$eSetmdOKvUzEG1ccyuBKVO68r.G1lk6yqQrLjYDoxW/THc5wNkSbK",
+        "$2b$10$0NyI4UZAGE6KLfqvUFNzNezWPOBIMfBsK.RUIHDVUHNpftEEG2Fty",
+        "$2b$10$4qK1jE1xI5cg9wAzjNW6VOnT4Ws6Ncvbm7Q55yBCe4lQ5/OUnlwNW",
+        "$2b$10$O8oYfQRQZdzaauNVBbmN4uUQdExlTxeTgqqMb/dM9S7vplqmR9kp2"
+      ],
+      "verificationStatus": "PENDING"
+    },
+    {
+      "id": "user_1789651530101",
+      "phone": "0799281088",
+      "name": "Second Farmer",
+      "role": "farmer",
+      "verified": false,
+      "county": "Nakuru",
+      "createdAt": "2026-09-17T13:25:30.102Z",
+      "passwordResetRequired": false
+    },
+    {
+      "id": "user_1789651530300",
+      "phone": "0722280613",
+      "name": "Integration Investor",
+      "role": "investor",
+      "verified": false,
+      "county": "Nakuru",
+      "createdAt": "2026-09-17T13:25:30.300Z",
+      "passwordResetRequired": false,
+      "investmentBudgetKES": 300000,
+      "preferredSectors": [
+        "Dairy"
+      ],
+      "investmentGoal": "Experienced dairy farmer with land."
+    },
+    {
+      "id": "user_1789651530556",
+      "phone": "0755114046",
+      "name": "Second Investor",
+      "role": "investor",
+      "verified": false,
+      "county": "Nairobi",
+      "createdAt": "2026-09-17T13:25:30.556Z",
+      "passwordResetRequired": false
+    },
+    {
+      "id": "user_1789652371858",
+      "phone": "0767068638",
+      "name": "Integration Farmer",
+      "email": "tester@example.test",
+      "role": "farmer",
+      "verified": false,
+      "county": "Kakamega",
+      "createdAt": "2026-09-17T13:39:31.858Z",
+      "passwordResetRequired": false,
+      "investmentBudgetKES": 120000,
+      "mfaSecret": "enc_v1:5537bce02c26c0ad88f141a4:d03cb81b0cfeb7652314e5a876eb42b9:8326addbaf67b2559d28040e0d540806fa906d33",
+      "mfaType": "totp",
+      "mfaEnabled": true,
+      "mfaBackupCodes": [
+        "$2b$10$Pq5mnvaNeh4FAEr286d6D.Q50VitJOJcTjhBIomEospxXLlGDrE8u",
+        "$2b$10$VQdX6htD6riFcwLAG.nYk.QswG9AGaZ/HA81EQm/2ccyaL5bc8OJG",
+        "$2b$10$ZF5ucM/vpQXLV3mSYlNZMelE3NldNNu4hcKpcycDD5ru/IViqPnvm",
+        "$2b$10$OlobOuBDo.WDYwV67o9WMuvbxjuybj32bgfCxkT84tD86H.JzdLTm",
+        "$2b$10$YiVNH6urOY.0UmpYfffgOez64bJm5gbG7Yd.Qv..ZtMhqyLIpShdO"
+      ],
+      "verificationStatus": "PENDING"
+    },
+    {
+      "id": "user_1789652374049",
+      "phone": "0768369099",
+      "name": "Second Farmer",
+      "role": "farmer",
+      "verified": false,
+      "county": "Nakuru",
+      "createdAt": "2026-09-17T13:39:34.049Z",
+      "passwordResetRequired": false
+    },
+    {
+      "id": "user_1789652374332",
+      "phone": "0783603297",
+      "name": "Integration Investor",
+      "role": "investor",
+      "verified": false,
+      "county": "Nakuru",
+      "createdAt": "2026-09-17T13:39:34.332Z",
+      "passwordResetRequired": false,
+      "investmentBudgetKES": 300000,
+      "preferredSectors": [
+        "Dairy"
+      ],
+      "investmentGoal": "Experienced dairy farmer with land."
+    },
+    {
+      "id": "user_1789652374617",
+      "phone": "0794410717",
+      "name": "Second Investor",
+      "role": "investor",
+      "verified": false,
+      "county": "Nairobi",
+      "createdAt": "2026-09-17T13:39:34.617Z",
+      "passwordResetRequired": false
+    },
+    {
+      "id": "user_1789654182579",
+      "phone": "0761737483",
+      "name": "Integration Farmer",
+      "email": "tester@example.test",
+      "role": "farmer",
+      "verified": false,
+      "county": "Kakamega",
+      "createdAt": "2026-09-17T14:09:42.579Z",
+      "passwordResetRequired": false,
+      "investmentBudgetKES": 120000,
+      "mfaSecret": "enc_v1:6d70779add7d9e8230571024:a035ecc381ce2ba4e082719c9aa47543:403853178ad498ca816c50de0788bc6c59e3a6bd",
+      "mfaType": "totp",
+      "mfaEnabled": true,
+      "mfaBackupCodes": [
+        "$2b$10$omHqlYXOBJ6.wJy6z5M.Fu/W1D.yUp5lQc4WRbESC.GmTujDkbwb2",
+        "$2b$10$Wb.JauCk1EiByOL8cwjLJ.JFmJO/1x.42BG6nYI/CsI0Yi99LiY0O",
+        "$2b$10$XlvPChyNjqwdT96Dz6xfYOJVc1TrLx/r1qPZogvuyiTWtptBRvYv6",
+        "$2b$10$qyGkiHBR92SfismZRJdznut9ZADFCfBL00LvZRXk0a348oAhu7TCq",
+        "$2b$10$R8nX4z1imz2dccad57KvW.0e.iYuWOW91epDmZ/XBNt3DBhKUpI9S"
+      ],
+      "verificationStatus": "PENDING"
+    },
+    {
+      "id": "user_1789654192863",
+      "phone": "0765609954",
+      "name": "Second Farmer",
+      "role": "farmer",
+      "verified": false,
+      "county": "Nakuru",
+      "createdAt": "2026-09-17T14:09:52.863Z",
+      "passwordResetRequired": false
+    },
+    {
+      "id": "user_1789654193725",
+      "phone": "0743255210",
+      "name": "Integration Investor",
+      "role": "investor",
+      "verified": false,
+      "county": "Nakuru",
+      "createdAt": "2026-09-17T14:09:53.725Z",
+      "passwordResetRequired": false,
+      "investmentBudgetKES": 300000,
+      "preferredSectors": [
+        "Dairy"
+      ],
+      "investmentGoal": "Experienced dairy farmer with land."
+    },
+    {
+      "id": "user_1789654194498",
+      "phone": "0736986441",
+      "name": "Second Investor",
+      "role": "investor",
+      "verified": false,
+      "county": "Nairobi",
+      "createdAt": "2026-09-17T14:09:54.498Z",
+      "passwordResetRequired": false
+    },
+    {
+      "id": "user_1789654245098",
+      "phone": "0720907992",
+      "name": "Integration Farmer",
+      "email": "tester@example.test",
+      "role": "farmer",
+      "verified": false,
+      "county": "Kakamega",
+      "createdAt": "2026-09-17T14:10:45.098Z",
+      "passwordResetRequired": false,
+      "investmentBudgetKES": 120000,
+      "mfaSecret": "enc_v1:c569d4bf136b72f9d0345ac9:9c866b99bb31149edc22d4c4f35734be:291532a927a8e7fb1d3d80cf64e0d4e8912fe570",
+      "mfaType": "totp",
+      "mfaEnabled": true,
+      "mfaBackupCodes": [
+        "$2b$10$kl62iX0xEbwf8GuyNM/DXO9iOPMrtW6buLCrWnJqsMA2SzIexUyru",
+        "$2b$10$tATrblAvGYgSDJZm0xNhguO2Suc0XMm.t291BR7g2oqwcTFFM5dN.",
+        "$2b$10$08CJYEr29kIFOrEF3CpPsO6gkCrySmSDEd9.eeCx1NANpK3dvfEVK",
+        "$2b$10$bHBS958Xfq34xIYtCtEt6uZ4CKz2khy4GAm.p.81ONnAfvM0xh.bi",
+        "$2b$10$5qCWTzPYWMQIQ65kZGIFJ.U8FsVuwkt7.T.j1jHi9ECH.WG0Y/iiK"
+      ],
+      "verificationStatus": "PENDING"
+    },
+    {
+      "id": "user_1789654258383",
+      "phone": "0789176573",
+      "name": "Second Farmer",
+      "role": "farmer",
+      "verified": false,
+      "county": "Nakuru",
+      "createdAt": "2026-09-17T14:10:58.383Z",
+      "passwordResetRequired": false
+    },
+    {
+      "id": "user_1789654259269",
+      "phone": "0767863987",
+      "name": "Integration Investor",
+      "role": "investor",
+      "verified": false,
+      "county": "Nakuru",
+      "createdAt": "2026-09-17T14:10:59.277Z",
+      "passwordResetRequired": false,
+      "investmentBudgetKES": 300000,
+      "preferredSectors": [
+        "Dairy"
+      ],
+      "investmentGoal": "Experienced dairy farmer with land."
+    },
+    {
+      "id": "user_1789654260357",
+      "phone": "0713119015",
+      "name": "Second Investor",
+      "role": "investor",
+      "verified": false,
+      "county": "Nairobi",
+      "createdAt": "2026-09-17T14:11:00.357Z",
+      "passwordResetRequired": false
+    },
+    {
+      "id": "user_1789654978810",
+      "phone": "0743694742",
+      "name": "Integration Farmer",
+      "email": "tester@example.test",
+      "role": "farmer",
+      "verified": false,
+      "county": "Kakamega",
+      "createdAt": "2026-09-17T14:22:58.810Z",
+      "passwordResetRequired": false,
+      "investmentBudgetKES": 120000,
+      "mfaSecret": "enc_v1:bdc04c78ff350500384e7306:ac576098264066c085bbc5508cf96a5f:4760c8c4ef1ff2910d76886338e50b92c8bd360f",
+      "mfaType": "totp",
+      "mfaEnabled": true,
+      "mfaBackupCodes": [
+        "$2b$10$uQxDJewgplXZJqle3XIZ9OHVuMh5vNWHfsT3rvTi5uY4vZhATa.76",
+        "$2b$10$VHAqhAegQl9fh36cJXxeBuqvkizGm48dopFiCheP1yqqALFFoi58a",
+        "$2b$10$PYGMjY200HkUNOT8thLnJu8HY/C4tTLODoynpl.cKalI7/zsFixuq",
+        "$2b$10$dr0swsWWjTqvXlkMCSYtze.sNapoYIWisAthr6lMqAoIBEIQAiTZ6",
+        "$2b$10$hBpmAmijplDtDRyKKJYnT.E3ww0XZWy3skdFyRvPlket8ZjJ6UPKC"
+      ],
+      "verificationStatus": "PENDING"
+    },
+    {
+      "id": "user_1789654981382",
+      "phone": "0796998341",
+      "name": "Second Farmer",
+      "role": "farmer",
+      "verified": false,
+      "county": "Nakuru",
+      "createdAt": "2026-09-17T14:23:01.382Z",
+      "passwordResetRequired": false
+    },
+    {
+      "id": "user_1789654981653",
+      "phone": "0745256299",
+      "name": "Integration Investor",
+      "role": "investor",
+      "verified": false,
+      "county": "Nakuru",
+      "createdAt": "2026-09-17T14:23:01.653Z",
+      "passwordResetRequired": false,
+      "investmentBudgetKES": 300000,
+      "preferredSectors": [
+        "Dairy"
+      ],
+      "investmentGoal": "Experienced dairy farmer with land."
+    },
+    {
+      "id": "user_1789654982015",
+      "phone": "0750235002",
+      "name": "Second Investor",
+      "role": "investor",
+      "verified": false,
+      "county": "Nairobi",
+      "createdAt": "2026-09-17T14:23:02.015Z",
+      "passwordResetRequired": false
     }
   ],
   "listings": [
@@ -1350,6 +1914,136 @@
       "startDate": "2026-09-17",
       "status": "SIGNED",
       "mpesaEscrowStatus": "DISPUTED",
+      "paymentsMade": 60000
+    },
+    {
+      "id": "lease_1789649645405",
+      "listingId": "list_1",
+      "landownerId": "user_1",
+      "farmerId": "user_1789649643651",
+      "acreageLeased": 5,
+      "pricePerAcreKES": 12000,
+      "durationMonths": 12,
+      "startDate": "2026-09-17",
+      "status": "SIGNED",
+      "mpesaEscrowStatus": "ESCROWED",
+      "paymentsMade": 60000
+    },
+    {
+      "id": "lease_1789649743510",
+      "listingId": "list_1",
+      "landownerId": "user_1",
+      "farmerId": "user_1789649741393",
+      "acreageLeased": 5,
+      "pricePerAcreKES": 12000,
+      "durationMonths": 12,
+      "startDate": "2026-09-17",
+      "status": "SIGNED",
+      "mpesaEscrowStatus": "ESCROWED",
+      "paymentsMade": 60000
+    },
+    {
+      "id": "lease_1789650009941",
+      "listingId": "list_1",
+      "landownerId": "user_1",
+      "farmerId": "user_1789650008101",
+      "acreageLeased": 5,
+      "pricePerAcreKES": 12000,
+      "durationMonths": 12,
+      "startDate": "2026-09-17",
+      "status": "SIGNED",
+      "mpesaEscrowStatus": "ESCROWED",
+      "paymentsMade": 60000
+    },
+    {
+      "id": "lease_1789650076854",
+      "listingId": "list_1",
+      "landownerId": "user_1",
+      "farmerId": "user_1789650075051",
+      "acreageLeased": 5,
+      "pricePerAcreKES": 12000,
+      "durationMonths": 12,
+      "startDate": "2026-09-17",
+      "status": "SIGNED",
+      "mpesaEscrowStatus": "ESCROWED",
+      "paymentsMade": 60000
+    },
+    {
+      "id": "lease_1789651477041",
+      "listingId": "list_1",
+      "landownerId": "user_1",
+      "farmerId": "user_1789651475155",
+      "acreageLeased": 5,
+      "pricePerAcreKES": 12000,
+      "durationMonths": 12,
+      "startDate": "2026-09-17",
+      "status": "SIGNED",
+      "mpesaEscrowStatus": "ESCROWED",
+      "paymentsMade": 60000
+    },
+    {
+      "id": "lease_1789651529812",
+      "listingId": "list_1",
+      "landownerId": "user_1",
+      "farmerId": "user_1789651528125",
+      "acreageLeased": 5,
+      "pricePerAcreKES": 12000,
+      "durationMonths": 12,
+      "startDate": "2026-09-17",
+      "status": "SIGNED",
+      "mpesaEscrowStatus": "ESCROWED",
+      "paymentsMade": 60000
+    },
+    {
+      "id": "lease_1789652373614",
+      "listingId": "list_1",
+      "landownerId": "user_1",
+      "farmerId": "user_1789652371858",
+      "acreageLeased": 5,
+      "pricePerAcreKES": 12000,
+      "durationMonths": 12,
+      "startDate": "2026-09-17",
+      "status": "SIGNED",
+      "mpesaEscrowStatus": "ESCROWED",
+      "paymentsMade": 60000
+    },
+    {
+      "id": "lease_1789654191768",
+      "listingId": "list_1",
+      "landownerId": "user_1",
+      "farmerId": "user_1789654182579",
+      "acreageLeased": 5,
+      "pricePerAcreKES": 12000,
+      "durationMonths": 12,
+      "startDate": "2026-09-17",
+      "status": "SIGNED",
+      "mpesaEscrowStatus": "ESCROWED",
+      "paymentsMade": 60000
+    },
+    {
+      "id": "lease_1789654255683",
+      "listingId": "list_1",
+      "landownerId": "user_1",
+      "farmerId": "user_1789654245098",
+      "acreageLeased": 5,
+      "pricePerAcreKES": 12000,
+      "durationMonths": 12,
+      "startDate": "2026-09-17",
+      "status": "SIGNED",
+      "mpesaEscrowStatus": "ESCROWED",
+      "paymentsMade": 60000
+    },
+    {
+      "id": "lease_1789654980602",
+      "listingId": "list_1",
+      "landownerId": "user_1",
+      "farmerId": "user_1789654978810",
+      "acreageLeased": 5,
+      "pricePerAcreKES": 12000,
+      "durationMonths": 12,
+      "startDate": "2026-09-17",
+      "status": "SIGNED",
+      "mpesaEscrowStatus": "ESCROWED",
       "paymentsMade": 60000
     }
   ],
@@ -1923,6 +2617,276 @@
       "adminNote": "Please provide a clearer image.",
       "reviewedAt": "2026-09-17T12:02:32.352Z",
       "reviewedBy": "user_admin"
+    },
+    {
+      "id": "verify_req_1789649645590",
+      "userId": "user_1789649643651",
+      "userName": "Integration Farmer",
+      "userRole": "farmer",
+      "documentType": "ID_CARD",
+      "documentNumber": "enc_v1:4c2ce451982adb16eccc5098:d63e5ecdf59b6273b6beddd3dcd011f3:dd8135835ec7e709a2a4adb7",
+      "notes": "Integration review record",
+      "status": "MORE_INFO",
+      "submittedAt": "2026-09-17T12:54:05.590Z",
+      "history": [
+        {
+          "at": "2026-09-17T12:54:05.590Z",
+          "actorId": "user_1789649643651",
+          "action": "SUBMITTED"
+        },
+        {
+          "at": "2026-09-17T12:54:05.609Z",
+          "actorId": "user_admin",
+          "action": "MORE_INFO",
+          "note": "Please provide a clearer image."
+        }
+      ],
+      "adminNote": "Please provide a clearer image.",
+      "reviewedAt": "2026-09-17T12:54:05.609Z",
+      "reviewedBy": "user_admin"
+    },
+    {
+      "id": "verify_req_1789649743650",
+      "userId": "user_1789649741393",
+      "userName": "Integration Farmer",
+      "userRole": "farmer",
+      "documentType": "ID_CARD",
+      "documentNumber": "enc_v1:b75af3578f89c0030202ce44:226c7d179cce367a987de4cace2e4d30:92f1077f23947141ded11138",
+      "notes": "Integration review record",
+      "status": "MORE_INFO",
+      "submittedAt": "2026-09-17T12:55:43.651Z",
+      "history": [
+        {
+          "at": "2026-09-17T12:55:43.651Z",
+          "actorId": "user_1789649741393",
+          "action": "SUBMITTED"
+        },
+        {
+          "at": "2026-09-17T12:55:43.663Z",
+          "actorId": "user_admin",
+          "action": "MORE_INFO",
+          "note": "Please provide a clearer image."
+        }
+      ],
+      "adminNote": "Please provide a clearer image.",
+      "reviewedAt": "2026-09-17T12:55:43.663Z",
+      "reviewedBy": "user_admin"
+    },
+    {
+      "id": "verify_req_1789650010050",
+      "userId": "user_1789650008101",
+      "userName": "Integration Farmer",
+      "userRole": "farmer",
+      "documentType": "ID_CARD",
+      "documentNumber": "enc_v1:bd01ad25d7b821f8cd1e1411:7968a6ee47718972179684fbcfbdc60d:efe9a5696729bf168750cb0d",
+      "notes": "Integration review record",
+      "status": "MORE_INFO",
+      "submittedAt": "2026-09-17T13:00:10.050Z",
+      "history": [
+        {
+          "at": "2026-09-17T13:00:10.050Z",
+          "actorId": "user_1789650008101",
+          "action": "SUBMITTED"
+        },
+        {
+          "at": "2026-09-17T13:00:10.063Z",
+          "actorId": "user_admin",
+          "action": "MORE_INFO",
+          "note": "Please provide a clearer image."
+        }
+      ],
+      "adminNote": "Please provide a clearer image.",
+      "reviewedAt": "2026-09-17T13:00:10.063Z",
+      "reviewedBy": "user_admin"
+    },
+    {
+      "id": "verify_req_1789650076972",
+      "userId": "user_1789650075051",
+      "userName": "Integration Farmer",
+      "userRole": "farmer",
+      "documentType": "ID_CARD",
+      "documentNumber": "enc_v1:29f4ff1484898bbe233abb7a:a7bd6a4218b48a27be0e6d4c8f7471b3:1f3252afcd463a0b446e0e41",
+      "notes": "Integration review record",
+      "status": "MORE_INFO",
+      "submittedAt": "2026-09-17T13:01:16.972Z",
+      "history": [
+        {
+          "at": "2026-09-17T13:01:16.972Z",
+          "actorId": "user_1789650075051",
+          "action": "SUBMITTED"
+        },
+        {
+          "at": "2026-09-17T13:01:16.980Z",
+          "actorId": "user_admin",
+          "action": "MORE_INFO",
+          "note": "Please provide a clearer image."
+        }
+      ],
+      "adminNote": "Please provide a clearer image.",
+      "reviewedAt": "2026-09-17T13:01:16.980Z",
+      "reviewedBy": "user_admin"
+    },
+    {
+      "id": "verify_req_1789651477138",
+      "userId": "user_1789651475155",
+      "userName": "Integration Farmer",
+      "userRole": "farmer",
+      "documentType": "ID_CARD",
+      "documentNumber": "enc_v1:ada04a057d695a3a65ee1d33:b8802d6c529689abab1204b51fa5db9d:3f330bf987e9751a5163bc97",
+      "notes": "Integration review record",
+      "status": "MORE_INFO",
+      "submittedAt": "2026-09-17T13:24:37.138Z",
+      "history": [
+        {
+          "at": "2026-09-17T13:24:37.138Z",
+          "actorId": "user_1789651475155",
+          "action": "SUBMITTED"
+        },
+        {
+          "at": "2026-09-17T13:24:37.149Z",
+          "actorId": "user_admin",
+          "action": "MORE_INFO",
+          "note": "Please provide a clearer image."
+        }
+      ],
+      "adminNote": "Please provide a clearer image.",
+      "reviewedAt": "2026-09-17T13:24:37.149Z",
+      "reviewedBy": "user_admin"
+    },
+    {
+      "id": "verify_req_1789651529909",
+      "userId": "user_1789651528125",
+      "userName": "Integration Farmer",
+      "userRole": "farmer",
+      "documentType": "ID_CARD",
+      "documentNumber": "enc_v1:db733e976f55c43f6d1d337f:84c5a423f75cc9def1793558983ad9ef:c7e58edafe7c72526031a5aa",
+      "notes": "Integration review record",
+      "status": "MORE_INFO",
+      "submittedAt": "2026-09-17T13:25:29.909Z",
+      "history": [
+        {
+          "at": "2026-09-17T13:25:29.909Z",
+          "actorId": "user_1789651528125",
+          "action": "SUBMITTED"
+        },
+        {
+          "at": "2026-09-17T13:25:29.923Z",
+          "actorId": "user_admin",
+          "action": "MORE_INFO",
+          "note": "Please provide a clearer image."
+        }
+      ],
+      "adminNote": "Please provide a clearer image.",
+      "reviewedAt": "2026-09-17T13:25:29.923Z",
+      "reviewedBy": "user_admin"
+    },
+    {
+      "id": "verify_req_1789652373741",
+      "userId": "user_1789652371858",
+      "userName": "Integration Farmer",
+      "userRole": "farmer",
+      "documentType": "ID_CARD",
+      "documentNumber": "enc_v1:7d6a7924d7a001433e5201a1:6ab2e62fb160acdb01980b59f4bcc471:eb96919706871c0f6b1b7ca8",
+      "notes": "Integration review record",
+      "status": "MORE_INFO",
+      "submittedAt": "2026-09-17T13:39:33.742Z",
+      "history": [
+        {
+          "at": "2026-09-17T13:39:33.742Z",
+          "actorId": "user_1789652371858",
+          "action": "SUBMITTED"
+        },
+        {
+          "at": "2026-09-17T13:39:33.751Z",
+          "actorId": "user_admin",
+          "action": "MORE_INFO",
+          "note": "Please provide a clearer image."
+        }
+      ],
+      "adminNote": "Please provide a clearer image.",
+      "reviewedAt": "2026-09-17T13:39:33.751Z",
+      "reviewedBy": "user_admin"
+    },
+    {
+      "id": "verify_req_1789654192078",
+      "userId": "user_1789654182579",
+      "userName": "Integration Farmer",
+      "userRole": "farmer",
+      "documentType": "ID_CARD",
+      "documentNumber": "enc_v1:538722a7462d56af9d5e2549:bcf7990f1e21c761b06c53949635e530:f9ec03e0dfe3a5d11e8c9370",
+      "notes": "Integration review record",
+      "status": "MORE_INFO",
+      "submittedAt": "2026-09-17T14:09:52.078Z",
+      "history": [
+        {
+          "at": "2026-09-17T14:09:52.078Z",
+          "actorId": "user_1789654182579",
+          "action": "SUBMITTED"
+        },
+        {
+          "at": "2026-09-17T14:09:52.114Z",
+          "actorId": "user_admin",
+          "action": "MORE_INFO",
+          "note": "Please provide a clearer image."
+        }
+      ],
+      "adminNote": "Please provide a clearer image.",
+      "reviewedAt": "2026-09-17T14:09:52.114Z",
+      "reviewedBy": "user_admin"
+    },
+    {
+      "id": "verify_req_1789654256076",
+      "userId": "user_1789654245098",
+      "userName": "Integration Farmer",
+      "userRole": "farmer",
+      "documentType": "ID_CARD",
+      "documentNumber": "enc_v1:c57943cd9a84a4792f003b5b:8e24549244cb6a48bfd0e1dba7e29b03:083e38a314744dc0cf15dcc1",
+      "notes": "Integration review record",
+      "status": "MORE_INFO",
+      "submittedAt": "2026-09-17T14:10:56.077Z",
+      "history": [
+        {
+          "at": "2026-09-17T14:10:56.077Z",
+          "actorId": "user_1789654245098",
+          "action": "SUBMITTED"
+        },
+        {
+          "at": "2026-09-17T14:10:56.103Z",
+          "actorId": "user_admin",
+          "action": "MORE_INFO",
+          "note": "Please provide a clearer image."
+        }
+      ],
+      "adminNote": "Please provide a clearer image.",
+      "reviewedAt": "2026-09-17T14:10:56.103Z",
+      "reviewedBy": "user_admin"
+    },
+    {
+      "id": "verify_req_1789654980735",
+      "userId": "user_1789654978810",
+      "userName": "Integration Farmer",
+      "userRole": "farmer",
+      "documentType": "ID_CARD",
+      "documentNumber": "enc_v1:cb3f6966be0c8831c7b46e3d:fe81443c34f8e559e86d4d9a38b9a869:787b0615b39589013fef4a75",
+      "notes": "Integration review record",
+      "status": "MORE_INFO",
+      "submittedAt": "2026-09-17T14:23:00.735Z",
+      "history": [
+        {
+          "at": "2026-09-17T14:23:00.735Z",
+          "actorId": "user_1789654978810",
+          "action": "SUBMITTED"
+        },
+        {
+          "at": "2026-09-17T14:23:00.785Z",
+          "actorId": "user_admin",
+          "action": "MORE_INFO",
+          "note": "Please provide a clearer image."
+        }
+      ],
+      "adminNote": "Please provide a clearer image.",
+      "reviewedAt": "2026-09-17T14:23:00.785Z",
+      "reviewedBy": "user_admin"
     }
   ],
   "transactions": [
@@ -2195,10 +3159,99 @@
       "purpose": "Integration Test Lease Deposit",
       "status": "SUCCESS",
       "timestamp": "2026-09-17T12:02:32.292Z"
+    },
+    {
+      "id": "tx_1789649645216",
+      "transactionId": "TGL9120HJK",
+      "phoneNumber": "0745088075",
+      "amountKES": 2500,
+      "purpose": "Integration Test Lease Deposit",
+      "status": "SUCCESS",
+      "timestamp": "2026-09-17T12:54:05.216Z"
+    },
+    {
+      "id": "tx_1789649743458",
+      "transactionId": "RGL4373HJK",
+      "phoneNumber": "0765072818",
+      "amountKES": 2500,
+      "purpose": "Integration Test Lease Deposit",
+      "status": "SUCCESS",
+      "timestamp": "2026-09-17T12:55:43.458Z"
+    },
+    {
+      "id": "tx_1789650009892",
+      "transactionId": "SGL7591HJK",
+      "phoneNumber": "0755238820",
+      "amountKES": 2500,
+      "purpose": "Integration Test Lease Deposit",
+      "status": "SUCCESS",
+      "timestamp": "2026-09-17T13:00:09.892Z"
+    },
+    {
+      "id": "tx_1789650076636",
+      "transactionId": "XGL8008HJK",
+      "phoneNumber": "0782978139",
+      "amountKES": 2500,
+      "purpose": "Integration Test Lease Deposit",
+      "status": "SUCCESS",
+      "timestamp": "2026-09-17T13:01:16.636Z"
+    },
+    {
+      "id": "tx_1789651476952",
+      "transactionId": "ZGL6495HJK",
+      "phoneNumber": "0779271939",
+      "amountKES": 2500,
+      "purpose": "Integration Test Lease Deposit",
+      "status": "SUCCESS",
+      "timestamp": "2026-09-17T13:24:36.952Z"
+    },
+    {
+      "id": "tx_1789651529766",
+      "transactionId": "UGL6997HJK",
+      "phoneNumber": "0716301675",
+      "amountKES": 2500,
+      "purpose": "Integration Test Lease Deposit",
+      "status": "SUCCESS",
+      "timestamp": "2026-09-17T13:25:29.766Z"
+    },
+    {
+      "id": "tx_1789652373558",
+      "transactionId": "SGL6189HJK",
+      "phoneNumber": "0767068638",
+      "amountKES": 2500,
+      "purpose": "Integration Test Lease Deposit",
+      "status": "SUCCESS",
+      "timestamp": "2026-09-17T13:39:33.558Z"
+    },
+    {
+      "id": "tx_1789654190645",
+      "transactionId": "XGL7519HJK",
+      "phoneNumber": "0761737483",
+      "amountKES": 2500,
+      "purpose": "Integration Test Lease Deposit",
+      "status": "SUCCESS",
+      "timestamp": "2026-09-17T14:09:50.645Z"
+    },
+    {
+      "id": "tx_1789654254894",
+      "transactionId": "XGL8926HJK",
+      "phoneNumber": "0720907992",
+      "amountKES": 2500,
+      "purpose": "Integration Test Lease Deposit",
+      "status": "SUCCESS",
+      "timestamp": "2026-09-17T14:10:54.894Z"
+    },
+    {
+      "id": "tx_1789654980457",
+      "transactionId": "UGL1294HJK",
+      "phoneNumber": "0743694742",
+      "amountKES": 2500,
+      "purpose": "Integration Test Lease Deposit",
+      "status": "SUCCESS",
+      "timestamp": "2026-09-17T14:23:00.457Z"
     }
   ],
   "passwordHashes": {
-    "user_1": "$2b$10$3ovxIuDwu/39CCRB6J2pCuqHwIYypC49n6oxR67TxLQbFahzc5MMy",
     "user_2": "$2b$10$3ovxIuDwu/39CCRB6J2pCuqHwIYypC49n6oxR67TxLQbFahzc5MMy",
     "user_3": "$2b$10$3ovxIuDwu/39CCRB6J2pCuqHwIYypC49n6oxR67TxLQbFahzc5MMy",
     "user_admin": "$2b$10$3ovxIuDwu/39CCRB6J2pCuqHwIYypC49n6oxR67TxLQbFahzc5MMy",
@@ -2255,7 +3308,47 @@
     "user_1789646551604": "$2b$10$Z9ndv3sMgt9D667CqmoRSOduvfvqC8Qx0JYq63dKdOh6Gq.LfhV8C",
     "user_1789646552376": "$2b$10$dUXmQvh4NvIg90fzn6vAdOM3LyuC9VHFBJfO3K0oi6W71eSux4S8C",
     "user_1789646552488": "$2b$10$PZ9ti5PdN.hGbEMnjunueOawvP9N5/TgTU4NBIAb.CBtKR5oEXeT6",
-    "user_1789646552618": "$2b$10$vbubhDBSqBsZkos.SBWAMuBctVH3TPYSQqX6H9Jc7pEnSZIA/RJM6"
+    "user_1789646552618": "$2b$10$vbubhDBSqBsZkos.SBWAMuBctVH3TPYSQqX6H9Jc7pEnSZIA/RJM6",
+    "user_1789649643651": "$2b$10$2t2bqPXeFETQE2Zy/DswG.2oAwWQNn/Nm1W5GIaJUdBwD2GxW/y.m",
+    "user_1789649645678": "$2b$10$yKXk0owWdkc8KO12QCXYCuPm0Otoc1rNuKyfl7xTOsGAen5Jibxsu",
+    "user_1789649645878": "$2b$10$XcI6x1rO6hxUUuD2Gx1Elec3wcgWWkO2/DITWRzWcjdlN/qynZhaG",
+    "user_1789649646122": "$2b$10$LZJ7FosWGEGB41jtQOMJCOtzCiW5lTsZcKf/UZNaIkuQxoUpj3Wi.",
+    "user_1789649741393": "$2b$10$XUP3JkOEeVOE1vAIShr.GOjK034EBAeY7sNV/ZATb0dvUvGTcVPZK",
+    "user_1789649743972": "$2b$10$oPID2HX93YDFKyiOPddyweFqpF9XcydShTRZfTeDh36WIozA/0Ifu",
+    "user_1789649744270": "$2b$10$RHt9y/PZkcZGOjV1T5D6EefEvARjwCxkGHy6qhu/Xi6G3nFpvI8Ri",
+    "user_1789649744530": "$2b$10$qF00IrZsyPcJcyZ.1x8b.uzbMb1ObZsIkg8HTKrd6t902BUntLycq",
+    "user_1789650008101": "$2b$10$bUs1Hb7iZyIYnzxUcjcmsekISXt9fX1X0KdWosF6xPp9WLEZKXiBe",
+    "user_1789650010463": "$2b$10$CxKPBvb56BUGW9g1NxqFP.DDlSLqFD7K7QB42s4bAjqkcqHwTc1wi",
+    "user_1789650010698": "$2b$10$dNmK/MqFRux/zcDe893bpeCIQgwSHCM3sq5Lb5A9XbfzzKaQ9j5cy",
+    "user_1789650010938": "$2b$10$FgsP9gNl00RHt13.d3V.F.GcYAolgbJziesATAnJYqriv4Mhm5Pvm",
+    "user_1789650075051": "$2b$10$LZlbBQdgb9Xtj7FW.XppGeEz5M9YSEQ1P4in5vlVNJ9aCJA7eRbW2",
+    "user_1789650077104": "$2b$10$iBOhEb.BKkMmOQ2SLIFEvubbwgeh8AVn/YPpLkUK7O0/ykwg2TrKi",
+    "user_1789650077406": "$2b$10$528sHY3bYvdejF4Whdb4neNCXFE8Iuoe8kHQObzREDCM..bzGgLd.",
+    "user_1789650077679": "$2b$10$ec3zIa6.NVWspIofj4ZHU.UwiBcuxg8PfsmQIgmtMSbR8e.J3r7Ea",
+    "user_1789651475155": "$2b$10$ETbLvdpToeMxHJdl.3VOKOriUxrdLuJ5LNckGcmsCyLStDK33i0eW",
+    "user_1789651477365": "$2b$10$pVUA/swOGrFlyj87/VEGFejeQKsn4TnlaYjIYbmDnrVro4hiqDnWy",
+    "user_1789651477586": "$2b$10$khMw4Ak4mHOuUjyeTgchU.0pe8TLU/FBdj4OzzBBbwxgZSE61qSRm",
+    "user_1789651477906": "$2b$10$8hC/ilCzKXCEwvdPYKb6mee0iqbJitX0P6ilIyb2KUMbobtKhw.WK",
+    "user_1789651528125": "$2b$10$N.joLJwKBaELFugD44ov.Oan36H786Iyn/vQP3DE5Y.5WRqTrkyhG",
+    "user_1789651530101": "$2b$10$2o1gM25M8Y/uCbXGSquBcOg/890VJXuocxtuX2NoKRur4G6oZ1Hn.",
+    "user_1789651530300": "$2b$10$15SIADgyDjfqTsWiJ5VGmOp5Awvpi1fL9Fnazy5.tp9/8XrQmZ616",
+    "user_1789651530556": "$2b$10$uzaJW2uKqOsXKs96MZJIpuCmYlWW3hetKXP8QsZavQ8TLId2EL9Mq",
+    "user_1789652371858": "$2b$10$RWoW5XUwJHFH1.7SjZMWyOzVBhDQyn.olVgNNkPBlG2JYitPCRz8S",
+    "user_1789652374049": "$2b$10$9clIEDQC9bmRC99bkwguUe0XSvreIAQzdD7yYEcbLbc6vzXdQkfPy",
+    "user_1789652374332": "$2b$10$CGcpuf9lp6ygE7305DF.wOM2.ITl67T38zI0mfsZBeb3gpww6ChVy",
+    "user_1789652374617": "$2b$10$1uD2YgVnklJK9RzyObT2c.91N5oaz9lDetkGPjqR5DB3VHS8OlMp2",
+    "user_1789654182579": "$2b$10$nvBNo0mlSOlMbSHLy53nBeF1bSI1855C02iAbDQte8.AH2qdLOFpC",
+    "user_1789654192863": "$2b$10$sFzmjXaB69y.04L2Hy/f3e67wdkiEBir/Db8y2VQEEdPBnQilTWna",
+    "user_1789654193725": "$2b$10$gk0f1RFoJpYUZDCa5R2uPeArqcXBFZGrh54Ft4uDmYmx7TGYTjP.2",
+    "user_1789654194498": "$2b$10$n89QLvx9fHlt2PvsoLFPEOLkns978xl8e4I38nCafsLMyYM2LZcbu",
+    "user_1789654245098": "$2b$10$oKHhbB.tLqiL59NK5GQpgeS6Ga3QCbclPRSVJ/XyDPiBfeJGOSI9S",
+    "user_1789654258383": "$2b$10$x2pEph.T8qaXMjYxzmWtJetYbyPElXkmPVWSLhlp9iz9yC5qxk/YW",
+    "user_1789654259269": "$2b$10$K3C72WqzK8q7pCQFp7JSQeNF58yxWWu/xfZMrIV57mjY9Z81rVhx6",
+    "user_1789654260357": "$2b$10$jtaTyhLkR0haamGN5bMtgOA9BJDp2P5DHR9xVYBW6gTasxPSWrsiG",
+    "user_1789654978810": "$2b$10$5PnxTgdlvLNNuVpipg6VyusLLnEr/WLUU0om9IhgeVpU7A3x/HtUS",
+    "user_1789654981382": "$2b$10$Gp778Vy7Y2kJEbldWw4Tqu2wI/8T7AGRHUtWfTlql6N4tnzL.BWi2",
+    "user_1789654981653": "$2b$10$azEMLPZ1x1r3dAxBgwJSvuSzc85GDWKEhhZEiUGg8vgsuUZN889Je",
+    "user_1789654982015": "$2b$10$LK1254j4yPAol0rnG3i9y.hPSuafsUuGa6Gl87xTGrDDmT.yJ5W3q"
   },
   "refreshTokens": [
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InVzZXJfMiIsImlhdCI6MTc4MTUxNTU3MCwiZXhwIjoxNzgyMTIwMzcwfQ.oBUC3PUhaTAOvmfSF5IbMyQO1yJ_bA-DijbFQzQgYx8",
@@ -2388,9 +3481,278 @@
     "a83801262f39b4c952ed33ae7e11c236c2ca0588e5d2f090673260df9a7553fc",
     "847997f984bfb9e92276d2dcd08b09b2bdba7ac6a23f7b49298d26ccdb5ef2fb",
     "48700340e23e8bb15cabe5645f2a528642f3884dbc38e45c09ca5d557a267c8f",
-    "7c1e3904ed2e3aa754577f8ab225d19c8aad44e831f35d99c774e5e0d3e45f68"
+    "7c1e3904ed2e3aa754577f8ab225d19c8aad44e831f35d99c774e5e0d3e45f68",
+    "d4bc206c411406fc2a9e837661d83d71469d41a19c26c71070fb1618619cb0f7",
+    "97127ea4546a07827131ce8d51c73fcb3758aae5dc34231b920fea398b4efb4b",
+    "badec95749700042eba107141fd5dacb4f8d8b549c11066a35c2825a6711be7e",
+    "a902101c9c7f754eaf48ac7f8c14fc9a00ca164e4bd645e5f9949c707c3bace2",
+    "5c80b7e2ac75f7ef1e79a4980f501c26a04322dbc6c4e9f66c4b6e7f4288fa4b",
+    "b5a1ed168539374023b4811102ad02eab46dfe9369c6790161c63683dff9e583",
+    "3c4489bcee2778193fc1eb7bdeefb1c1c28d240f8df4b59e5873ec534fbebbd8",
+    "8e7655d16904898b27cd5bf58fe3c21007aa9d2f5b1692f2722aea06bc471c63",
+    "ceaec52b560e37f4c75ca8e842a6773d3d335b72f33442d6fb2486c454ea3a50",
+    "3e7b44303d7627dba8fd4193ee19f874078b355be1a75350b66d77eb6610fd67",
+    "46b497e8222d1293369e7a52e3e641a2b31a63f1dbee26000ce61a3fa1dad889",
+    "26ae0aa9505d691260fa478559ee01324741a43912accfce5259d064ffdb94e5",
+    "a419c92b472e554eb2568e9301cb27151a96d890711b22f7ef6aa4832a66c686",
+    "628c096df9b3a946304e40dff3a0b0727bfe6a7fcf1f705a9badd470b8400d71",
+    "b057a7c167e08c0f16a140794c16e59096f16dd602ee08bed92bfb7534e6ac1d",
+    "fefae7be4597390b895d5178cbacd7a946bb424ff351a2371ac4eab239c3a657",
+    "27a982df55f68fc8f8b5f6d15beefe5d6b8637caef6ce2810cfb947f5bb562c1",
+    "74454a6f01c59658333b67f214523e0eba6b3bbd51a046694c9383acc338999c",
+    "546517d70714867aff201b5163a58867b6d14b6d386041f545df7e5eca354f68",
+    "9a26ef31adcea67da38517dfb65f5e58405d806b55dab1c5bdad1c608dad4559",
+    "1096c460de5bebaa381e5775aa5b66260ac157d97962198d2ae689b731655221",
+    "b7b64a48d608a0ad9d2ec6b92431878fbda8d85a05dc771cb21f5e5c3b56e789",
+    "ee2172255c98b8f1719520f3ed8286b218e9019ce66a9d1cfe8507333239d704",
+    "bad6a7eab87a9385d09d7b99eebe26a281bbc2b36ec28c29eaea539031e862b5",
+    "352da0702ebeed2e557bdc265e88e0f9095a8ccc029b22510cd4526a546fe45a",
+    "352da0702ebeed2e557bdc265e88e0f9095a8ccc029b22510cd4526a546fe45a",
+    "b1c2ee82869fea0a3230d4c71d1b7bc8ec674cad2b1d97843d2a08bbf37675dd",
+    "0121a8f7d18a2364ce545ec8de6dbce78c4258d995b8256326ffd72de36ece65",
+    "f7e7dcf34652e704de4f864be0950577fbf152e72863a6c82ad0dfdeaae51c4c",
+    "edf5ebadc945b75aa9375c93eb143d1b6d21bf7a0d869c7e3e8251c049c855c6",
+    "7392d11c012259b8b289635bda7b5f96a85bb47f7b6f579274908e3eb43c427a",
+    "bc3723260bde9912b3d3149a734c091795e74f9cd76093d967786b33ad2c7804",
+    "a22b2b8871fa2ee9ab059b484b1ad323f17aafbaa391d032a7805f5aeecc5353",
+    "571a28ce3547e8f7983a83e50b54239e90d0dbe75a70910eec0998b98ea61802",
+    "2a5449ed0a9e4ccd255598cb3b26021092c4460d15142f0edaeebbe66ed37859",
+    "1548d30c116cbb4c1d49a8adfe7ae222c11bde0ce4d385d00d4d448cd6b675dc",
+    "1548d30c116cbb4c1d49a8adfe7ae222c11bde0ce4d385d00d4d448cd6b675dc",
+    "cc59b4d511965d1807e7fac9f5b45e5ec3e3918e4254b5de03c6010cb6de45b1",
+    "8f324048568e27f4f88fc22ffe9f4fb1fdccd6fd41415731dd37a6075eee7e1e",
+    "6aa155ea3920cbf2ab5298ee2acc77feaa94104f085704cf92d5452f34ed0d38",
+    "e5826d79e0fd343dad7804144e2205fe2a4c71ddd814f716850a21a21b7e5162",
+    "6f5c13e21d8190eb7b50c9a6d1357a62ae8c13c904af1810dd24da205a672a48",
+    "c6cf282ae3c62d1b050d3fcb09123e8eeff5e447e78fac8e9dc6d6272c9fdeff",
+    "5a8a71cec1b8ce38b0830f9cef1294f44eee0eb2e4b82fc7be61efb482df1a0d",
+    "c3495b1c0af0031c48136702197e92d408b550119b7accb85753e4f2fdb83620",
+    "dd72640eae50e5438dbcc2d5ac9fa76537d2e4a2d32c6ade1ba2424319194e31",
+    "2eee1558f01abfc40b0c23d94189e7a70b86f180ef423c2730b2e138feaf4ff6",
+    "e37ba579e2f6f332d472523015ef6fe69498a50569c4648ecb845e46155f7a0e",
+    "f842de59374969159d1804c860daddf0a5425d2ccd50b960f5bb6d4f1c60c9bf",
+    "640f1630edbed7130e8555a57ca75a8cfb9308cb4663c9e38a62f62ec7cd9b3b",
+    "9d021787a00bcb243b662756f95ebd832bd0fb0754a12e5194c6d630ca78c56f",
+    "6729259d8f7a0a66a1271ee3d9ab3747f0666e952f2f37b6b797f2e53d563a13",
+    "e77fe7835fb52deb349cc59f1a7d1e2b9e8620bb785823dbe91737f87c14ab56",
+    "e77fe7835fb52deb349cc59f1a7d1e2b9e8620bb785823dbe91737f87c14ab56",
+    "2f8528615c42fba26306f0443049e9e767d4e98a1b9dd544b395ab1e043ed3b5",
+    "2d1033b2480907477295f9f16b579e34ea00d3efd3de779a88915f10f043e42d",
+    "a10139f3f218ee3f6731c94d6700705e5093806afced972a0177949d76f5fe13",
+    "490273f9092be04bbfef8f03f8ec059d07bc13bd5495b62536334097a9998c5d",
+    "165191d3465b506bc051c470e542b4a146eb56b9bb9e82e98deb59aab6c735e6",
+    "9e75e0aaef21a711fdec8ebcdb97e38c047a644ec49c449f4655822e900eb2b1",
+    "5999c9c4671a164d7be29a92e3517b5dc60b8091bef29474c34a972bb515ff41",
+    "d0a8dbf27fee774b56dc09e6ff52f60a5a476f180011c6dc3a132a5aadf2f7ad",
+    "54be3c80ee9fd92e4ae57ee08d7d917fce6fec4e56e533dfbab00057f50b4148",
+    "0d199b4e57fe4d39b676474424a6bff0a042d1f97be353d5e08f36ae37c7d009",
+    "0d199b4e57fe4d39b676474424a6bff0a042d1f97be353d5e08f36ae37c7d009",
+    "e304db7701e0dff488ce7320f2f1395408fd4c80133a9e855242d107a5ed0542",
+    "5c018b9ced94c22a0ac911f284ff370cb11e1f9f77fdca557d7dd3249ddb5e0d",
+    "a00930343b4c4a28034acbd060b6649d214e340873cbaadc8cc283e2de4db735",
+    "92016841d1d6f3fdb94308f599cd172dd592015f30125e2bfe491556a6b2b768",
+    "3be5914ae1d79cea61b73c32ac001a001cafdc8f4447b9f196ad5a557d1ad925",
+    "904cf75636ba2327f5f8035519edcce811dd4524368ff1b2eb9c76588b6a6eb3",
+    "b236529c5b2a65713c1bfbc9c7ddb752a1deae9bd4bf657b63eb51e29fc8a7c1",
+    "80ae84bab713a2fa45daa89d5bcb39e775a89d75ebde10d6715bd8ada7bf8a42",
+    "42a3983b574cd6179182385a46217d97f918221d6a2b238b39c7c63e5a7c4667",
+    "437fca12af5437d40dcfb291bc55edbec11c6231187723bef0d24133a3626266",
+    "a61af0c1e7948920110d999f0f7d1bb8507b2998d64e2a0e36d341e3e5790e0e",
+    "a61af0c1e7948920110d999f0f7d1bb8507b2998d64e2a0e36d341e3e5790e0e",
+    "6393511399825f276eb8cbc72c326f4d0b8f31f53a89e1cc9ec5ef6308e68709",
+    "26d67df135637a17b11299d10e82e2b7c40986576a487e3869a10910d6a1369f",
+    "37f17548bab957961cd843370986e367be4d8b6bad9f521da68f83df0185dc69",
+    "925a8edef7ae27b99c3f2d2b10d3bdb22392a019550f8267d4d4e05898ad6c31",
+    "6d6d6815a5cf2aa18e752389e397b878e2660aeee3b369dcf4322a9b623280cc",
+    "15f9b4411073eed219e09f52e86714a78f8968e86dddb4d6bae7519937516498",
+    "1e6a96727d605f494f493f1b3134cc386d5551938467935edfbef8a3be09221d",
+    "0a8c2c133a2d9d0637b1261af6723bb9935f90f87138d8cada2995b2f6afab4f",
+    "7b5f73ef339d94e40beb5a16e64ddb40163792df5cb6834d33d23a7ac32738b3",
+    "4244aa62debb13f2632d8d2aa936314f10beec885e67bddbc3ce71e63f726d00",
+    "729c827d0d8577cbe2d7cdf42fabe76c0d4dfbd8fc8136bc81a3df3e773d3d39",
+    "40b72dc06abc52ab53e5ebb5e839b2816be46d5275155dbc0a81cafe2af4a3c7",
+    "ce2e15af78c1cf5b8d84e44377a164c3f4038f33e80a199c0f18c5ed9091431c",
+    "93bb88cbe98294e138f876d71cd28180c9a1a204f78b2ad4ebef7cd928ca4bfb",
+    "df9aa028e448b5406bc1853770aeb26c1a67c8952fb1e0ae3d1860c6db94129e",
+    "8b91e67add0c831012d290c9385626ac45fed4867e30f8d757bd65f2be351c10",
+    "9f47775335ef54b9d3bf99c645fc53c063bdab6ed70f1e08a6393c8fa0554a58",
+    "bbd9a8c911e7b411256635ab75f36bfc8cbbe109d22b7e3c8ce31dce4ced9070",
+    "940a05a80032bcc333cc39ee6d790bef90b2b7277a349f7f4be15113335d99a5",
+    "1d5b60937cc9fcfba124eebcebe7ab565639b68ad748f16e5a5f010fabf7e700",
+    "fe256da401d056bc824e8335b4b601b50d65b518e4a93affe2c95324d9281590",
+    "cd505d034eda97ff314d466b42ca1525ab0c58626b9c8b54ea43fa4b75f60ef6",
+    "30704bc11e4d93d05d6ae510467400fcd1db086be26d4ab6cfdba85b0bdc9eaa",
+    "01fefe2cf9e5158fdde3bf30c7200a7cc8805e6cf9d55f2e946e5537d8d2207c",
+    "b17a9cc8e6ad4627cef0636d4a7a0d6fc73bb0d9824be6859db59552189d9983",
+    "26fdef31de81481442e1a66671377ed661827fd3e3db2643ee677db0ae6cfad1",
+    "84bf4dea27836802275ecbe4e581dc31156d4905d0e5992ceb14ebac6e7ee708",
+    "7da0f726095570029c25a4e304958e595aa34d57d6060f6f0308448345eee436",
+    "3f6798ad34f975ec714ed781a5d83edcfbd62a835e0d0243b67a6f3ed4e743de",
+    "276724882bcd2a4e246d2ed6af0ea31e31b871670542c2bda4382946a6a0d239",
+    "7c8b73af6472f00aea54172921a00426e32fc64daeeaf2b408ec7baadda3c758",
+    "0e0966337a51550f67e0ff7604b0c832a77a2eb6d32bdbb6de3c3994d6c94adb",
+    "77ce7a4f834a21c7a9d30d4b9a3a32af52cb9ac5f936e90453867652e4b7695c",
+    "9b814228b601dde919eee1d5f30654cbfb85980c9f7714ea6baf1c19a2e62c19",
+    "7f975888f9e8666ac000c687132dc8580e4d4a7e0f42035b046a3914f3335370",
+    "e72a4da2cf688006875496082f63f4d868559bbb449c70607f0cb10bd61c3fe1",
+    "243ab104510726927249a25078a89f9bf5a57f52dafb86a23626fbf3437b5072",
+    "8dede3e100f0e07f74d9a1d8f0906e66e29892da80e7c403d7715ba4ed99fedc",
+    "988f43acfdf75803a97fdd4bd576a5c5307231ba2d2cbaa355b5a7303589a84d",
+    "9e4ee37604e390994ebe2bef3aa22fa87bee8398e24c8ad847b2a970f2a86b31",
+    "9c53a3ae3a18f91f4a1de80c0cf6dfff8c693d0b665b447cacefb2435383caca",
+    "803ab9db179153f2a05f84605b5a78d6d4fe2e1d1d5e597606f8a79cf44e1f45",
+    "0a316bca64944f3f9b92f26db7bba908dc14f77837ddaaba0c4918caa3c6d69a",
+    "0a316bca64944f3f9b92f26db7bba908dc14f77837ddaaba0c4918caa3c6d69a",
+    "c252ebad211c78e17068419d87034a73414d229123aa9558242218aeb5694f56",
+    "a1f2f3ecf327118b9a44f3e383e667e797665b89dda9e319fcea3fe047904910",
+    "97fa85b25c5992c662ec8f66d0b071acfe4eae7b1ce4479350e83cf6ea96a08a",
+    "04245a866e9ee3bde1688c7f5ee506b9e6fe306bcdba6855c4a2af035b5936ae",
+    "3d8ef27f8540625ce865ee4adf5bf1723280fc26cb0bb15eb876b46f5d41487e",
+    "9a526d85d761381f6ccf22ad5dac8a628a80214a42b5d70a80c1edd6a023aa8a",
+    "a3603dcc221cd8801b379699ea95ea04916a48bb6e6454f217d4343b82713b95",
+    "e812d31ea16be4d4fa496497d044b86b964c94fb34efb5b3c93007dda3bcf32b",
+    "c4b294a42425198cfdc5c3ce29c5a06e5f762c319920988c9f6e928cb045cb3b",
+    "e30d68f89a721a9e159c50c404833b3f9022706af03883a7d288088c45196689",
+    "ae442a2ff0940ab7b63f654aa17420dde1bf193931410e65d5241ecf2c1e3e7f",
+    "462c746d6f085a110e25fc1aff4f974a3d1de1cb9f4cb648253e2aaed7e895cf",
+    "c007247dc265ab38e2e4d1585f4d6351a21bace9beb59684d53c509034de5837",
+    "f385f3bc72e14aa9feaad79e7ab027a34818378a288d746061c8fd8bd238c370",
+    "bb4300422dd9be15cb0e615dae812f79ac8753241081f013d3ae1353e1f3fcff",
+    "ebedbee44127fdeb0303d41e4da55985939396e87856fd18cced91ec4bf043b8",
+    "6d456847f7d4ffa65224fbae125b255d40c35631beeef678a6ee4ec27afc886d",
+    "c92619ef8e0f9c79c60333c9c9942037ad0492bfc081f8bb299edca110ca0a02",
+    "3753ba51a7b3d2cf6a2c26e701d8d89b45979be63ebdc94186631d8796dffb43",
+    "46689d945c0519c729412117d11993e888443cbbbd3f7928807d8cc9c55b7c9c"
   ],
   "disputes": [
+    {
+      "id": "disp_1789646552312",
+      "creatorId": "user_1789646551604",
+      "creatorName": "Integration Farmer",
+      "creatorRole": "farmer",
+      "respondentName": "Partner Party",
+      "title": "Partnership Grievance",
+      "reason": "Landowner denied deep tractor plowing access, violating verbal agreements.",
+      "evidenceUrls": [],
+      "leaseId": "lease_1789646552308",
+      "status": "OPEN",
+      "createdAt": "2026-09-17T12:02:32.312Z",
+      "updatedAt": "2026-09-17T12:02:32.312Z",
+      "messages": [
+        {
+          "senderId": "user_1789646551604",
+          "senderName": "Integration Farmer",
+          "senderRole": "farmer",
+          "message": "Landowner denied deep tractor plowing access, violating verbal agreements.",
+          "evidenceUrls": [],
+          "timestamp": "2026-09-17T12:02:32.312Z"
+        }
+      ],
+      "history": [
+        {
+          "at": "2026-09-17T12:02:32.312Z",
+          "actorId": "user_1789646551604",
+          "action": "OPENED",
+          "note": "Dispute registered in ShambaLoop Dispute Room"
+        }
+      ]
+    },
+    {
+      "id": "disp_1789646412989",
+      "creatorId": "user_1789646412302",
+      "creatorName": "Integration Farmer",
+      "creatorRole": "farmer",
+      "respondentName": "Partner Party",
+      "title": "Partnership Grievance",
+      "reason": "Landowner denied deep tractor plowing access, violating verbal agreements.",
+      "evidenceUrls": [],
+      "leaseId": "lease_1789646412985",
+      "status": "OPEN",
+      "createdAt": "2026-09-17T12:00:12.989Z",
+      "updatedAt": "2026-09-17T12:00:12.989Z",
+      "messages": [
+        {
+          "senderId": "user_1789646412302",
+          "senderName": "Integration Farmer",
+          "senderRole": "farmer",
+          "message": "Landowner denied deep tractor plowing access, violating verbal agreements.",
+          "evidenceUrls": [],
+          "timestamp": "2026-09-17T12:00:12.989Z"
+        }
+      ],
+      "history": [
+        {
+          "at": "2026-09-17T12:00:12.989Z",
+          "actorId": "user_1789646412302",
+          "action": "OPENED",
+          "note": "Dispute registered in ShambaLoop Dispute Room"
+        }
+      ]
+    },
+    {
+      "id": "disp_1789646402246",
+      "creatorId": "user_1789646401570",
+      "creatorName": "Integration Farmer",
+      "creatorRole": "farmer",
+      "respondentName": "Partner Party",
+      "title": "Partnership Grievance",
+      "reason": "Landowner denied deep tractor plowing access, violating verbal agreements.",
+      "evidenceUrls": [],
+      "leaseId": "lease_1789646402241",
+      "status": "OPEN",
+      "createdAt": "2026-09-17T12:00:02.246Z",
+      "updatedAt": "2026-09-17T12:00:02.246Z",
+      "messages": [
+        {
+          "senderId": "user_1789646401570",
+          "senderName": "Integration Farmer",
+          "senderRole": "farmer",
+          "message": "Landowner denied deep tractor plowing access, violating verbal agreements.",
+          "evidenceUrls": [],
+          "timestamp": "2026-09-17T12:00:02.246Z"
+        }
+      ],
+      "history": [
+        {
+          "at": "2026-09-17T12:00:02.246Z",
+          "actorId": "user_1789646401570",
+          "action": "OPENED",
+          "note": "Dispute registered in ShambaLoop Dispute Room"
+        }
+      ]
+    },
+    {
+      "id": "disp_1789646387536",
+      "creatorId": "user_1789646386836",
+      "creatorName": "Integration Farmer",
+      "creatorRole": "farmer",
+      "respondentName": "Partner Party",
+      "title": "Partnership Grievance",
+      "reason": "Landowner denied deep tractor plowing access, violating verbal agreements.",
+      "evidenceUrls": [],
+      "leaseId": "lease_1789646387531",
+      "status": "OPEN",
+      "createdAt": "2026-09-17T11:59:47.536Z",
+      "updatedAt": "2026-09-17T11:59:47.536Z",
+      "messages": [
+        {
+          "senderId": "user_1789646386836",
+          "senderName": "Integration Farmer",
+          "senderRole": "farmer",
+          "message": "Landowner denied deep tractor plowing access, violating verbal agreements.",
+          "evidenceUrls": [],
+          "timestamp": "2026-09-17T11:59:47.536Z"
+        }
+      ],
+      "history": [
+        {
+          "at": "2026-09-17T11:59:47.536Z",
+          "actorId": "user_1789646386836",
+          "action": "OPENED",
+          "note": "Dispute registered in ShambaLoop Dispute Room"
+        }
+      ]
+    },
     {
       "id": "disp_1789553592879",
       "leaseId": "lease_1789553592875",
@@ -2572,138 +3934,350 @@
       "status": "OPEN",
       "createdAt": "2026-09-15T09:15:51.758Z",
       "updatedAt": "2026-09-15T09:15:51.758Z"
-    },
-    {
-      "id": "disp_1789646387536",
-      "creatorId": "user_1789646386836",
-      "creatorName": "Integration Farmer",
-      "creatorRole": "farmer",
-      "respondentName": "Partner Party",
-      "title": "Partnership Grievance",
-      "reason": "Landowner denied deep tractor plowing access, violating verbal agreements.",
-      "evidenceUrls": [],
-      "leaseId": "lease_1789646387531",
-      "status": "OPEN",
-      "createdAt": "2026-09-17T11:59:47.536Z",
-      "updatedAt": "2026-09-17T11:59:47.536Z",
-      "messages": [
-        {
-          "senderId": "user_1789646386836",
-          "senderName": "Integration Farmer",
-          "senderRole": "farmer",
-          "message": "Landowner denied deep tractor plowing access, violating verbal agreements.",
-          "evidenceUrls": [],
-          "timestamp": "2026-09-17T11:59:47.536Z"
-        }
-      ],
-      "history": [
-        {
-          "at": "2026-09-17T11:59:47.536Z",
-          "actorId": "user_1789646386836",
-          "action": "OPENED",
-          "note": "Dispute registered in ShambaLoop Dispute Room"
-        }
-      ]
-    },
-    {
-      "id": "disp_1789646402246",
-      "creatorId": "user_1789646401570",
-      "creatorName": "Integration Farmer",
-      "creatorRole": "farmer",
-      "respondentName": "Partner Party",
-      "title": "Partnership Grievance",
-      "reason": "Landowner denied deep tractor plowing access, violating verbal agreements.",
-      "evidenceUrls": [],
-      "leaseId": "lease_1789646402241",
-      "status": "OPEN",
-      "createdAt": "2026-09-17T12:00:02.246Z",
-      "updatedAt": "2026-09-17T12:00:02.246Z",
-      "messages": [
-        {
-          "senderId": "user_1789646401570",
-          "senderName": "Integration Farmer",
-          "senderRole": "farmer",
-          "message": "Landowner denied deep tractor plowing access, violating verbal agreements.",
-          "evidenceUrls": [],
-          "timestamp": "2026-09-17T12:00:02.246Z"
-        }
-      ],
-      "history": [
-        {
-          "at": "2026-09-17T12:00:02.246Z",
-          "actorId": "user_1789646401570",
-          "action": "OPENED",
-          "note": "Dispute registered in ShambaLoop Dispute Room"
-        }
-      ]
-    },
-    {
-      "id": "disp_1789646412989",
-      "creatorId": "user_1789646412302",
-      "creatorName": "Integration Farmer",
-      "creatorRole": "farmer",
-      "respondentName": "Partner Party",
-      "title": "Partnership Grievance",
-      "reason": "Landowner denied deep tractor plowing access, violating verbal agreements.",
-      "evidenceUrls": [],
-      "leaseId": "lease_1789646412985",
-      "status": "OPEN",
-      "createdAt": "2026-09-17T12:00:12.989Z",
-      "updatedAt": "2026-09-17T12:00:12.989Z",
-      "messages": [
-        {
-          "senderId": "user_1789646412302",
-          "senderName": "Integration Farmer",
-          "senderRole": "farmer",
-          "message": "Landowner denied deep tractor plowing access, violating verbal agreements.",
-          "evidenceUrls": [],
-          "timestamp": "2026-09-17T12:00:12.989Z"
-        }
-      ],
-      "history": [
-        {
-          "at": "2026-09-17T12:00:12.989Z",
-          "actorId": "user_1789646412302",
-          "action": "OPENED",
-          "note": "Dispute registered in ShambaLoop Dispute Room"
-        }
-      ]
-    },
-    {
-      "id": "disp_1789646552312",
-      "creatorId": "user_1789646551604",
-      "creatorName": "Integration Farmer",
-      "creatorRole": "farmer",
-      "respondentName": "Partner Party",
-      "title": "Partnership Grievance",
-      "reason": "Landowner denied deep tractor plowing access, violating verbal agreements.",
-      "evidenceUrls": [],
-      "leaseId": "lease_1789646552308",
-      "status": "OPEN",
-      "createdAt": "2026-09-17T12:02:32.312Z",
-      "updatedAt": "2026-09-17T12:02:32.312Z",
-      "messages": [
-        {
-          "senderId": "user_1789646551604",
-          "senderName": "Integration Farmer",
-          "senderRole": "farmer",
-          "message": "Landowner denied deep tractor plowing access, violating verbal agreements.",
-          "evidenceUrls": [],
-          "timestamp": "2026-09-17T12:02:32.312Z"
-        }
-      ],
-      "history": [
-        {
-          "at": "2026-09-17T12:02:32.312Z",
-          "actorId": "user_1789646551604",
-          "action": "OPENED",
-          "note": "Dispute registered in ShambaLoop Dispute Room"
-        }
-      ]
     }
   ],
   "matches": [],
   "proposals": [
+    {
+      "id": "proposal_1789654981960",
+      "farmerId": "user_1789654978810",
+      "farmerName": "Integration Farmer",
+      "farmerPhone": "0743694742",
+      "investorId": "user_1789654981653",
+      "investorName": "Integration Investor",
+      "title": "Secure dairy expansion",
+      "sector": "Dairy",
+      "farmDescription": "Established farm with water, fodder, and experienced staff.",
+      "capitalRequestedKES": 200000,
+      "farmerContribution": "Land, labour, water, and feed storage.",
+      "investorSharePercent": 40,
+      "farmerSharePercent": 60,
+      "status": "NEGOTIATING",
+      "createdAt": "2026-09-17T14:23:01.960Z"
+    },
+    {
+      "id": "proposal_1789654981282",
+      "farmerId": "user_1789654978810",
+      "farmerName": "Integration Farmer",
+      "farmerPhone": "0743694742",
+      "investorId": "user_3",
+      "investorName": "David Mwangi",
+      "title": "Dairy fodder expansion",
+      "sector": "Dairy",
+      "farmDescription": "Five acres, reliable water, and two experienced dairy workers.",
+      "capitalRequestedKES": 250000,
+      "farmerContribution": "Land, labour, water, and fodder storage.",
+      "investorSharePercent": 40,
+      "farmerSharePercent": 60,
+      "status": "SUBMITTED",
+      "createdAt": "2026-09-17T14:23:01.282Z"
+    },
+    {
+      "id": "proposal_1789654259997",
+      "farmerId": "user_1789654245098",
+      "farmerName": "Integration Farmer",
+      "farmerPhone": "0720907992",
+      "investorId": "user_1789654259269",
+      "investorName": "Integration Investor",
+      "title": "Secure dairy expansion",
+      "sector": "Dairy",
+      "farmDescription": "Established farm with water, fodder, and experienced staff.",
+      "capitalRequestedKES": 200000,
+      "farmerContribution": "Land, labour, water, and feed storage.",
+      "investorSharePercent": 40,
+      "farmerSharePercent": 60,
+      "status": "NEGOTIATING",
+      "createdAt": "2026-09-17T14:10:59.997Z"
+    },
+    {
+      "id": "proposal_1789654257645",
+      "farmerId": "user_1789654245098",
+      "farmerName": "Integration Farmer",
+      "farmerPhone": "0720907992",
+      "investorId": "user_3",
+      "investorName": "David Mwangi",
+      "title": "Dairy fodder expansion",
+      "sector": "Dairy",
+      "farmDescription": "Five acres, reliable water, and two experienced dairy workers.",
+      "capitalRequestedKES": 250000,
+      "farmerContribution": "Land, labour, water, and fodder storage.",
+      "investorSharePercent": 40,
+      "farmerSharePercent": 60,
+      "status": "SUBMITTED",
+      "createdAt": "2026-09-17T14:10:57.645Z"
+    },
+    {
+      "id": "proposal_1789654194379",
+      "farmerId": "user_1789654182579",
+      "farmerName": "Integration Farmer",
+      "farmerPhone": "0761737483",
+      "investorId": "user_1789654193725",
+      "investorName": "Integration Investor",
+      "title": "Secure dairy expansion",
+      "sector": "Dairy",
+      "farmDescription": "Established farm with water, fodder, and experienced staff.",
+      "capitalRequestedKES": 200000,
+      "farmerContribution": "Land, labour, water, and feed storage.",
+      "investorSharePercent": 40,
+      "farmerSharePercent": 60,
+      "status": "NEGOTIATING",
+      "createdAt": "2026-09-17T14:09:54.379Z"
+    },
+    {
+      "id": "proposal_1789654192598",
+      "farmerId": "user_1789654182579",
+      "farmerName": "Integration Farmer",
+      "farmerPhone": "0761737483",
+      "investorId": "user_3",
+      "investorName": "David Mwangi",
+      "title": "Dairy fodder expansion",
+      "sector": "Dairy",
+      "farmDescription": "Five acres, reliable water, and two experienced dairy workers.",
+      "capitalRequestedKES": 250000,
+      "farmerContribution": "Land, labour, water, and fodder storage.",
+      "investorSharePercent": 40,
+      "farmerSharePercent": 60,
+      "status": "SUBMITTED",
+      "createdAt": "2026-09-17T14:09:52.598Z"
+    },
+    {
+      "id": "proposal_1789652374573",
+      "farmerId": "user_1789652371858",
+      "farmerName": "Integration Farmer",
+      "farmerPhone": "0767068638",
+      "investorId": "user_1789652374332",
+      "investorName": "Integration Investor",
+      "title": "Secure dairy expansion",
+      "sector": "Dairy",
+      "farmDescription": "Established farm with water, fodder, and experienced staff.",
+      "capitalRequestedKES": 200000,
+      "farmerContribution": "Land, labour, water, and feed storage.",
+      "investorSharePercent": 40,
+      "farmerSharePercent": 60,
+      "status": "NEGOTIATING",
+      "createdAt": "2026-09-17T13:39:34.573Z"
+    },
+    {
+      "id": "proposal_1789652373958",
+      "farmerId": "user_1789652371858",
+      "farmerName": "Integration Farmer",
+      "farmerPhone": "0767068638",
+      "investorId": "user_3",
+      "investorName": "David Mwangi",
+      "title": "Dairy fodder expansion",
+      "sector": "Dairy",
+      "farmDescription": "Five acres, reliable water, and two experienced dairy workers.",
+      "capitalRequestedKES": 250000,
+      "farmerContribution": "Land, labour, water, and fodder storage.",
+      "investorSharePercent": 40,
+      "farmerSharePercent": 60,
+      "status": "SUBMITTED",
+      "createdAt": "2026-09-17T13:39:33.958Z"
+    },
+    {
+      "id": "proposal_1789651530521",
+      "farmerId": "user_1789651528125",
+      "farmerName": "Integration Farmer",
+      "farmerPhone": "0716301675",
+      "investorId": "user_1789651530300",
+      "investorName": "Integration Investor",
+      "title": "Secure dairy expansion",
+      "sector": "Dairy",
+      "farmDescription": "Established farm with water, fodder, and experienced staff.",
+      "capitalRequestedKES": 200000,
+      "farmerContribution": "Land, labour, water, and feed storage.",
+      "investorSharePercent": 40,
+      "farmerSharePercent": 60,
+      "status": "NEGOTIATING",
+      "createdAt": "2026-09-17T13:25:30.521Z"
+    },
+    {
+      "id": "proposal_1789651530057",
+      "farmerId": "user_1789651528125",
+      "farmerName": "Integration Farmer",
+      "farmerPhone": "0716301675",
+      "investorId": "user_3",
+      "investorName": "David Mwangi",
+      "title": "Dairy fodder expansion",
+      "sector": "Dairy",
+      "farmDescription": "Five acres, reliable water, and two experienced dairy workers.",
+      "capitalRequestedKES": 250000,
+      "farmerContribution": "Land, labour, water, and fodder storage.",
+      "investorSharePercent": 40,
+      "farmerSharePercent": 60,
+      "status": "SUBMITTED",
+      "createdAt": "2026-09-17T13:25:30.057Z"
+    },
+    {
+      "id": "proposal_1789651477861",
+      "farmerId": "user_1789651475155",
+      "farmerName": "Integration Farmer",
+      "farmerPhone": "0779271939",
+      "investorId": "user_1789651477586",
+      "investorName": "Integration Investor",
+      "title": "Secure dairy expansion",
+      "sector": "Dairy",
+      "farmDescription": "Established farm with water, fodder, and experienced staff.",
+      "capitalRequestedKES": 200000,
+      "farmerContribution": "Land, labour, water, and feed storage.",
+      "investorSharePercent": 40,
+      "farmerSharePercent": 60,
+      "status": "NEGOTIATING",
+      "createdAt": "2026-09-17T13:24:37.861Z"
+    },
+    {
+      "id": "proposal_1789651477292",
+      "farmerId": "user_1789651475155",
+      "farmerName": "Integration Farmer",
+      "farmerPhone": "0779271939",
+      "investorId": "user_3",
+      "investorName": "David Mwangi",
+      "title": "Dairy fodder expansion",
+      "sector": "Dairy",
+      "farmDescription": "Five acres, reliable water, and two experienced dairy workers.",
+      "capitalRequestedKES": 250000,
+      "farmerContribution": "Land, labour, water, and fodder storage.",
+      "investorSharePercent": 40,
+      "farmerSharePercent": 60,
+      "status": "SUBMITTED",
+      "createdAt": "2026-09-17T13:24:37.292Z"
+    },
+    {
+      "id": "proposal_1789650077646",
+      "farmerId": "user_1789650075051",
+      "farmerName": "Integration Farmer",
+      "farmerPhone": "0782978139",
+      "investorId": "user_1789650077406",
+      "investorName": "Integration Investor",
+      "title": "Secure dairy expansion",
+      "sector": "Dairy",
+      "farmDescription": "Established farm with water, fodder, and experienced staff.",
+      "capitalRequestedKES": 200000,
+      "farmerContribution": "Land, labour, water, and feed storage.",
+      "investorSharePercent": 40,
+      "farmerSharePercent": 60,
+      "status": "NEGOTIATING",
+      "createdAt": "2026-09-17T13:01:17.646Z"
+    },
+    {
+      "id": "proposal_1789650077062",
+      "farmerId": "user_1789650075051",
+      "farmerName": "Integration Farmer",
+      "farmerPhone": "0782978139",
+      "investorId": "user_3",
+      "investorName": "David Mwangi",
+      "title": "Dairy fodder expansion",
+      "sector": "Dairy",
+      "farmDescription": "Five acres, reliable water, and two experienced dairy workers.",
+      "capitalRequestedKES": 250000,
+      "farmerContribution": "Land, labour, water, and fodder storage.",
+      "investorSharePercent": 40,
+      "farmerSharePercent": 60,
+      "status": "SUBMITTED",
+      "createdAt": "2026-09-17T13:01:17.062Z"
+    },
+    {
+      "id": "proposal_1789650010904",
+      "farmerId": "user_1789650008101",
+      "farmerName": "Integration Farmer",
+      "farmerPhone": "0755238820",
+      "investorId": "user_1789650010698",
+      "investorName": "Integration Investor",
+      "title": "Secure dairy expansion",
+      "sector": "Dairy",
+      "farmDescription": "Established farm with water, fodder, and experienced staff.",
+      "capitalRequestedKES": 200000,
+      "farmerContribution": "Land, labour, water, and feed storage.",
+      "investorSharePercent": 40,
+      "farmerSharePercent": 60,
+      "status": "NEGOTIATING",
+      "createdAt": "2026-09-17T13:00:10.904Z"
+    },
+    {
+      "id": "proposal_1789650010366",
+      "farmerId": "user_1789650008101",
+      "farmerName": "Integration Farmer",
+      "farmerPhone": "0755238820",
+      "investorId": "user_3",
+      "investorName": "David Mwangi",
+      "title": "Dairy fodder expansion",
+      "sector": "Dairy",
+      "farmDescription": "Five acres, reliable water, and two experienced dairy workers.",
+      "capitalRequestedKES": 250000,
+      "farmerContribution": "Land, labour, water, and fodder storage.",
+      "investorSharePercent": 40,
+      "farmerSharePercent": 60,
+      "status": "SUBMITTED",
+      "createdAt": "2026-09-17T13:00:10.366Z"
+    },
+    {
+      "id": "proposal_1789649744498",
+      "farmerId": "user_1789649741393",
+      "farmerName": "Integration Farmer",
+      "farmerPhone": "0765072818",
+      "investorId": "user_1789649744270",
+      "investorName": "Integration Investor",
+      "title": "Secure dairy expansion",
+      "sector": "Dairy",
+      "farmDescription": "Established farm with water, fodder, and experienced staff.",
+      "capitalRequestedKES": 200000,
+      "farmerContribution": "Land, labour, water, and feed storage.",
+      "investorSharePercent": 40,
+      "farmerSharePercent": 60,
+      "status": "NEGOTIATING",
+      "createdAt": "2026-09-17T12:55:44.498Z"
+    },
+    {
+      "id": "proposal_1789649743777",
+      "farmerId": "user_1789649741393",
+      "farmerName": "Integration Farmer",
+      "farmerPhone": "0765072818",
+      "investorId": "user_3",
+      "investorName": "David Mwangi",
+      "title": "Dairy fodder expansion",
+      "sector": "Dairy",
+      "farmDescription": "Five acres, reliable water, and two experienced dairy workers.",
+      "capitalRequestedKES": 250000,
+      "farmerContribution": "Land, labour, water, and fodder storage.",
+      "investorSharePercent": 40,
+      "farmerSharePercent": 60,
+      "status": "SUBMITTED",
+      "createdAt": "2026-09-17T12:55:43.777Z"
+    },
+    {
+      "id": "proposal_1789649646092",
+      "farmerId": "user_1789649643651",
+      "farmerName": "Integration Farmer",
+      "farmerPhone": "0745088075",
+      "investorId": "user_1789649645878",
+      "investorName": "Integration Investor",
+      "title": "Secure dairy expansion",
+      "sector": "Dairy",
+      "farmDescription": "Established farm with water, fodder, and experienced staff.",
+      "capitalRequestedKES": 200000,
+      "farmerContribution": "Land, labour, water, and feed storage.",
+      "investorSharePercent": 40,
+      "farmerSharePercent": 60,
+      "status": "NEGOTIATING",
+      "createdAt": "2026-09-17T12:54:06.092Z"
+    },
+    {
+      "id": "proposal_1789649645638",
+      "farmerId": "user_1789649643651",
+      "farmerName": "Integration Farmer",
+      "farmerPhone": "0745088075",
+      "investorId": "user_3",
+      "investorName": "David Mwangi",
+      "title": "Dairy fodder expansion",
+      "sector": "Dairy",
+      "farmDescription": "Five acres, reliable water, and two experienced dairy workers.",
+      "capitalRequestedKES": 250000,
+      "farmerContribution": "Land, labour, water, and fodder storage.",
+      "investorSharePercent": 40,
+      "farmerSharePercent": 60,
+      "status": "SUBMITTED",
+      "createdAt": "2026-09-17T12:54:05.638Z"
+    },
     {
       "id": "proposal_1789646552608",
       "farmerId": "user_1789646551604",
@@ -2979,6 +4553,126 @@
   ],
   "farmEvents": [
     {
+      "id": "event_1789654981330",
+      "farmId": "farm_primary",
+      "farmerId": "user_1789654978810",
+      "farmerName": "Integration Farmer",
+      "eventType": "PEST_ALERT",
+      "title": "Aphid activity",
+      "description": "Aphids found on the greenhouse tomatoes.",
+      "severity": "HIGH",
+      "date": "2026-09-17T14:23:01.330Z",
+      "reportedBy": "Integration Farmer"
+    },
+    {
+      "id": "event_1789654257978",
+      "farmId": "farm_primary",
+      "farmerId": "user_1789654245098",
+      "farmerName": "Integration Farmer",
+      "eventType": "PEST_ALERT",
+      "title": "Aphid activity",
+      "description": "Aphids found on the greenhouse tomatoes.",
+      "severity": "HIGH",
+      "date": "2026-09-17T14:10:57.978Z",
+      "reportedBy": "Integration Farmer"
+    },
+    {
+      "id": "event_1789654192708",
+      "farmId": "farm_primary",
+      "farmerId": "user_1789654182579",
+      "farmerName": "Integration Farmer",
+      "eventType": "PEST_ALERT",
+      "title": "Aphid activity",
+      "description": "Aphids found on the greenhouse tomatoes.",
+      "severity": "HIGH",
+      "date": "2026-09-17T14:09:52.708Z",
+      "reportedBy": "Integration Farmer"
+    },
+    {
+      "id": "event_1789652373990",
+      "farmId": "farm_primary",
+      "farmerId": "user_1789652371858",
+      "farmerName": "Integration Farmer",
+      "eventType": "PEST_ALERT",
+      "title": "Aphid activity",
+      "description": "Aphids found on the greenhouse tomatoes.",
+      "severity": "HIGH",
+      "date": "2026-09-17T13:39:33.990Z",
+      "reportedBy": "Integration Farmer"
+    },
+    {
+      "id": "event_1789651530078",
+      "farmId": "farm_primary",
+      "farmerId": "user_1789651528125",
+      "farmerName": "Integration Farmer",
+      "eventType": "PEST_ALERT",
+      "title": "Aphid activity",
+      "description": "Aphids found on the greenhouse tomatoes.",
+      "severity": "HIGH",
+      "date": "2026-09-17T13:25:30.078Z",
+      "reportedBy": "Integration Farmer"
+    },
+    {
+      "id": "event_1789651477327",
+      "farmId": "farm_primary",
+      "farmerId": "user_1789651475155",
+      "farmerName": "Integration Farmer",
+      "eventType": "PEST_ALERT",
+      "title": "Aphid activity",
+      "description": "Aphids found on the greenhouse tomatoes.",
+      "severity": "HIGH",
+      "date": "2026-09-17T13:24:37.327Z",
+      "reportedBy": "Integration Farmer"
+    },
+    {
+      "id": "event_1789650077081",
+      "farmId": "farm_primary",
+      "farmerId": "user_1789650075051",
+      "farmerName": "Integration Farmer",
+      "eventType": "PEST_ALERT",
+      "title": "Aphid activity",
+      "description": "Aphids found on the greenhouse tomatoes.",
+      "severity": "HIGH",
+      "date": "2026-09-17T13:01:17.081Z",
+      "reportedBy": "Integration Farmer"
+    },
+    {
+      "id": "event_1789650010434",
+      "farmId": "farm_primary",
+      "farmerId": "user_1789650008101",
+      "farmerName": "Integration Farmer",
+      "eventType": "PEST_ALERT",
+      "title": "Aphid activity",
+      "description": "Aphids found on the greenhouse tomatoes.",
+      "severity": "HIGH",
+      "date": "2026-09-17T13:00:10.434Z",
+      "reportedBy": "Integration Farmer"
+    },
+    {
+      "id": "event_1789649743805",
+      "farmId": "farm_primary",
+      "farmerId": "user_1789649741393",
+      "farmerName": "Integration Farmer",
+      "eventType": "PEST_ALERT",
+      "title": "Aphid activity",
+      "description": "Aphids found on the greenhouse tomatoes.",
+      "severity": "HIGH",
+      "date": "2026-09-17T12:55:43.805Z",
+      "reportedBy": "Integration Farmer"
+    },
+    {
+      "id": "event_1789649645658",
+      "farmId": "farm_primary",
+      "farmerId": "user_1789649643651",
+      "farmerName": "Integration Farmer",
+      "eventType": "PEST_ALERT",
+      "title": "Aphid activity",
+      "description": "Aphids found on the greenhouse tomatoes.",
+      "severity": "HIGH",
+      "date": "2026-09-17T12:54:05.658Z",
+      "reportedBy": "Integration Farmer"
+    },
+    {
       "id": "event_1789646552367",
       "farmId": "farm_primary",
       "farmerId": "user_1789646551604",
@@ -3077,6 +4771,150 @@
   ],
   "veterinaryJobs": [
     {
+      "id": "vjob_1789654981363",
+      "farmId": "farm_primary",
+      "farmerId": "user_1789654978810",
+      "farmerName": "Integration Farmer",
+      "farmerPhone": "0743694742",
+      "location": "Kakamega farm",
+      "animalOrCropType": "Dairy cattle",
+      "serviceType": "CLINICAL_CHECK",
+      "urgency": "NORMAL",
+      "status": "OPEN",
+      "requestedDate": "2026-09-17",
+      "notes": "Reduced appetite in one animal."
+    },
+    {
+      "id": "vjob_1789654258192",
+      "farmId": "farm_primary",
+      "farmerId": "user_1789654245098",
+      "farmerName": "Integration Farmer",
+      "farmerPhone": "0720907992",
+      "location": "Kakamega farm",
+      "animalOrCropType": "Dairy cattle",
+      "serviceType": "CLINICAL_CHECK",
+      "urgency": "NORMAL",
+      "status": "OPEN",
+      "requestedDate": "2026-09-17",
+      "notes": "Reduced appetite in one animal."
+    },
+    {
+      "id": "vjob_1789654192808",
+      "farmId": "farm_primary",
+      "farmerId": "user_1789654182579",
+      "farmerName": "Integration Farmer",
+      "farmerPhone": "0761737483",
+      "location": "Kakamega farm",
+      "animalOrCropType": "Dairy cattle",
+      "serviceType": "CLINICAL_CHECK",
+      "urgency": "NORMAL",
+      "status": "OPEN",
+      "requestedDate": "2026-09-17",
+      "notes": "Reduced appetite in one animal."
+    },
+    {
+      "id": "vjob_1789652374031",
+      "farmId": "farm_primary",
+      "farmerId": "user_1789652371858",
+      "farmerName": "Integration Farmer",
+      "farmerPhone": "0767068638",
+      "location": "Kakamega farm",
+      "animalOrCropType": "Dairy cattle",
+      "serviceType": "CLINICAL_CHECK",
+      "urgency": "NORMAL",
+      "status": "OPEN",
+      "requestedDate": "2026-09-17",
+      "notes": "Reduced appetite in one animal."
+    },
+    {
+      "id": "vjob_1789651530088",
+      "farmId": "farm_primary",
+      "farmerId": "user_1789651528125",
+      "farmerName": "Integration Farmer",
+      "farmerPhone": "0716301675",
+      "location": "Kakamega farm",
+      "animalOrCropType": "Dairy cattle",
+      "serviceType": "CLINICAL_CHECK",
+      "urgency": "NORMAL",
+      "status": "OPEN",
+      "requestedDate": "2026-09-17",
+      "notes": "Reduced appetite in one animal."
+    },
+    {
+      "id": "vjob_1789651477348",
+      "farmId": "farm_primary",
+      "farmerId": "user_1789651475155",
+      "farmerName": "Integration Farmer",
+      "farmerPhone": "0779271939",
+      "location": "Kakamega farm",
+      "animalOrCropType": "Dairy cattle",
+      "serviceType": "CLINICAL_CHECK",
+      "urgency": "NORMAL",
+      "status": "OPEN",
+      "requestedDate": "2026-09-17",
+      "notes": "Reduced appetite in one animal."
+    },
+    {
+      "id": "vjob_1789650077091",
+      "farmId": "farm_primary",
+      "farmerId": "user_1789650075051",
+      "farmerName": "Integration Farmer",
+      "farmerPhone": "0782978139",
+      "location": "Kakamega farm",
+      "animalOrCropType": "Dairy cattle",
+      "serviceType": "CLINICAL_CHECK",
+      "urgency": "NORMAL",
+      "status": "OPEN",
+      "requestedDate": "2026-09-17",
+      "notes": "Reduced appetite in one animal.",
+      "bids": []
+    },
+    {
+      "id": "vjob_1789650010446",
+      "farmId": "farm_primary",
+      "farmerId": "user_1789650008101",
+      "farmerName": "Integration Farmer",
+      "farmerPhone": "0755238820",
+      "location": "Kakamega farm",
+      "animalOrCropType": "Dairy cattle",
+      "serviceType": "CLINICAL_CHECK",
+      "urgency": "NORMAL",
+      "status": "OPEN",
+      "requestedDate": "2026-09-17",
+      "notes": "Reduced appetite in one animal.",
+      "bids": []
+    },
+    {
+      "id": "vjob_1789649743864",
+      "farmId": "farm_primary",
+      "farmerId": "user_1789649741393",
+      "farmerName": "Integration Farmer",
+      "farmerPhone": "0765072818",
+      "location": "Kakamega farm",
+      "animalOrCropType": "Dairy cattle",
+      "serviceType": "CLINICAL_CHECK",
+      "urgency": "NORMAL",
+      "status": "OPEN",
+      "requestedDate": "2026-09-17",
+      "notes": "Reduced appetite in one animal.",
+      "bids": []
+    },
+    {
+      "id": "vjob_1789649645668",
+      "farmId": "farm_primary",
+      "farmerId": "user_1789649643651",
+      "farmerName": "Integration Farmer",
+      "farmerPhone": "0745088075",
+      "location": "Kakamega farm",
+      "animalOrCropType": "Dairy cattle",
+      "serviceType": "CLINICAL_CHECK",
+      "urgency": "NORMAL",
+      "status": "OPEN",
+      "requestedDate": "2026-09-17",
+      "notes": "Reduced appetite in one animal.",
+      "bids": []
+    },
+    {
       "id": "vjob_1789646552371",
       "farmId": "farm_primary",
       "farmerName": "Integration Farmer",
@@ -3087,7 +4925,9 @@
       "urgency": "NORMAL",
       "status": "OPEN",
       "requestedDate": "2026-09-17",
-      "notes": "Reduced appetite in one animal."
+      "notes": "Reduced appetite in one animal.",
+      "farmerId": "user_1789646551604",
+      "bids": []
     },
     {
       "id": "vjob_1789646413051",
@@ -3100,7 +4940,9 @@
       "urgency": "NORMAL",
       "status": "OPEN",
       "requestedDate": "2026-09-17",
-      "notes": "Reduced appetite in one animal."
+      "notes": "Reduced appetite in one animal.",
+      "farmerId": "user_1789646412302",
+      "bids": []
     },
     {
       "id": "vjob_1789646402303",
@@ -3113,7 +4955,9 @@
       "urgency": "NORMAL",
       "status": "OPEN",
       "requestedDate": "2026-09-17",
-      "notes": "Reduced appetite in one animal."
+      "notes": "Reduced appetite in one animal.",
+      "farmerId": "user_1789646401570",
+      "bids": []
     },
     {
       "id": "vjob_1789646387595",
@@ -3126,7 +4970,9 @@
       "urgency": "NORMAL",
       "status": "OPEN",
       "requestedDate": "2026-09-17",
-      "notes": "Reduced appetite in one animal."
+      "notes": "Reduced appetite in one animal.",
+      "farmerId": "user_1789646386836",
+      "bids": []
     },
     {
       "id": "vet_job_1789553592936",
@@ -3139,7 +4985,9 @@
       "urgency": "NORMAL",
       "status": "OPEN",
       "requestedDate": "2026-09-16T10:13:12.936Z",
-      "notes": "Reduced appetite in one animal."
+      "notes": "Reduced appetite in one animal.",
+      "farmerId": "user_1789553592131",
+      "bids": []
     },
     {
       "id": "vet_job_1789548455908",
@@ -3152,7 +5000,9 @@
       "urgency": "NORMAL",
       "status": "OPEN",
       "requestedDate": "2026-09-16T08:47:35.908Z",
-      "notes": "Reduced appetite in one animal."
+      "notes": "Reduced appetite in one animal.",
+      "farmerId": "user_1789548455156",
+      "bids": []
     },
     {
       "id": "vet_job_1789548151926",
@@ -3165,7 +5015,9 @@
       "urgency": "NORMAL",
       "status": "OPEN",
       "requestedDate": "2026-09-16T08:42:31.926Z",
-      "notes": "Reduced appetite in one animal."
+      "notes": "Reduced appetite in one animal.",
+      "farmerId": "user_1789548151164",
+      "bids": []
     },
     {
       "id": "vet_job_1789547698006",
@@ -3178,11 +5030,193 @@
       "urgency": "NORMAL",
       "status": "OPEN",
       "requestedDate": "2026-09-16T08:34:58.006Z",
-      "notes": "Reduced appetite in one animal."
+      "notes": "Reduced appetite in one animal.",
+      "farmerId": "user_1789547697251",
+      "bids": []
     }
   ],
   "veterinaryReports": [],
   "investorCriteria": [
+    {
+      "id": "criteria_1789654981926",
+      "investorId": "user_1789654981653",
+      "investorName": "Integration Investor",
+      "lookingFor": "FARMER_WITH_LAND_NEEDING_CAPITAL",
+      "budgetKES": 300000,
+      "preferredSectors": [
+        "Dairy"
+      ],
+      "targetCounties": [
+        "Kakamega"
+      ],
+      "notes": "Monthly record review required.",
+      "resourcesProvided": "Capital and feed equipment.",
+      "partnerRequirements": "Experienced dairy farmer with land.",
+      "status": "ACTIVE",
+      "createdAt": "2026-09-17T14:23:01.926Z"
+    },
+    {
+      "id": "criteria_1789654259855",
+      "investorId": "user_1789654259269",
+      "investorName": "Integration Investor",
+      "lookingFor": "FARMER_WITH_LAND_NEEDING_CAPITAL",
+      "budgetKES": 300000,
+      "preferredSectors": [
+        "Dairy"
+      ],
+      "targetCounties": [
+        "Kakamega"
+      ],
+      "notes": "Monthly record review required.",
+      "resourcesProvided": "Capital and feed equipment.",
+      "partnerRequirements": "Experienced dairy farmer with land.",
+      "status": "ACTIVE",
+      "createdAt": "2026-09-17T14:10:59.855Z"
+    },
+    {
+      "id": "criteria_1789654194261",
+      "investorId": "user_1789654193725",
+      "investorName": "Integration Investor",
+      "lookingFor": "FARMER_WITH_LAND_NEEDING_CAPITAL",
+      "budgetKES": 300000,
+      "preferredSectors": [
+        "Dairy"
+      ],
+      "targetCounties": [
+        "Kakamega"
+      ],
+      "notes": "Monthly record review required.",
+      "resourcesProvided": "Capital and feed equipment.",
+      "partnerRequirements": "Experienced dairy farmer with land.",
+      "status": "ACTIVE",
+      "createdAt": "2026-09-17T14:09:54.261Z"
+    },
+    {
+      "id": "criteria_1789652374543",
+      "investorId": "user_1789652374332",
+      "investorName": "Integration Investor",
+      "lookingFor": "FARMER_WITH_LAND_NEEDING_CAPITAL",
+      "budgetKES": 300000,
+      "preferredSectors": [
+        "Dairy"
+      ],
+      "targetCounties": [
+        "Kakamega"
+      ],
+      "notes": "Monthly record review required.",
+      "resourcesProvided": "Capital and feed equipment.",
+      "partnerRequirements": "Experienced dairy farmer with land.",
+      "status": "ACTIVE",
+      "createdAt": "2026-09-17T13:39:34.543Z"
+    },
+    {
+      "id": "criteria_1789651530497",
+      "investorId": "user_1789651530300",
+      "investorName": "Integration Investor",
+      "lookingFor": "FARMER_WITH_LAND_NEEDING_CAPITAL",
+      "budgetKES": 300000,
+      "preferredSectors": [
+        "Dairy"
+      ],
+      "targetCounties": [
+        "Kakamega"
+      ],
+      "notes": "Monthly record review required.",
+      "resourcesProvided": "Capital and feed equipment.",
+      "partnerRequirements": "Experienced dairy farmer with land.",
+      "status": "ACTIVE",
+      "createdAt": "2026-09-17T13:25:30.497Z"
+    },
+    {
+      "id": "criteria_1789651477802",
+      "investorId": "user_1789651477586",
+      "investorName": "Integration Investor",
+      "lookingFor": "FARMER_WITH_LAND_NEEDING_CAPITAL",
+      "budgetKES": 300000,
+      "preferredSectors": [
+        "Dairy"
+      ],
+      "targetCounties": [
+        "Kakamega"
+      ],
+      "notes": "Monthly record review required.",
+      "resourcesProvided": "Capital and feed equipment.",
+      "partnerRequirements": "Experienced dairy farmer with land.",
+      "status": "ACTIVE",
+      "createdAt": "2026-09-17T13:24:37.802Z"
+    },
+    {
+      "id": "criteria_1789650077616",
+      "investorId": "user_1789650077406",
+      "investorName": "Integration Investor",
+      "lookingFor": "FARMER_WITH_LAND_NEEDING_CAPITAL",
+      "budgetKES": 300000,
+      "preferredSectors": [
+        "Dairy"
+      ],
+      "targetCounties": [
+        "Kakamega"
+      ],
+      "notes": "Monthly record review required.",
+      "resourcesProvided": "Capital and feed equipment.",
+      "partnerRequirements": "Experienced dairy farmer with land.",
+      "status": "ACTIVE",
+      "createdAt": "2026-09-17T13:01:17.616Z"
+    },
+    {
+      "id": "criteria_1789650010868",
+      "investorId": "user_1789650010698",
+      "investorName": "Integration Investor",
+      "lookingFor": "FARMER_WITH_LAND_NEEDING_CAPITAL",
+      "budgetKES": 300000,
+      "preferredSectors": [
+        "Dairy"
+      ],
+      "targetCounties": [
+        "Kakamega"
+      ],
+      "notes": "Monthly record review required.",
+      "resourcesProvided": "Capital and feed equipment.",
+      "partnerRequirements": "Experienced dairy farmer with land.",
+      "status": "ACTIVE",
+      "createdAt": "2026-09-17T13:00:10.868Z"
+    },
+    {
+      "id": "criteria_1789649744457",
+      "investorId": "user_1789649744270",
+      "investorName": "Integration Investor",
+      "lookingFor": "FARMER_WITH_LAND_NEEDING_CAPITAL",
+      "budgetKES": 300000,
+      "preferredSectors": [
+        "Dairy"
+      ],
+      "targetCounties": [
+        "Kakamega"
+      ],
+      "notes": "Monthly record review required.",
+      "resourcesProvided": "Capital and feed equipment.",
+      "partnerRequirements": "Experienced dairy farmer with land.",
+      "status": "ACTIVE",
+      "createdAt": "2026-09-17T12:55:44.457Z"
+    },
+    {
+      "id": "criteria_1789649646055",
+      "investorId": "user_1789649645878",
+      "investorName": "Integration Investor",
+      "lookingFor": "FARMER_WITH_LAND_NEEDING_CAPITAL",
+      "budgetKES": 300000,
+      "preferredSectors": [
+        "Dairy"
+      ],
+      "targetCounties": [
+        "Kakamega"
+      ],
+      "notes": "Monthly record review required.",
+      "resourcesProvided": "Capital and feed equipment.",
+      "partnerRequirements": "Experienced dairy farmer with land.",
+      "status": "ACTIVE",
+      "createdAt": "2026-09-17T12:54:06.055Z"
+    },
     {
       "id": "criteria_1789646552593",
       "investorId": "user_1789646552488",
@@ -3327,5 +5361,168 @@
       "status": "ACTIVE",
       "createdAt": "2026-09-16T08:34:58.218Z"
     }
-  ]
+  ],
+  "uploadedFiles": [
+    {
+      "id": "doc_1789649743715_6abb355ec5d2c13b90a566c6",
+      "originalName": "vaccination.pdf",
+      "mimeType": "application/pdf",
+      "sizeBytes": 15,
+      "uploaderId": "user_2",
+      "uploaderRole": "farmer",
+      "url": "/api/uploads/doc_1789649743715_6abb355ec5d2c13b90a566c6",
+      "isPrivate": true,
+      "createdAt": "2026-09-17T12:55:43.718Z",
+      "farmId": "farm_user_2",
+      "documentType": "VACCINATION_REPORT",
+      "description": "Routine vaccination record"
+    },
+    {
+      "id": "doc_1789650010140_baa102046ac43115e1fc66ab",
+      "originalName": "vaccination.pdf",
+      "mimeType": "application/pdf",
+      "sizeBytes": 15,
+      "uploaderId": "user_2",
+      "uploaderRole": "farmer",
+      "url": "/api/uploads/doc_1789650010140_baa102046ac43115e1fc66ab",
+      "isPrivate": true,
+      "createdAt": "2026-09-17T13:00:10.146Z",
+      "farmId": "farm_user_2",
+      "documentType": "VACCINATION_REPORT",
+      "description": "Routine vaccination record"
+    },
+    {
+      "id": "doc_1789650077012_55e560b0dba765ccc3b8d251",
+      "originalName": "vaccination.pdf",
+      "mimeType": "application/pdf",
+      "sizeBytes": 15,
+      "uploaderId": "user_2",
+      "uploaderRole": "farmer",
+      "url": "/api/uploads/doc_1789650077012_55e560b0dba765ccc3b8d251",
+      "isPrivate": true,
+      "createdAt": "2026-09-17T13:01:17.014Z",
+      "farmId": "farm_user_2",
+      "documentType": "VACCINATION_REPORT",
+      "description": "Routine vaccination record"
+    },
+    {
+      "id": "doc_1789651477220_ed3f380b334c510f75823c7c",
+      "originalName": "vaccination.pdf",
+      "mimeType": "application/pdf",
+      "sizeBytes": 15,
+      "uploaderId": "user_2",
+      "uploaderRole": "farmer",
+      "url": "/api/uploads/doc_1789651477220_ed3f380b334c510f75823c7c",
+      "isPrivate": true,
+      "createdAt": "2026-09-17T13:24:37.223Z",
+      "farmId": "farm_user_2",
+      "documentType": "VACCINATION_REPORT",
+      "description": "Routine vaccination record"
+    },
+    {
+      "id": "doc_1789651529993_339f6090526480bce2bcb720",
+      "originalName": "vaccination.pdf",
+      "mimeType": "application/pdf",
+      "sizeBytes": 15,
+      "uploaderId": "user_2",
+      "uploaderRole": "farmer",
+      "url": "/api/uploads/doc_1789651529993_339f6090526480bce2bcb720",
+      "isPrivate": true,
+      "createdAt": "2026-09-17T13:25:29.998Z",
+      "farmId": "farm_user_2",
+      "documentType": "VACCINATION_REPORT",
+      "description": "Routine vaccination record"
+    },
+    {
+      "id": "doc_1789652373829_967005d3e0d6bebd182b1312",
+      "originalName": "vaccination.pdf",
+      "mimeType": "application/pdf",
+      "sizeBytes": 15,
+      "uploaderId": "user_2",
+      "uploaderRole": "farmer",
+      "url": "/api/uploads/doc_1789652373829_967005d3e0d6bebd182b1312",
+      "isPrivate": true,
+      "createdAt": "2026-09-17T13:39:33.830Z",
+      "farmId": "farm_user_2",
+      "documentType": "VACCINATION_REPORT",
+      "description": "Routine vaccination record"
+    },
+    {
+      "id": "doc_1789654192308_37b1caa5c217266c0abd0714",
+      "originalName": "vaccination.pdf",
+      "mimeType": "application/pdf",
+      "sizeBytes": 15,
+      "uploaderId": "user_2",
+      "uploaderRole": "farmer",
+      "url": "/api/uploads/doc_1789654192308_37b1caa5c217266c0abd0714",
+      "isPrivate": true,
+      "createdAt": "2026-09-17T14:09:52.314Z",
+      "farmId": "farm_user_2",
+      "documentType": "VACCINATION_REPORT",
+      "description": "Routine vaccination record"
+    },
+    {
+      "id": "doc_1789654256284_ef5b2ca443c7845c27c0a893",
+      "originalName": "vaccination.pdf",
+      "mimeType": "application/pdf",
+      "sizeBytes": 15,
+      "uploaderId": "user_2",
+      "uploaderRole": "farmer",
+      "url": "/api/uploads/doc_1789654256284_ef5b2ca443c7845c27c0a893",
+      "isPrivate": true,
+      "createdAt": "2026-09-17T14:10:56.286Z",
+      "farmId": "farm_user_2",
+      "documentType": "VACCINATION_REPORT",
+      "description": "Routine vaccination record"
+    },
+    {
+      "id": "doc_1789654981109_4deb5a4797e6fa04fdb997fd",
+      "originalName": "vaccination.pdf",
+      "mimeType": "application/pdf",
+      "sizeBytes": 15,
+      "uploaderId": "user_2",
+      "uploaderRole": "farmer",
+      "url": "/api/uploads/doc_1789654981109_4deb5a4797e6fa04fdb997fd",
+      "isPrivate": true,
+      "createdAt": "2026-09-17T14:23:01.111Z",
+      "farmId": "farm_user_2",
+      "documentType": "VACCINATION_REPORT",
+      "description": "Routine vaccination record"
+    }
+  ],
+  "farmRecords": [],
+  "ledgerTransactions": [
+    {
+      "id": "txn_1789655402338",
+      "reference": "DEP_1789655402338_7091D580",
+      "userId": "user_2",
+      "amountKES": 100,
+      "currency": "KES",
+      "type": "DEPOSIT",
+      "category": "PERSONAL_EARNINGS",
+      "status": "PENDING",
+      "description": "Payment intent via M-Pesa 0722111222",
+      "payerId": "user_2",
+      "payerName": "Josphat Kiprop",
+      "idempotencyKey": "7f7a1a07-932c-4f12-84f9-662c10d858cb",
+      "timestamp": "2026-09-17T14:30:02.338Z"
+    },
+    {
+      "id": "txn_1789655410804",
+      "reference": "DEP_1789655410803_F725777D",
+      "userId": "user_2",
+      "amountKES": 100,
+      "currency": "KES",
+      "type": "DEPOSIT",
+      "category": "PERSONAL_EARNINGS",
+      "status": "PENDING",
+      "description": "Payment intent via M-Pesa 0722111222",
+      "payerId": "user_2",
+      "payerName": "Josphat Kiprop",
+      "idempotencyKey": "6fc77537-815c-4cdb-8840-db07da47886e",
+      "timestamp": "2026-09-17T14:30:10.804Z"
+    }
+  ],
+  "reviews": [],
+  "schemaVersion": 2
 }
