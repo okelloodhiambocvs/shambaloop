@@ -1,12 +1,8 @@
 export enum UserRole {
-  LANDOWNER = 'landowner',
   FARMER = 'farmer',
   INVESTOR = 'investor',
   ADMIN = 'admin',
-  VETERINARIAN = 'veterinarian',
-  COOPERATIVE = 'cooperative',
-  VERIFIER = 'verifier',
-  SUPPORT = 'support'
+  VETERINARIAN = 'veterinarian'
 }
 
 export interface User {
@@ -240,7 +236,7 @@ export interface FarmRecord {
   farmId: string;
   farmerId: string;
   farmerName?: string;
-  recordType: 'FEED' | 'INPUTS' | 'LIVESTOCK' | 'EXPENSE' | 'PRODUCTION' | 'EVENT' | 'MILESTONE' | 'PURCHASE' | 'LOSS' | 'OTHER';
+  recordType: 'FEED' | 'INPUTS' | 'LIVESTOCK' | 'EXPENSE' | 'PRODUCTION' | 'EVENT' | 'VACCINATION' | 'MILESTONE' | 'PURCHASE' | 'LOSS' | 'OTHER';
   description: string;
   quantity: number;
   unit?: string;
@@ -324,6 +320,11 @@ export interface UploadedFile {
   url: string;
   isPrivate: boolean;
   createdAt: string;
+  farmId?: string;
+  documentType?: 'VACCINATION_REPORT' | 'FARM_PHOTO' | 'FEED_RECEIPT' | 'PAYMENT_RECEIPT' | 'EVENT_DOCUMENT' | 'VETERINARY_REPORT' | 'INVESTMENT_VERIFICATION' | 'OTHER';
+  description?: string;
+  relatedReportId?: string;
+  relatedInvestmentBriefId?: string;
 }
 
 // ==========================================
@@ -409,11 +410,15 @@ export interface VeterinaryJob {
   animalOrCropType: string;
   serviceType: 'CLINICAL_CHECK' | 'VACCINATION' | 'PREGNANCY_SCAN' | 'EMERGENCY_SURGERY' | 'NUTRITIONAL_AUDIT';
   urgency: 'NORMAL' | 'URGENT' | 'EMERGENCY';
-  status: 'OPEN' | 'ASSIGNED' | 'IN_PROGRESS' | 'COMPLETED';
+  status: 'OPEN' | 'ASSIGNED' | 'IN_PROGRESS' | 'COMPLETED' | 'INCOMPLETE' | 'CANCELLED';
   assignedVetId?: string;
   assignedVetName?: string;
   requestedDate: string;
   notes?: string;
+  farmerId?: string;
+  bids?: { veterinarianId: string; veterinarianName: string; note?: string; proposedFeeKES?: number; createdAt: string }[];
+  completedAt?: string;
+  completionNotes?: string;
 }
 
 export interface TripartiteMatch {
