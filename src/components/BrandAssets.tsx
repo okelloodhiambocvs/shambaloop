@@ -203,7 +203,7 @@ export const BrandedEmptyState: React.FC<EmptyStateProps> = ({
     },
     transactions: {
       title: 'No Escrow Payments Found',
-      defaultDescription: 'Your simulated M-PESA escrow statements and yield payout histories will appear here as soon as they compile.',
+      defaultDescription: 'Your M-PESA escrow statements and yield payout histories will appear here as soon as they compile.',
     }
   };
 

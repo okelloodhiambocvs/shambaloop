@@ -472,7 +472,6 @@ export default function LoginModal({
                   >
                     <option value={UserRole.FARMER}>Farmer</option>
                     <option value={UserRole.INVESTOR}>Investor</option>
-                    <option value={UserRole.LANDOWNER}>Landowner</option>
                     <option value={UserRole.VETERINARIAN}>Veterinarian</option>
                   </select>
                 </div>

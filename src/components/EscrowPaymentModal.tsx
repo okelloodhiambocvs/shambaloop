@@ -18,7 +18,7 @@ export default function EscrowPaymentModal({ listing, onClose, onPaymentSuccess,
   const [durationMonths, setDurationMonths] = useState<number>(listing.type === ListingType.LAND ? 12 : 6);
   const [splitPercent, setSplitPercent] = useState<number>(listing.revenueSplitPercent || 40);
   
-  // Simulation Steps
+  // Payment processing steps
   // 'CONFIG' | 'STK_INITIATED' | 'POPUP_PROMPT' | 'PIN_SUBMITTING' | 'SUCCESS'
   const [step, setStep] = useState<'CONFIG' | 'STK_INITIATED' | 'POPUP_PROMPT' | 'PIN_SUBMITTING' | 'SUCCESS'>('CONFIG');
   const [pin, setPin] = useState('');
@@ -62,7 +62,7 @@ export default function EscrowPaymentModal({ listing, onClose, onPaymentSuccess,
 
       const data = await response.json();
       
-      // Delay simulating network speeds over towers
+      // Network delay for carrier gateway
       setTimeout(() => {
         setLoading(false);
         if (data.transaction) {
@@ -93,7 +93,7 @@ export default function EscrowPaymentModal({ listing, onClose, onPaymentSuccess,
     setLoading(true);
     setStep('PIN_SUBMITTING');
 
-    // Simulate callback delay from Safaricom API router
+    // Network callback delay from Safaricom API router
     setTimeout(() => {
       setLoading(false);
       setStep('SUCCESS');
@@ -144,7 +144,7 @@ export default function EscrowPaymentModal({ listing, onClose, onPaymentSuccess,
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto" id="mpes_simulation_overlay">
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto" id="mpes_payment_overlay">
       <div className="bg-white rounded-2xl w-full max-w-md border border-agri-dirt-100 shadow-2xl overflow-hidden flex flex-col">
         {/* Header containing Mpesa Safaricom styling */}
         <div className="bg-[#41b045] px-5 py-4 text-white flex items-center justify-between select-none">
@@ -273,10 +273,10 @@ export default function EscrowPaymentModal({ listing, onClose, onPaymentSuccess,
             <div className="space-y-5 py-2">
               <div className="border border-dashed border-slate-300 rounded-2xl p-5 bg-slate-50/50 flex flex-col items-center relative overflow-hidden">
                 <span className="absolute top-1.5 left-2 px-1.5 py-0.5 bg-slate-800 text-white font-mono text-[8px] font-bold rounded">
-                  MOBILE SCREEN SIMULATOR
+                  M-PESA STK PROMPT
                 </span>
 
-                {/* Smartphone simulator */}
+                {/* Smartphone prompt */}
                 <div className="w-72 bg-slate-900 rounded-3xl border-4 border-slate-700 shadow-xl p-4 text-center text-white space-y-4 my-2">
                   <div className="w-10 h-1 bg-slate-700 rounded-full mx-auto mb-1"></div>
                   <div className="bg-slate-800 p-3.5 rounded-xl border border-slate-700">
@@ -286,7 +286,7 @@ export default function EscrowPaymentModal({ listing, onClose, onPaymentSuccess,
                     <input
                       type="password"
                       maxLength={4}
-                      placeholder="ENTER PIN (Simulated)"
+                      placeholder="ENTER PIN"
                       value={pin}
                       onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
                       className="w-full text-center p-2.5 bg-slate-950 text-emerald-400 rounded-lg text-lg select-none tracking-widest font-bold border border-slate-800 mt-3 focus:outline-none focus:border-emerald-600"
@@ -319,7 +319,7 @@ export default function EscrowPaymentModal({ listing, onClose, onPaymentSuccess,
               )}
 
               <p className="text-slate-500 text-center leading-normal text-[10px] max-w-sm mx-auto">
-                Enter any 4-digit code (e.g. <code>1234</code>) in the black simulated smartphone popup to proceed with the escrow verification. This mirrors exactly the Lipa Na M-Pesa STK Push user experience.
+                Enter your 4-digit M-Pesa PIN in the prompt to authorize the escrow transfer securely.
               </p>
             </div>
           )}

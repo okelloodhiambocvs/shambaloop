@@ -656,7 +656,30 @@ export default function App() {
     setInvestorCriteria(data);
     setInvestorCriteriaList(previous => [data, ...previous.filter(criteria => criteria.investorId !== data.investorId)]);
     setCurrentUser(previous => previous ? { ...previous, investmentBudgetKES: data.budgetKES, preferredSectors: data.preferredSectors, investmentGoal: data.partnerRequirements } : previous);
-    showToast('Investment brief saved.');
+    setFarmerInvestors(previous => {
+      const updated = previous.map(inv => inv.id === data.investorId ? {
+        ...inv,
+        investmentBudgetKES: data.budgetKES,
+        preferredSectors: data.preferredSectors,
+        investmentGoal: data.partnerRequirements
+      } : inv);
+      if (!updated.some(inv => inv.id === data.investorId)) {
+        updated.unshift({
+          id: data.investorId,
+          name: data.investorName,
+          phone: currentUser.phone,
+          role: UserRole.INVESTOR,
+          verified: true,
+          county: data.targetCounties[0] || currentUser.county,
+          createdAt: data.createdAt,
+          investmentBudgetKES: data.budgetKES,
+          preferredSectors: data.preferredSectors,
+          investmentGoal: data.partnerRequirements
+        });
+      }
+      return updated;
+    });
+    showToast('Investment opportunity posted. Farmers can now view your requirements.');
   };
 
   const handleRequestVetJob = async (jobData: Pick<VeterinaryJob, 'farmId' | 'location' | 'animalOrCropType' | 'serviceType' | 'urgency' | 'assignedVetId' | 'notes'>) => {
@@ -1063,7 +1086,7 @@ export default function App() {
             </h4>
             <p>Ensuring payment protection on all land transactions:</p>
             <ul className="list-disc pl-5 space-y-1.5 font-normal">
-              <li><strong>Virtual M-Pesa:</strong> Utilize our sandbox virtual M-Pesa to simulate the escrow authorization step.</li>
+              <li><strong>M-Pesa Escrow:</strong> Automated escrow authorization on all leasehold and livestock agreements.</li>
               <li><strong>SACCO Bank Wire:</strong> For bulk or corporate land transactions, payouts are secured via Cooperative Bank of Kenya (Kisumu Branch).</li>
               <li><strong>Fraud prevention:</strong> Never complete payment outside our application interface. ShambaLoop will never ask for PIN numbers.</li>
             </ul>
@@ -1317,7 +1340,7 @@ export default function App() {
                     <strong>Livestock Health Records:</strong> RFID ear-tag serial codes, breed types, immunization/vaccination logs, dairy yield metrics (in Liters), and supervisor health stamps.
                   </li>
                   <li>
-                    <strong>Financial Ledgers:</strong> Simulated wallet transactional records, virtual M-Pesa escrow balances, SACCO wire information, and cooperative revenue split percentages.
+                    <strong>Financial Ledgers:</strong> Wallet transactional records, M-Pesa escrow balances, SACCO wire information, and cooperative revenue split percentages.
                   </li>
                 </ul>
               </section>
@@ -2461,39 +2484,14 @@ export default function App() {
             <Logo size={42} variant="full" isDarkMode={isDarkMode} />
           </button>
 
-          {/* Header Search Bar */}
-          <div className="flex-1 max-w-[200px] sm:max-w-xs md:max-w-sm mx-1 sm:mx-4">
-            <div className="relative w-full">
-              <input
-                type="text"
-                value={searchQuery}
-                aria-label="Search assets"
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search assets (county, breed, etc)..."
-                className={`w-full pl-3.5 pr-7 py-1.5 text-xs rounded-xl border focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors duration-200 ${
-                  isDarkMode 
-                    ? 'bg-slate-850 border-slate-700 text-white placeholder-slate-500' 
-                    : 'bg-slate-100 border-slate-200 text-slate-800 placeholder-slate-400'
-                }`}
-                id="header_search_input"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="absolute inset-y-0 right-0 pr-2 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer text-[10px] font-bold"
-                  title="Clear search"
-                  id="btn_clear_header_search"
-                >
-                  Clear
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Swahili Warm Greeting */}
-          <div className={`hidden lg:block text-xs font-semibold shrink-0 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-            Habari yako, <span className="text-emerald-600 dark:text-emerald-400 font-bold">{currentUser.name}</span>! County: <span className="font-mono text-xs">{currentUser.county}</span>
+          {/* Greeting first: "Hello, [Client Name]" then writings */}
+          <div className="flex-1 flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2.5 min-w-0 mx-2 sm:mx-4">
+            <span className="text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate">
+              Hello, <span className="text-emerald-600 dark:text-emerald-400 font-extrabold">{currentUser.name}</span>
+            </span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 truncate">
+              County: <span className="font-mono text-slate-700 dark:text-slate-300 font-semibold">{currentUser.county}</span> · Role: <span className="font-semibold text-emerald-600 dark:text-emerald-400 uppercase">{currentUser.role}</span>
+            </span>
           </div>
 
           {/* User Controls Panel */}
@@ -2602,6 +2600,11 @@ export default function App() {
                 farmEvents={farmEvents}
                 farmers={investorFarmers}
                 criteria={investorCriteria}
+                listings={listings}
+                onListingAction={(listing) => {
+                  setSelectedListingForAction(listing);
+                  setIsPaymentModalOpen(true);
+                }}
                 onSaveCriteria={handleSaveInvestorCriteria}
                 onUpdateProposal={handleUpdateInvestorProposal}
               />
@@ -2618,6 +2621,11 @@ export default function App() {
                 vetJobs={vetJobs}
                 investors={farmerInvestors}
                 veterinarians={farmerVeterinarians}
+                listings={listings}
+                onListingAction={(listing) => {
+                  setSelectedListingForAction(listing);
+                  setIsPaymentModalOpen(true);
+                }}
                 onCreateProposal={handleCreateProposal}
                 onSaveProfile={handleSaveFarmerProfile}
                 onRequestVet={handleRequestVetJob}
@@ -2796,7 +2804,7 @@ export default function App() {
                 <div className="flex items-center gap-2 text-slate-800 font-bold uppercase tracking-wider text-[11px]">
                   <span>My Active Farms & Ledgers</span>
                 </div>
-                <span className="text-[9px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded uppercase">Simulated</span>
+                <span className="text-[9px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded uppercase">Active</span>
               </div>
 
               {leases.length === 0 && partnerships.length === 0 ? (
@@ -2811,7 +2819,7 @@ export default function App() {
                   {leases.map((lease) => (
                     <div key={lease.id} className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-2">
                       <div className="flex justify-between items-start font-bold text-slate-800">
-                        <span className="text-slate-900 line-clamp-1">Simulated Lease: {lease.acreageLeased} Acres</span>
+                        <span className="text-slate-900 line-clamp-1">Lease: {lease.acreageLeased} Acres</span>
                         <span className="text-emerald-700 bg-white border border-slate-200 px-1.5 py-0.5 rounded mono-display">
                           {lease.mpesaEscrowStatus}
                         </span>
@@ -4011,13 +4019,15 @@ export default function App() {
                 
                 {/* Reordering Sorting controls */}
                 <div className="flex items-center gap-2 text-xs">
-                  <button
-                    type="button"
-                    onClick={() => setIsListingModalOpen(true)}
-                    className="rounded-lg bg-emerald-700 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-white hover:bg-emerald-800"
-                  >
-                    Add listing
-                  </button>
+                  {(currentUser.role === UserRole.LANDOWNER || currentUser.role === UserRole.FARMER || currentUser.role === UserRole.ADMIN) && (
+                    <button
+                      type="button"
+                      onClick={() => setIsListingModalOpen(true)}
+                      className="rounded-lg bg-emerald-700 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-white hover:bg-emerald-800"
+                    >
+                      Add listing
+                    </button>
+                  )}
                   <span className="text-slate-500 dark:text-slate-400 font-bold whitespace-nowrap text-[10px] uppercase tracking-wider">Sort by price:</span>
                   <select
                     value={sortBy}

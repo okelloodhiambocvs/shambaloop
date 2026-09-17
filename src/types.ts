@@ -16,6 +16,10 @@ export interface User {
   email?: string;
   role: UserRole;
   verified: boolean;
+  verificationStatus?: 'UNVERIFIED' | 'PENDING' | 'UNDER_REVIEW' | 'VERIFIED' | 'REJECTED';
+  isEmailVerified?: boolean;
+  vetLicenseNumber?: string;
+  vetBoardVerified?: boolean;
   county: string;
   avatarUrl?: string;
   createdAt: string;
@@ -125,16 +129,37 @@ export interface HealthLog {
 export interface VeterinaryReport {
   id: string;
   partnershipId: string;
+  farmId?: string;
   animalTagId: string;
+  animalOrCropType?: string;
   veterinarianId: string;
   veterinarianName: string;
   farmerId: string;
+  farmerName?: string;
   investorId: string;
+  investorName?: string;
   visitType: string;
+  visitDate?: string;
+  diagnosis?: string;
+  treatment?: string;
+  medication?: string;
+  vaccination?: string;
+  pregnancyStatus?: 'PREGNANT' | 'NOT_PREGNANT' | 'NOT_APPLICABLE' | 'UNKNOWN';
+  observations?: string;
   findings: string;
   recommendations: string;
+  followUpDate?: string;
+  photos?: string[];
+  documents?: string[];
   status: 'FIT_FOR_PRODUCTION' | 'FOLLOW_UP_REQUIRED' | 'TREATMENT_REQUIRED' | 'NOT_FIT_FOR_PRODUCTION';
+  reportStatus?: 'DRAFT' | 'SUBMITTED' | 'FINALIZED';
+  isFinalized?: boolean;
+  finalizedAt?: string;
+  version?: number;
+  originalReportId?: string;
+  amendments?: { version: number; date: string; reason: string; amendedBy: string; changes: string }[];
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface ProductionLog {
@@ -184,22 +209,121 @@ export interface Dispute {
   id: string;
   leaseId?: string;
   partnershipId?: string;
+  jobId?: string;
   creatorId: string;
   creatorName: string;
+  creatorRole?: UserRole;
+  respondentId?: string;
+  respondentName?: string;
+  respondentRole?: UserRole;
+  title?: string;
   reason: string;
   evidenceText?: string;
-  status: 'OPEN' | 'UNDER_REVIEW' | 'REFUNDED' | 'RELEASED' | 'RESOLVED';
+  evidenceUrls?: string[];
+  status: 'OPEN' | 'UNDER_REVIEW' | 'REFUNDED' | 'RELEASED' | 'RESOLVED' | 'CLOSED' | 'ESCALATED';
   createdAt: string;
   updatedAt: string;
   resolutionNotes?: string;
+  messages?: { senderId: string; senderName: string; senderRole: UserRole; message: string; evidenceUrls?: string[]; timestamp: string }[];
   history?: DisputeHistoryEntry[];
 }
 
 export interface DisputeHistoryEntry {
   at: string;
   actorId: string;
-  action: 'OPENED' | 'UNDER_REVIEW' | 'REFUNDED' | 'RELEASED';
+  action: 'OPENED' | 'UNDER_REVIEW' | 'REFUNDED' | 'RELEASED' | 'RESOLVED' | 'CLOSED' | 'ESCALATED';
   note?: string;
+}
+
+export interface FarmRecord {
+  id: string;
+  farmId: string;
+  farmerId: string;
+  farmerName?: string;
+  recordType: 'FEED' | 'INPUTS' | 'LIVESTOCK' | 'EXPENSE' | 'PRODUCTION' | 'EVENT' | 'MILESTONE' | 'PURCHASE' | 'LOSS' | 'OTHER';
+  description: string;
+  quantity: number;
+  unit?: string;
+  date: string;
+  quotationKES?: number;
+  actualPriceKES?: number;
+  rrpKES?: number; // Recommended Retail Price
+  supplierInfo?: string;
+  evidenceUrls?: string[];
+  notes?: string;
+  timestamp: string;
+  createdAt: string;
+  history?: { timestamp: string; action: string; actorId: string; note?: string }[];
+}
+
+export interface LedgerTransaction {
+  id: string;
+  reference: string;
+  userId: string;
+  amountKES: number;
+  currency: 'KES';
+  type: 'DEPOSIT' | 'ALLOCATION' | 'RELEASE' | 'PAYOUT' | 'EXPENSE' | 'RETURN' | 'WITHDRAWAL';
+  category: 'OPERATIONAL' | 'PERSONAL_EARNINGS' | 'INVESTMENT_CAPITAL';
+  status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+  relatedEntityId?: string;
+  relatedEntityType?: 'FARM' | 'PROPOSAL' | 'JOB' | 'MILESTONE' | 'COLLABORATION';
+  description: string;
+  payerId?: string;
+  payerName?: string;
+  payeeId?: string;
+  payeeName?: string;
+  paymentProviderRef?: string;
+  idempotencyKey?: string;
+  timestamp: string;
+}
+
+export interface WalletSummary {
+  userId: string;
+  role: UserRole;
+  availableBalanceKES: number;
+  pendingInKES: number;
+  approvedKES: number;
+  releasedKES: number;
+  operationalFarmFundsKES?: number;
+  farmerEarningsKES?: number;
+  investmentCapitalKES?: number;
+  committedFundsKES?: number;
+  allocatedFundsKES?: number;
+  releasedFundsKES?: number;
+  farmExpensesKES?: number;
+  returnsKES?: number;
+  pendingJobPaymentsKES?: number;
+  earningsKES?: number;
+  recentTransactions: LedgerTransaction[];
+}
+
+export interface Review {
+  id: string;
+  reviewerId: string;
+  reviewerName: string;
+  reviewerRole: UserRole;
+  targetUserId: string;
+  targetUserName: string;
+  targetUserRole: UserRole;
+  partnershipId?: string;
+  jobId?: string;
+  proposalId?: string;
+  rating: number; // 1 to 5
+  title?: string;
+  comment: string;
+  createdAt: string;
+}
+
+export interface UploadedFile {
+  id: string;
+  originalName: string;
+  mimeType: string;
+  sizeBytes: number;
+  uploaderId: string;
+  uploaderRole: UserRole;
+  url: string;
+  isPrivate: boolean;
+  createdAt: string;
 }
 
 // ==========================================
@@ -220,23 +344,33 @@ export interface FarmerProposal {
   farmerContribution: string; // e.g., "5 acres arable land, water reservoir, daily labor"
   investorSharePercent: number; // e.g. 40
   farmerSharePercent: number; // e.g. 60
-  status: 'DRAFT' | 'SUBMITTED' | 'NEGOTIATING' | 'ACCEPTED' | 'REJECTED';
+  timelineMonths?: number;
+  expectedStartDate?: string;
+  status: 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'SHORTLISTED' | 'NEGOTIATING' | 'ACCEPTED' | 'REJECTED';
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface InvestorCriteria {
   id: string;
   investorId: string;
   investorName: string;
+  title?: string;
   lookingFor: 'FARMER_WITH_LAND_NEEDING_CAPITAL' | 'FARM_MANAGER_EXPERTISE' | 'LAND_FOR_LEASE_PROJECT';
   budgetKES: number;
   preferredSectors: string[];
   targetCounties: string[];
   notes: string;
+  objectives?: string;
+  timelineMonths?: number;
   resourcesProvided?: string;
   partnerRequirements?: string;
+  documents?: string[];
+  images?: string[];
+  milestones?: { title: string; targetMonth: number; budgetPercent: number }[];
   status: 'ACTIVE' | 'MATCHED' | 'PAUSED';
   createdAt: string;
+  updatedAt?: string;
 }
 
 /** Public farmer information that an authenticated investor may use for discovery. */
@@ -300,5 +434,49 @@ export interface TripartiteMatch {
   status: 'PROPOSED' | 'ACTIVE' | 'REVIEW' | 'COMPLETED';
   startDate?: string;
   createdAt?: string;
+}
+
+export type InvestmentLifecycleStatus =
+  | 'INVESTMENT_CREATED'
+  | 'PROPOSAL_SELECTED'
+  | 'AGREEMENT_CONFIRMED'
+  | 'FUNDING_PENDING'
+  | 'FUNDED'
+  | 'FARM_ACTIVE'
+  | 'MILESTONES_IN_PROGRESS'
+  | 'PRODUCTION'
+  | 'REVENUE_GENERATED'
+  | 'SETTLEMENT'
+  | 'COMPLETED';
+
+export interface FarmMilestone {
+  id: string;
+  farmId: string;
+  title: string;
+  description: string;
+  category: 'PREPARATION' | 'PROCUREMENT' | 'VETERINARY' | 'PRODUCTION' | 'HARVEST' | 'SETTLEMENT' | 'GENERAL';
+  targetDate: string;
+  completedDate?: string;
+  status: 'PENDING' | 'IN_PROGRESS' | 'SUBMITTED_FOR_REVIEW' | 'VERIFIED_AND_RELEASED' | 'REJECTED';
+  allocatedFundsKES: number;
+  releasedFundsKES: number;
+  evidenceNotes?: string;
+  evidenceUrl?: string;
+  verifiedBy?: string;
+  verifiedAt?: string;
+}
+
+export interface FarmTimelineEvent {
+  id: string;
+  farmId: string;
+  timestamp: string;
+  eventType: string;
+  title: string;
+  description: string;
+  responsibleUser: string;
+  responsibleRole: UserRole;
+  evidence?: string;
+  financialImpactKES?: number;
+  verificationStatus: 'PENDING' | 'VERIFIED' | 'NOT_APPLICABLE';
 }
 

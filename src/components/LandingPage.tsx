@@ -2,6 +2,8 @@ import React from 'react';
 import { Sun, Moon, LogIn, ArrowRight } from 'lucide-react';
 import { Logo } from './BrandAssets';
 import { UserRole } from '../types';
+import HeroAvatarLoop from './HeroAvatarLoop';
+import RoleWorkflowSection from './RoleWorkflowSection';
 
 interface LandingPageProps {
   onLoginClick: (role?: UserRole | 'dashboard') => void;
@@ -104,79 +106,70 @@ export default function LandingPage({
         </div>
       </header>
 
-      <section className={`relative overflow-hidden pt-12 pb-16 md:pt-20 md:pb-24 px-4 sm:px-6 lg:px-8 border-b border-border-base ${isDarkMode ? 'bg-slate-900/60 text-white' : 'bg-gradient-to-b from-emerald-50/50 to-white text-slate-900'}`}>
-        <div className="max-w-5xl mx-auto text-center space-y-6">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-[11px] font-extrabold uppercase tracking-widest">
-            Kenya's Premier Agritech Cooperative
-          </div>
-
-          <h1 className="text-3xl sm:text-5xl md:text-6xl font-black font-display tracking-tight leading-[1.15] text-slate-900 dark:text-white">
-            Connecting People, Land, <br className="hidden sm:inline" />
-            <span className="text-[#8B5E3C] dark:text-amber-400">Livestock</span>, and{' '}
-            <span className="text-[#1F6B3D] dark:text-emerald-400">Opportunity</span>
-          </h1>
-
-          <p className="max-w-2xl mx-auto text-sm sm:text-base md:text-lg font-medium leading-relaxed text-slate-600 dark:text-slate-300">
-            Eliminating structural friction for Kenyan smallholders and diaspora investors. Lease idle fertile shamba, fund high-pedigree dairy herds, and enjoy automated yield splits secured by M-Pesa trust escrow.
-          </p>
-
+      <section className={`relative overflow-hidden pt-12 pb-16 md:pt-16 md:pb-24 px-4 sm:px-6 lg:px-8 border-b border-border-base min-h-[620px] lg:min-h-[680px] flex flex-col justify-center ${isDarkMode ? 'bg-[#0a120d] text-white' : 'bg-gradient-to-b from-emerald-50/60 via-white to-emerald-50/20 text-slate-900'}`}>
+        {/* Subtle background radial glow */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[500px] bg-emerald-500/10 dark:bg-emerald-500/5 rounded-full blur-3xl" />
+          <div className="absolute top-1/2 -left-20 w-72 h-72 bg-amber-500/10 dark:bg-amber-500/5 rounded-full blur-3xl" />
+          <div className="absolute top-1/3 -right-20 w-72 h-72 bg-[#8B5E3C]/10 dark:bg-[#8B5E3C]/5 rounded-full blur-3xl" />
         </div>
-      </section>
 
-      {/* How It Works Section */}
-      <section className="py-14 md:py-20 px-4 sm:px-6 lg:px-8 border-b border-border-base bg-card-bg" id="landing_how_it_works_section">
-        <div className="max-w-6xl mx-auto space-y-10">
-          <div className="text-center space-y-2 max-w-2xl mx-auto">
-            <span className="text-[10px] uppercase font-bold tracking-widest text-emerald-600 dark:text-emerald-400">
-              Transparent Tri-Partite Model
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-black font-display text-slate-900 dark:text-white">
-              How ShambaLoop Works
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-              Three seamless steps protecting every shilling and hectare of land.
+        {/* Hero Container with Evenly Flanked Avatars on Both Sides of the Writings */}
+        <div className="relative w-full max-w-7xl mx-auto flex flex-col items-center justify-center min-h-[580px] lg:min-h-[640px]">
+          {/* Evenly distributed avatars on BOTH sides of the writings */}
+          <HeroAvatarLoop />
+
+          {/* Center Hero Content Container - perfectly flanked on both sides */}
+          <div className="relative z-20 max-w-2xl lg:max-w-2xl xl:max-w-3xl mx-auto text-center space-y-6 pt-4 pb-2 px-4">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-[11px] font-extrabold uppercase tracking-widest shadow-2xs">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping inline-block" />
+              Kenya's Premier Agritech Cooperative
+            </div>
+
+            <div className="space-y-3">
+              <h1 className="text-3xl sm:text-5xl md:text-6xl font-black font-display tracking-tight leading-[1.12] text-slate-900 dark:text-white">
+                The Agricultural Cooperative
+              </h1>
+              <p className="text-2xl sm:text-4xl md:text-5xl font-black font-display tracking-tight">
+                <span className="text-emerald-600 dark:text-emerald-400">Lease.</span>{' '}
+                <span className="text-[#8B5E3C] dark:text-amber-400">Partner.</span>{' '}
+                <span className="text-amber-600 dark:text-amber-300">Grow.</span>
+              </p>
+            </div>
+
+            <p className="max-w-2xl mx-auto text-sm sm:text-base md:text-lg font-medium leading-relaxed text-slate-600 dark:text-slate-300">
+              Connecting Kenyan smallholders, diaspora investors, and fertile shamba into an automated asset-sharing marketplace. Fund verified livestock, lease productive land, and secure yield dividends via M-Pesa escrow.
             </p>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="p-6 rounded-2xl border border-border-base bg-bg-base space-y-3 shadow-xs">
-              <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shadow-xs">
-                01
-              </div>
-              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
-                Discover Verified Assets
-              </h3>
-              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                Landowners list verified arable land with certified soil reports. Farmers list animal tags and production yields for open sponsorship.
-              </p>
-            </div>
+            {/* Action CTA Buttons */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+              <button
+                onClick={() => onLoginClick('dashboard')}
+                className="w-full sm:w-auto px-7 py-3.5 rounded-xl bg-[#1F6B3D] hover:bg-[#185530] text-white text-sm font-extrabold uppercase tracking-wider shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 cursor-pointer flex items-center justify-center gap-2"
+                id="hero_cta_join_free_btn"
+              >
+                <span>Explore Marketplace</span>
+                <ArrowRight className="w-4 h-4 shrink-0" />
+              </button>
 
-            <div className="p-6 rounded-2xl border border-border-base bg-bg-base space-y-3 shadow-xs">
-              <div className="w-10 h-10 rounded-xl bg-amber-600 text-white flex items-center justify-center font-bold text-sm shadow-xs">
-                02
-              </div>
-              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
-                M-Pesa Escrow Protection
-              </h3>
-              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                Investors and tenant farmers commit funds safely into the trust escrow. Capital is only released once title deeds and livestock health are verified.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-2xl border border-border-base bg-bg-base space-y-3 shadow-xs">
-              <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center font-bold text-sm shadow-xs">
-                03
-              </div>
-              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
-                Automated Yield Splits
-              </h3>
-              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                Daily milk and harvest metrics are logged in the immutable ledger. Payouts automatically credit both the farmer's and investor's accounts.
-              </p>
+              <button
+                onClick={() => {
+                  const el = document.getElementById('landing_how_it_works_section');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  else onOpenDoc('How It Works');
+                }}
+                className="w-full sm:w-auto px-6 py-3.5 rounded-xl border-2 border-slate-300 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-white text-sm font-extrabold uppercase tracking-wider shadow-xs transition-all cursor-pointer"
+                id="hero_cta_how_it_works_btn"
+              >
+                How It Works
+              </button>
             </div>
           </div>
         </div>
       </section>
+
+      {/* Role-Based Interactive How Shamba Loop Works Section */}
+      <RoleWorkflowSection onLoginClick={onLoginClick} isDarkMode={isDarkMode} />
 
       {/* Consolidated & Detailed About Us Section */}
       <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 border-b border-border-base bg-gradient-to-b from-white to-emerald-50/30 dark:from-slate-900 dark:to-slate-900/60" id="landing_about_section">

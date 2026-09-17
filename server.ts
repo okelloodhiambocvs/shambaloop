@@ -8,9 +8,20 @@ import crypto from 'crypto';
 import { 
   UserRole, User, Listing, ListingType, LeaseAgreement, 
   LivestockPartnership, VerificationRequest, MpesaTransaction,
-  HealthLog, ProductionLog, Dispute, TripartiteMatch, FarmerProposal, FarmEvent, VeterinaryJob, VeterinaryReport, InvestorCriteria
+  HealthLog, ProductionLog, Dispute, TripartiteMatch, FarmerProposal, FarmEvent, VeterinaryJob, VeterinaryReport, InvestorCriteria,
+  FarmRecord, LedgerTransaction, Review, UploadedFile
 } from './src/types.js';
 import { DEMO_ACCOUNT_IDS, DEMO_ACCOUNT_PROFILES } from './src/demoAccounts.js';
+import { registerUploadRoutes } from './server/uploadService.js';
+import { registerVerificationRoutes } from './server/verificationService.js';
+import { registerWalletRoutes } from './server/walletService.js';
+import { registerFarmRecordsRoutes } from './server/farmRecordsService.js';
+import { registerVeterinaryRoutes } from './server/veterinaryService.js';
+import { registerInvestmentRoutes } from './server/investmentService.js';
+import { registerDisputesRoutes } from './server/disputesService.js';
+import { registerReviewsRoutes } from './server/reviewsService.js';
+import { registerAuthExtensionRoutes } from './server/authExtensionService.js';
+import { readRecentAuditLogs } from './server/audit.js';
 
 const app = express();
 const PORT = 3000;
@@ -34,6 +45,10 @@ interface DatabaseSchema {
   veterinaryJobs?: VeterinaryJob[];
   veterinaryReports?: VeterinaryReport[];
   investorCriteria?: InvestorCriteria[];
+  farmRecords?: FarmRecord[];
+  ledgerTransactions?: LedgerTransaction[];
+  reviews?: Review[];
+  uploadedFiles?: UploadedFile[];
 }
 
 const DATA_DIR = path.join(process.cwd(), 'data');
@@ -1579,85 +1594,6 @@ app.post('/api/farmer/events', JWTAuthMiddleware, farmerOnly, (req: Authenticate
   res.status(201).json(event);
 });
 
-app.get('/api/farmer/veterinary-jobs', JWTAuthMiddleware, farmerOnly, (req: AuthenticatedRequest, res) => {
-  res.json((db.veterinaryJobs || []).filter(job => job.farmerName === req.user!.name && job.farmerPhone === req.user!.phone));
-});
-
-app.post('/api/farmer/veterinary-jobs', JWTAuthMiddleware, farmerOnly, (req: AuthenticatedRequest, res) => {
-  const { farmId, location, animalOrCropType, serviceType, urgency, assignedVetId, notes } = req.body;
-  const validServices: VeterinaryJob['serviceType'][] = ['CLINICAL_CHECK', 'VACCINATION', 'PREGNANCY_SCAN', 'EMERGENCY_SURGERY', 'NUTRITIONAL_AUDIT'];
-  const validUrgencies: VeterinaryJob['urgency'][] = ['NORMAL', 'URGENT', 'EMERGENCY'];
-  const vet = assignedVetId ? db.users.find(user => user.id === assignedVetId && user.role === UserRole.VETERINARIAN && user.verified) : undefined;
-  const normalizedLocation = cleanText(location, 200);
-  const normalizedSubject = cleanText(animalOrCropType, 160);
-  if (typeof farmId !== 'string' || (!farmerPartnership(req.user!.id, farmId) && farmId !== 'farm_primary') || !normalizedLocation || !normalizedSubject || !validServices.includes(serviceType) || !validUrgencies.includes(urgency) || (assignedVetId && !vet)) {
-    return res.status(400).json({ error: 'Provide your farm, service, location, subject, urgency, and an eligible veterinarian if selected.' });
-  }
-  const job: VeterinaryJob = { id: `vet_job_${Date.now()}`, farmId, farmerName: req.user!.name, farmerPhone: req.user!.phone, location: normalizedLocation, animalOrCropType: normalizedSubject, serviceType, urgency, status: vet ? 'ASSIGNED' : 'OPEN', assignedVetId: vet?.id, assignedVetName: vet?.name, requestedDate: new Date().toISOString(), notes: notes === undefined ? undefined : cleanText(notes, 1000) || undefined };
-  db.veterinaryJobs ||= [];
-  db.veterinaryJobs.unshift(job);
-  saveDatabase();
-  writeAuditLog(req.user!.id, 'veterinary_job_requested', `vet_job:${job.id}`, null, { farmId, serviceType }, req.ip || '127.0.0.1');
-  res.status(201).json(job);
-});
-
-app.get('/api/veterinary/reports', JWTAuthMiddleware, (req: AuthenticatedRequest, res) => {
-  const reports = (db.veterinaryReports || []).filter(report => req.user!.role === UserRole.ADMIN || report.farmerId === req.user!.id || report.investorId === req.user!.id || report.veterinarianId === req.user!.id);
-  res.json(reports);
-});
-
-// 5d. Veterinary workspace. A veterinarian may claim an open request, then only
-// access the linked partnership and publish records for that assignment.
-const veterinaryOnly = requireRole([UserRole.VETERINARIAN]);
-const veterinaryJobsFor = (vetId: string) => (db.veterinaryJobs || []).filter(job => job.status === 'OPEN' || job.assignedVetId === vetId);
-
-app.get('/api/veterinary/jobs', JWTAuthMiddleware, veterinaryOnly, (req: AuthenticatedRequest, res) => {
-  res.json(veterinaryJobsFor(req.user!.id));
-});
-
-app.patch('/api/veterinary/jobs/:id', JWTAuthMiddleware, veterinaryOnly, (req: AuthenticatedRequest, res) => {
-  const job = (db.veterinaryJobs || []).find(item => item.id === req.params.id);
-  if (!job) return res.status(404).json({ error: 'Veterinary job not found.' });
-  const { status } = req.body;
-  const allowed: VeterinaryJob['status'][] = ['IN_PROGRESS', 'COMPLETED'];
-  if (!allowed.includes(status)) return res.status(400).json({ error: 'Choose in progress or completed.' });
-  if (job.status === 'OPEN') {
-    if (status !== 'IN_PROGRESS') return res.status(409).json({ error: 'An open job must be accepted before completion.' });
-    job.assignedVetId = req.user!.id;
-    job.assignedVetName = req.user!.name;
-  } else if (job.assignedVetId !== req.user!.id) {
-    return res.status(403).json({ error: 'This job is assigned to another veterinarian.' });
-  }
-  if (job.status === 'COMPLETED') return res.status(409).json({ error: 'Completed jobs cannot be changed.' });
-  job.status = status;
-  saveDatabase();
-  writeAuditLog(req.user!.id, 'veterinary_job_updated', `vet_job:${job.id}`, null, { status }, req.ip || '127.0.0.1');
-  res.json(job);
-});
-
-app.get('/api/veterinary/partnerships', JWTAuthMiddleware, veterinaryOnly, (req: AuthenticatedRequest, res) => {
-  const farmIds = new Set(veterinaryJobsFor(req.user!.id).filter(job => job.assignedVetId === req.user!.id).map(job => job.farmId));
-  res.json(db.partnerships.filter(item => farmIds.has(item.id)));
-});
-
-app.post('/api/veterinary/reports', JWTAuthMiddleware, veterinaryOnly, (req: AuthenticatedRequest, res) => {
-  const { partnershipId, visitType, findings, recommendations, status } = req.body;
-  const partnership = db.partnerships.find(item => item.id === partnershipId);
-  const job = (db.veterinaryJobs || []).find(item => item.farmId === partnershipId && item.assignedVetId === req.user!.id && (item.status === 'IN_PROGRESS' || item.status === 'COMPLETED'));
-  const validStatuses: VeterinaryReport['status'][] = ['FIT_FOR_PRODUCTION', 'FOLLOW_UP_REQUIRED', 'TREATMENT_REQUIRED', 'NOT_FIT_FOR_PRODUCTION'];
-  const normalizedVisit = cleanText(visitType, 160);
-  const normalizedFindings = cleanText(findings, 3000);
-  const normalizedRecommendations = cleanText(recommendations, 3000);
-  if (!partnership || !job) return res.status(403).json({ error: 'A current assigned job is required for this livestock record.' });
-  if (!normalizedVisit || !normalizedFindings || !normalizedRecommendations || !validStatuses.includes(status)) return res.status(400).json({ error: 'Provide a valid service, observations, recommendations, and status.' });
-  const report: VeterinaryReport = { id: `vet_report_${Date.now()}`, partnershipId, animalTagId: partnership.animalTagId, veterinarianId: req.user!.id, veterinarianName: req.user!.name, farmerId: partnership.farmerId, investorId: partnership.investorId, visitType: normalizedVisit, findings: normalizedFindings, recommendations: normalizedRecommendations, status, createdAt: new Date().toISOString() };
-  db.veterinaryReports ||= [];
-  db.veterinaryReports.unshift(report);
-  saveDatabase();
-  writeAuditLog(req.user!.id, 'veterinary_report_created', `report:${report.id}`, null, { partnershipId, status }, req.ip || '127.0.0.1');
-  res.status(201).json(report);
-});
-
 // 5c. Investor workspace. Discovery exposes only public farmer information;
 // collaboration, proposals, events, and reports remain scoped to the investor.
 const investorOnly = requireRole([UserRole.INVESTOR]);
@@ -1758,101 +1694,6 @@ app.get('/api/investor/events', JWTAuthMiddleware, investorOnly, (req: Authentic
   res.json((db.farmEvents || []).filter(event => partnershipIds.has(event.farmId)));
 });
 
-// 6. Verification Queue & Approvals
-app.post('/api/verification/request', JWTAuthMiddleware, (req: AuthenticatedRequest, res) => {
-  const { userId, userName, userRole, documentType, documentNumber, notes } = req.body;
-  const normalizedDocumentNumber = cleanText(documentNumber, 200);
-  const normalizedNotes = notes === undefined ? undefined : cleanText(notes, 1000);
-  if (!['ID_CARD', 'TITLE_DEED', 'LIVESTOCK_CERT'].includes(documentType) || !normalizedDocumentNumber || (notes !== undefined && !normalizedNotes)) {
-    return res.status(400).json({ error: 'Form parameter error. Please complete required fields.' });
-  }
-
-  const creatorId = req.user ? req.user.id : (userId || 'user_2');
-  const creatorName = req.user ? req.user.name : (userName || 'Josphat Kiprop');
-  const creatorRole = req.user ? req.user.role : (userRole || UserRole.FARMER);
-
-  const verification: VerificationRequest = {
-    id: `verify_req_${Date.now()}`,
-    userId: creatorId,
-    userName: creatorName,
-    userRole: creatorRole as UserRole,
-    documentType,
-    documentNumber: encryptField(normalizedDocumentNumber), // AES-256-GCM field encryption at rest
-    notes: normalizedNotes,
-    status: 'PENDING',
-    submittedAt: new Date().toISOString(),
-    history: [{ at: new Date().toISOString(), actorId: creatorId, action: 'SUBMITTED' }]
-  };
-
-  db.verifications.push(verification);
-  saveDatabase();
-  syncRefs();
-
-  writeAuditLog(creatorId, 'verification_requested', `verify_req:${verification.id}`, null, { type: documentType }, req.ip || '127.0.0.1');
-
-  // Return non-sensitive representation to UI
-  res.status(201).json({
-    ...verification,
-    documentNumber: '[ENCRYPTED]'
-  });
-});
-
-const maskDocumentNumber = (value: string) => {
-  const clear = decryptField(value);
-  return clear.length > 4 ? `****${clear.slice(-4)}` : '****';
-};
-
-const verificationSummary = (verification: VerificationRequest) => ({
-  ...verification,
-  documentNumber: maskDocumentNumber(verification.documentNumber)
-});
-
-app.get('/api/admin/verifications', JWTAuthMiddleware, requireRole([UserRole.ADMIN]), (req, res) => {
-  const status = typeof req.query.status === 'string' ? req.query.status : undefined;
-  const query = typeof req.query.q === 'string' ? req.query.q.trim().toLowerCase() : '';
-  const results = db.verifications.filter(item =>
-    (!status || item.status === status) &&
-    (!query || item.userName.toLowerCase().includes(query) || item.userRole.toLowerCase().includes(query))
-  ).map(verificationSummary);
-  res.json(results);
-});
-
-// A document number is only returned for the individual record to an authenticated administrator.
-app.get('/api/admin/verifications/:id', JWTAuthMiddleware, requireRole([UserRole.ADMIN]), (req, res) => {
-  const item = db.verifications.find(verification => verification.id === req.params.id);
-  if (!item) return res.status(404).json({ error: 'Verification request was not found.' });
-  res.json({ ...item, documentNumber: decryptField(item.documentNumber) });
-});
-
-app.post('/api/admin/approve-doc', JWTAuthMiddleware, requireRole([UserRole.ADMIN]), (req: AuthenticatedRequest, res) => {
-  const { requestId, status, note } = req.body;
-  if (typeof requestId !== 'string' || !verificationDecisionStatuses.has(status)) {
-    return res.status(400).json({ error: 'A verification request and valid decision are required.' });
-  }
-  const adminNote = note === undefined ? undefined : cleanText(note, 1000);
-  if (note !== undefined && !adminNote) return res.status(400).json({ error: 'Decision note must contain at most 1000 printable characters.' });
-  if (status === 'MORE_INFO' && !adminNote) return res.status(400).json({ error: 'A note is required when requesting additional information.' });
-
-  const request = db.verifications.find(item => item.id === requestId);
-  if (!request) return res.status(404).json({ error: 'Verification request was not found.' });
-  if (request.status === 'APPROVED' || request.status === 'REJECTED') {
-    return res.status(409).json({ error: 'This verification has already received a final decision.' });
-  }
-
-  const previousStatus = request.status;
-  request.status = status;
-  request.adminNote = adminNote;
-  request.reviewedAt = new Date().toISOString();
-  request.reviewedBy = req.user!.id;
-  request.history = [...(request.history || []), { at: request.reviewedAt, actorId: req.user!.id, action: status, note: adminNote }];
-  const subscriber = db.users.find(user => user.id === request.userId);
-  if (subscriber && status === 'APPROVED') subscriber.verified = true;
-  if (subscriber && status === 'REJECTED') subscriber.verified = false;
-  saveDatabase();
-  writeAuditLog(req.user!.id, 'verification_decided', `verify_req:${request.id}`, { status: previousStatus }, { status, note: adminNote }, req.ip || '127.0.0.1');
-  res.json({ success: true, verification: verificationSummary(request) });
-});
-
 app.get('/api/admin/listings', JWTAuthMiddleware, requireRole([UserRole.ADMIN]), (req, res) => {
   const status = typeof req.query.status === 'string' ? req.query.status : undefined;
   res.json(db.listings.filter(item => !status || item.moderationStatus === status));
@@ -1907,123 +1748,18 @@ app.post('/api/admin/matches', JWTAuthMiddleware, requireRole([UserRole.ADMIN]),
   res.status(201).json(match);
 });
 
-// 8. ESCROW INTEGRATED DISPUTE RESOLUTION
-app.post('/api/disputes', JWTAuthMiddleware, (req: AuthenticatedRequest, res) => {
-  const { agreementId, reason } = req.body;
-  const normalizedReason = cleanText(reason, 2000);
-  if (typeof agreementId !== 'string' || !normalizedReason) {
-    return res.status(400).json({ error: 'Agreement ID and dispute reasoning details are mandatory.' });
-  }
+// 7. Register Modular Services (Separation of Concerns)
+registerAuthExtensionRoutes(app, JWTAuthMiddleware, validatePasswordStrength, cleanCredential, () => db, saveDatabase);
+registerUploadRoutes(app, JWTAuthMiddleware, () => db, saveDatabase);
+registerVerificationRoutes(app, JWTAuthMiddleware, requireRole([UserRole.ADMIN]), () => db, saveDatabase);
+registerWalletRoutes(app, JWTAuthMiddleware, () => db, saveDatabase);
+registerFarmRecordsRoutes(app, JWTAuthMiddleware, farmerOnly, () => db, saveDatabase);
+registerVeterinaryRoutes(app, JWTAuthMiddleware, () => db, saveDatabase);
+registerInvestmentRoutes(app, JWTAuthMiddleware, () => db, saveDatabase);
+registerDisputesRoutes(app, JWTAuthMiddleware, () => db, saveDatabase);
+registerReviewsRoutes(app, JWTAuthMiddleware, () => db, saveDatabase);
 
-  const agreement = db.agreements.find(a => a.id === agreementId);
-  if (!agreement) {
-    return res.status(404).json({ error: 'Associated lease agreement could not be located.' });
-  }
-
-  const userId = req.user!.id;
-  const userName = req.user!.name;
-  if (agreement.landownerId !== userId && agreement.farmerId !== userId) {
-    return res.status(403).json({ error: 'Only participants of the lease agreement can open a dispute.' });
-  }
-
-  // Check if an active dispute exists for this lease already
-  const existingDispute = db.disputes.find(d => d.leaseId === agreementId && d.status === 'OPEN');
-  if (existingDispute) {
-    return res.status(400).json({ error: 'An active unresolved dispute already exists for this lease agreement.' });
-  }
-
-  // Update agreement escrow state to DISPUTED to freeze funds safely
-  agreement.mpesaEscrowStatus = 'DISPUTED';
-
-  const newDispute: Dispute = {
-    id: `disp_${Date.now()}`,
-    leaseId: agreementId,
-    creatorId: userId,
-    creatorName: userName,
-    reason: normalizedReason,
-    status: 'OPEN',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    history: [{ at: new Date().toISOString(), actorId: userId, action: 'OPENED', note: normalizedReason }]
-  };
-
-  db.disputes.push(newDispute);
-  saveDatabase();
-  syncRefs();
-
-  writeAuditLog(userId, 'dispute_raised', `dispute:${newDispute.id}`, agreementId, { reason }, req.ip || '127.0.0.1');
-
-  res.status(201).json(newDispute);
-});
-
-app.get('/api/disputes', JWTAuthMiddleware, (req: AuthenticatedRequest, res) => {
-  const userId = req.user!.id;
-  if (req.user!.role === UserRole.ADMIN) {
-    return res.json(db.disputes);
-  }
-
-  // Users see disputes they created or are party to via their lease agreements
-  const filtered = db.disputes.filter(d => {
-    if (d.creatorId === userId) return true;
-    if (d.leaseId) {
-      const agg = db.agreements.find(a => a.id === d.leaseId);
-      if (agg && (agg.landownerId === userId || agg.farmerId === userId)) return true;
-    }
-    return false;
-  });
-  res.json(filtered);
-});
-
-app.post('/api/disputes/:id/resolve', JWTAuthMiddleware, requireRole([UserRole.ADMIN]), (req: AuthenticatedRequest, res) => {
-  const { id } = req.params;
-  const { resolution, resolutionReason } = req.body; // 'refund_farmer' | 'disburse_landowner'
-  const normalizedResolutionReason = cleanText(resolutionReason, 2000);
-  
-  if (!resolution || !normalizedResolutionReason) {
-    return res.status(400).json({ error: 'Resolution choice and descriptive justification are required.' });
-  }
-
-  const dispute = db.disputes.find(d => d.id === id);
-  if (!dispute) {
-    return res.status(404).json({ error: 'Dispute record could not be found.' });
-  }
-
-  if (dispute.status !== 'OPEN' && dispute.status !== 'UNDER_REVIEW') {
-    return res.status(400).json({ error: 'This dispute has already been finalized.' });
-  }
-
-  if (!dispute.leaseId) {
-    return res.status(400).json({ error: 'Dispute is not linked to a valid lease agreement.' });
-  }
-
-  const agreement = db.agreements.find(a => a.id === dispute.leaseId);
-  if (!agreement) {
-    return res.status(404).json({ error: 'Associated lease agreement records have been lost.' });
-  }
-
-  if (resolution === 'refund_farmer') {
-    agreement.mpesaEscrowStatus = 'REFUNDED';
-    dispute.status = 'REFUNDED';
-  } else if (resolution === 'disburse_landowner') {
-    agreement.mpesaEscrowStatus = 'DISBURSED';
-    dispute.status = 'RELEASED';
-  } else {
-    return res.status(400).json({ error: 'Invalid resolution choice. Permitted: refund_farmer, disburse_landowner.' });
-  }
-
-  dispute.resolutionNotes = normalizedResolutionReason;
-  dispute.updatedAt = new Date().toISOString();
-  dispute.history = [...(dispute.history || []), { at: dispute.updatedAt, actorId: req.user!.id, action: resolution === 'refund_farmer' ? 'REFUNDED' : 'RELEASED', note: normalizedResolutionReason }];
-
-  saveDatabase();
-  syncRefs();
-
-  writeAuditLog(req.user!.id, 'dispute_resolved', `dispute:${dispute.id}`, agreement.id, { resolution, resolutionReason: normalizedResolutionReason }, req.ip || '127.0.0.1');
-
-  res.json({ success: true, dispute, agreement });
-});
-
-// 7. Administrative Metrics (Dynamic counting formula queries instead of hardcoded numbers)
+// 8. Administrative Metrics (Dynamic counting formula queries instead of hardcoded numbers)
 app.get('/api/admin/analytics', JWTAuthMiddleware, requireRole([UserRole.ADMIN]), (req, res) => {
   const activeListings = db.listings.filter(item => item.moderationStatus === 'APPROVED').length;
   const activeFarms = db.agreements.filter(a => a.status === 'SIGNED').length + db.partnerships.filter(p => p.status === 'ACTIVE').length;
@@ -2043,6 +1779,12 @@ app.get('/api/admin/analytics', JWTAuthMiddleware, requireRole([UserRole.ADMIN])
     openDisputesCount: db.disputes.filter(item => item.status === 'OPEN' || item.status === 'UNDER_REVIEW').length,
     activeCollaborationsCount: db.agreements.filter(item => item.status === 'SIGNED').length + db.partnerships.filter(item => item.status === 'ACTIVE').length + (db.matches || []).filter(item => item.status === 'ACTIVE' || item.status === 'PROPOSED').length
   });
+});
+
+app.get('/api/admin/audit-logs', JWTAuthMiddleware, requireRole([UserRole.ADMIN]), (req, res) => {
+  const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 200);
+  const logs = readRecentAuditLogs(limit);
+  res.json({ logs });
 });
 
 // Enhanced Healtcheck

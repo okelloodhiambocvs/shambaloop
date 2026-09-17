@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { BriefcaseBusiness, ClipboardList, FileText, Search, ShieldAlert, Stethoscope, UsersRound } from 'lucide-react';
-import { FarmEvent, FarmerProposal, InvestorCriteria, InvestorFarmerProfile, LivestockPartnership, User, VeterinaryReport } from '../types';
+import { BriefcaseBusiness, ClipboardList, FileText, MapPin, PlusCircle, ShieldAlert, Stethoscope, UsersRound } from 'lucide-react';
+import { FarmEvent, FarmerProposal, InvestorCriteria, InvestorFarmerProfile, Listing, LivestockPartnership, User, VeterinaryReport } from '../types';
 
 interface Props {
   currentUser: User;
@@ -10,6 +10,8 @@ interface Props {
   farmEvents: FarmEvent[];
   farmers: InvestorFarmerProfile[];
   criteria: InvestorCriteria | null;
+  listings?: Listing[];
+  onListingAction?: (listing: Listing) => void;
   onSaveCriteria: (criteria: Omit<InvestorCriteria, 'id' | 'createdAt' | 'investorId' | 'investorName' | 'status'>) => Promise<void>;
   onUpdateProposal: (id: string, status: Extract<FarmerProposal['status'], 'NEGOTIATING' | 'ACCEPTED' | 'REJECTED'>) => Promise<void>;
 }
@@ -24,10 +26,10 @@ const money = (amount: number) => `KES ${amount.toLocaleString()}`;
 const date = (value: string) => new Date(value).toLocaleDateString();
 
 export default function InvestorDashboard(props: Props) {
-  const [view, setView] = useState<'overview' | 'farmers' | 'brief'>('overview');
-  const [query, setQuery] = useState('');
+  const [view, setView] = useState<'overview' | 'farmers' | 'opportunities' | 'brief'>('overview');
   const [county, setCounty] = useState('');
   const [sector, setSector] = useState('');
+  const [oppType, setOppType] = useState('ALL');
   const [busy, setBusy] = useState<string | null>(null);
   const [brief, setBrief] = useState({
     lookingFor: props.criteria?.lookingFor || 'FARMER_WITH_LAND_NEEDING_CAPITAL' as InvestorCriteria['lookingFor'],
@@ -61,8 +63,8 @@ export default function InvestorDashboard(props: Props) {
   ].sort((a, b) => b.at.localeCompare(a.at)), [collaborations, props.farmEvents, props.veterinaryReports]);
   const farmers = useMemo(() => props.farmers.filter(farmer => {
     const text = `${farmer.name} ${farmer.county} ${(farmer.farmSpecialties || []).join(' ')} ${farmer.listings.map(listing => `${listing.title} ${listing.description}`).join(' ')}`.toLowerCase();
-    return (!query || text.includes(query.toLowerCase())) && (!county || farmer.county.toLowerCase() === county.toLowerCase()) && (!sector || text.includes(sector.toLowerCase()));
-  }), [props.farmers, query, county, sector]);
+    return (!county || farmer.county.toLowerCase() === county.toLowerCase()) && (!sector || text.includes(sector.toLowerCase()));
+  }), [props.farmers, county, sector]);
   const production = collaborations.flatMap(item => item.productionLogs).slice(0, 5);
 
   const saveBrief = async (event: React.FormEvent) => {
@@ -86,7 +88,7 @@ export default function InvestorDashboard(props: Props) {
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">See active projects, review farm records, and decide what needs your attention.</p>
       </div>
       <nav className="flex flex-wrap gap-2" aria-label="Investor workspace views">
-        {([['overview', 'Overview'], ['farmers', 'Find farmers'], ['brief', 'Investment brief']] as const).map(([id, label]) => <button key={id} type="button" onClick={() => setView(id)} className={`rounded-lg px-3 py-2 text-xs font-semibold ${view === id ? 'bg-violet-700 text-white' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200'}`}>{label}</button>)}
+        {([['overview', 'Overview'], ['farmers', 'Find farmers'], ['opportunities', 'Marketplace'], ['brief', 'Investment brief']] as const).map(([id, label]) => <button key={id} type="button" onClick={() => setView(id)} className={`rounded-lg px-3 py-2 text-xs font-semibold ${view === id ? 'bg-violet-700 text-white' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200'}`}>{label}</button>)}
       </nav>
     </header>
 
@@ -108,8 +110,51 @@ export default function InvestorDashboard(props: Props) {
       {proposals.length > 0 && <ProposalList proposals={proposals} busy={busy} onChange={changeProposal} />}
     </>}
 
+    {view === 'opportunities' && <section className="space-y-4">
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <input value={county} onChange={event => setCounty(event.target.value)} placeholder="Filter by county" className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-white"/>
+        <select value={oppType} onChange={event => setOppType(event.target.value)} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-white">
+          <option value="ALL">All opportunities</option>
+          <option value="OPPORTUNITY">Investment deals</option>
+          <option value="LIVESTOCK">Livestock partnerships</option>
+          <option value="LAND">Farmland projects</option>
+        </select>
+      </div>
+      <p className="text-xs text-slate-500">Discover vetted agricultural parcels and commercial livestock operations seeking investment across Kenya.</p>
+      {props.listings && props.listings.filter(l => l.moderationStatus !== 'REJECTED' && l.moderationStatus !== 'SUSPENDED' && (!county || (l.locationCounty && l.locationCounty.toLowerCase().includes(county.toLowerCase()))) && (oppType === 'ALL' || l.type === oppType)).length ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {props.listings.filter(l => l.moderationStatus !== 'REJECTED' && l.moderationStatus !== 'SUSPENDED' && (!county || (l.locationCounty && l.locationCounty.toLowerCase().includes(county.toLowerCase()))) && (oppType === 'ALL' || l.type === oppType)).map(listing => (
+            <article key={listing.id} className="flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 shadow-xs">
+              <div>
+                <div className="flex items-start justify-between gap-2">
+                  <span className="rounded bg-violet-50 px-2 py-0.5 text-[10px] font-bold text-violet-800 dark:bg-violet-950/50 dark:text-violet-300">{listing.type}</span>
+                  <span className="text-xs font-bold text-slate-900 dark:text-white">{money(listing.priceKES)}</span>
+                </div>
+                <h3 className="mt-2 text-xs font-bold text-slate-900 dark:text-white line-clamp-1">{listing.title}</h3>
+                <p className="mt-1 flex items-center gap-1 text-[11px] text-slate-500"><MapPin className="h-3 w-3 shrink-0"/>{listing.locationCounty}</p>
+                <p className="mt-2 text-[11px] text-slate-600 dark:text-slate-300 line-clamp-2">{listing.description}</p>
+              </div>
+              {props.onListingAction && (
+                <button type="button" onClick={() => props.onListingAction?.(listing)} className="mt-4 w-full rounded-lg bg-violet-700 py-1.5 text-center text-xs font-semibold text-white hover:bg-violet-800 transition">
+                  Evaluate & Connect
+                </button>
+              )}
+            </article>
+          ))}
+        </div>
+      ) : (
+        <Empty text="No marketplace opportunities match these criteria." />
+      )}
+    </section>}
+
     {view === 'farmers' && <section className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row"><label className="flex flex-1 items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-900"><Search className="h-4 w-4 text-slate-400"/><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search farmer, county, activity, or listing" className="w-full bg-transparent text-sm outline-none" /></label><input value={county} onChange={event => setCounty(event.target.value)} placeholder="County" className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"/><select value={sector} onChange={event => setSector(event.target.value)} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"><option value="">All activities</option>{sectors.map(item => <option key={item}>{item}</option>)}</select></div>
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <input value={county} onChange={event => setCounty(event.target.value)} placeholder="Filter by county" className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"/>
+        <select value={sector} onChange={event => setSector(event.target.value)} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900">
+          <option value="">All activities</option>
+          {sectors.map(item => <option key={item}>{item}</option>)}
+        </select>
+      </div>
       <p className="text-xs text-slate-500">Showing public farmer profiles and approved listings. Private farm records are available only after a collaboration is established.</p>
       {farmers.length ? <div className="grid gap-3 lg:grid-cols-2">{farmers.map(farmer => <article key={farmer.id} className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900"><div className="flex items-start justify-between gap-3"><div><h2 className="text-sm font-bold text-slate-900 dark:text-white">{farmer.name}</h2><p className="text-xs text-slate-500">{farmer.county}{farmer.verified ? ' · Verified profile' : ''}</p></div><UsersRound className="h-5 w-5 text-violet-600"/></div><p className="mt-3 text-xs text-slate-600 dark:text-slate-300">{farmer.farmSpecialties?.length ? farmer.farmSpecialties.join(' · ') : 'Farm details have not been added.'}</p><div className="mt-3 border-t border-slate-100 pt-3 text-xs dark:border-slate-800"><strong className="text-slate-800 dark:text-slate-100">Approved listings</strong>{farmer.listings.length ? <ul className="mt-1 space-y-1 text-slate-600 dark:text-slate-300">{farmer.listings.slice(0, 2).map(listing => <li key={listing.id}>{listing.title} · {money(listing.priceKES)}</li>)}</ul> : <p className="mt-1 text-slate-500">No approved listings.</p>}</div><p className="mt-3 text-xs text-slate-500">{proposals.some(proposal => proposal.farmerId === farmer.id) ? 'A proposal from this farmer is ready for review.' : 'No proposal has been sent to you.'}</p></article>)}</div> : <Empty text="No farmers match these filters." />}
     </section>}

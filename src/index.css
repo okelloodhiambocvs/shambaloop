@@ -157,6 +157,65 @@ h1, h2, h3, h4, .font-display {
   animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* Floating Loop Animations for Hero Circles (CoFoundersLab style) */
+@keyframes heroFloat1 {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-12px) rotate(2deg);
+  }
+}
+
+@keyframes heroFloat2 {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(14px) rotate(-2deg);
+  }
+}
+
+@keyframes heroFloat3 {
+  0%, 100% {
+    transform: translate(0px, 0px);
+  }
+  33% {
+    transform: translate(6px, -10px);
+  }
+  66% {
+    transform: translate(-6px, 6px);
+  }
+  100% {
+    transform: translate(0px, 0px);
+  }
+}
+
+@keyframes heroFloat4 {
+  0%, 100% {
+    transform: translateY(0px) scale(1);
+  }
+  50% {
+    transform: translateY(-8px) scale(1.04);
+  }
+}
+
+.animate-hero-float-1 {
+  animation: heroFloat1 5.5s ease-in-out infinite;
+}
+
+.animate-hero-float-2 {
+  animation: heroFloat2 6.8s ease-in-out infinite;
+}
+
+.animate-hero-float-3 {
+  animation: heroFloat3 6.2s ease-in-out infinite;
+}
+
+.animate-hero-float-4 {
+  animation: heroFloat4 7.4s ease-in-out infinite;
+}
+
 /* Compact, shared administrative actions. */
 .action-primary, .action-secondary, .action-danger, .link-action {
   cursor: pointer;
