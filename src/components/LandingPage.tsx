@@ -106,7 +106,7 @@ export default function LandingPage({
         </div>
       </header>
 
-      <section className={`relative overflow-hidden pt-12 pb-16 md:pt-16 md:pb-24 px-4 sm:px-6 lg:px-8 border-b border-border-base min-h-[620px] lg:min-h-[680px] flex flex-col justify-center ${isDarkMode ? 'bg-[#0a120d] text-white' : 'bg-gradient-to-b from-emerald-50/60 via-white to-emerald-50/20 text-slate-900'}`}>
+      <section className={`relative overflow-hidden py-8 md:py-12 px-4 sm:px-6 lg:px-8 border-b border-border-base min-h-[500px] lg:min-h-[560px] flex flex-col justify-center ${isDarkMode ? 'bg-[#0a120d] text-white' : 'bg-gradient-to-b from-emerald-50/60 via-white to-emerald-50/20 text-slate-900'}`}>
         {/* Subtle background radial glow */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[500px] bg-emerald-500/10 dark:bg-emerald-500/5 rounded-full blur-3xl" />
@@ -115,41 +115,36 @@ export default function LandingPage({
         </div>
 
         {/* Hero Container with Evenly Flanked Avatars on Both Sides of the Writings */}
-        <div className="relative w-full max-w-7xl mx-auto flex flex-col items-center justify-center min-h-[580px] lg:min-h-[640px]">
+        <div className="relative w-full max-w-7xl mx-auto flex flex-col items-center justify-center min-h-[480px] lg:min-h-[540px]">
           {/* Evenly distributed avatars on BOTH sides of the writings */}
           <HeroAvatarLoop />
 
           {/* Center Hero Content Container - perfectly flanked on both sides */}
-          <div className="relative z-20 max-w-2xl lg:max-w-2xl xl:max-w-3xl mx-auto text-center space-y-6 pt-4 pb-2 px-4">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-[11px] font-extrabold uppercase tracking-widest shadow-2xs">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping inline-block" />
-              Kenya's Premier Agritech Cooperative
-            </div>
+          <div className="relative z-20 max-w-2xl lg:max-w-2xl xl:max-w-3xl mx-auto text-center space-y-4 pt-2 pb-1 px-4">
 
             <div className="space-y-3">
-              <h1 className="text-3xl sm:text-5xl md:text-6xl font-black font-display tracking-tight leading-[1.12] text-slate-900 dark:text-white">
+              <h1 className="text-3xl sm:text-5xl md:text-6xl font-medium font-display tracking-tight leading-[1.12] text-slate-900 dark:text-white">
                 The Agricultural Cooperative
               </h1>
-              <p className="text-2xl sm:text-4xl md:text-5xl font-black font-display tracking-tight">
+              <p className="text-2xl sm:text-4xl md:text-5xl font-medium font-display tracking-tight">
                 <span className="text-emerald-600 dark:text-emerald-400">Lease.</span>{' '}
                 <span className="text-[#8B5E3C] dark:text-amber-400">Partner.</span>{' '}
                 <span className="text-amber-600 dark:text-amber-300">Grow.</span>
               </p>
             </div>
 
-            <p className="max-w-2xl mx-auto text-sm sm:text-base md:text-lg font-medium leading-relaxed text-slate-600 dark:text-slate-300">
+            <p className="max-w-2xl mx-auto text-sm sm:text-base md:text-lg font-normal leading-relaxed text-slate-600 dark:text-slate-300">
               Connecting Kenyan smallholders, diaspora investors, and fertile shamba into an automated asset-sharing marketplace. Fund verified livestock, lease productive land, and secure yield dividends via M-Pesa escrow.
             </p>
 
             {/* Action CTA Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-1">
               <button
                 onClick={() => onLoginClick('dashboard')}
-                className="w-full sm:w-auto px-7 py-3.5 rounded-xl bg-[#1F6B3D] hover:bg-[#185530] text-white text-sm font-extrabold uppercase tracking-wider shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 cursor-pointer flex items-center justify-center gap-2"
+                className="w-full sm:w-auto px-3 py-1.5 rounded-md bg-[#1F6B3D] hover:bg-[#185530] text-white text-xs font-medium tracking-wide shadow-sm transition-all cursor-pointer"
                 id="hero_cta_join_free_btn"
               >
                 <span>Explore Marketplace</span>
-                <ArrowRight className="w-4 h-4 shrink-0" />
               </button>
 
               <button
@@ -158,7 +153,7 @@ export default function LandingPage({
                   if (el) el.scrollIntoView({ behavior: 'smooth' });
                   else onOpenDoc('How It Works');
                 }}
-                className="w-full sm:w-auto px-6 py-3.5 rounded-xl border-2 border-slate-300 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-white text-sm font-extrabold uppercase tracking-wider shadow-xs transition-all cursor-pointer"
+                className="w-full sm:w-auto px-3 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-white text-xs font-medium tracking-wide shadow-xs transition-all cursor-pointer"
                 id="hero_cta_how_it_works_btn"
               >
                 How It Works
@@ -172,13 +167,10 @@ export default function LandingPage({
       <RoleWorkflowSection onLoginClick={onLoginClick} isDarkMode={isDarkMode} />
 
       {/* Consolidated & Detailed About Us Section */}
-      <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 border-b border-border-base bg-gradient-to-b from-white to-emerald-50/30 dark:from-slate-900 dark:to-slate-900/60" id="landing_about_section">
+      <section className="py-10 md:py-14 px-4 sm:px-6 lg:px-8 border-b border-border-base bg-gradient-to-b from-white to-emerald-50/30 dark:from-slate-900 dark:to-slate-900/60" id="landing_about_section">
         <div className="max-w-6xl mx-auto space-y-12">
           {/* Section Header */}
           <div className="text-center space-y-3 max-w-3xl mx-auto">
-            <span className="text-[11px] uppercase font-extrabold tracking-widest text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/60 px-3 py-1 rounded-full border border-emerald-300 dark:border-emerald-800">
-              About ShambaLoop Kenya
-            </span>
             <h2 className="text-2xl sm:text-4xl font-black font-display text-slate-900 dark:text-white tracking-tight">
               Pioneering Kenya's Agricultural Trust & Productivity Ecosystem
             </h2>
@@ -190,11 +182,8 @@ export default function LandingPage({
           {/* Platform Roles: Admin, Farmer, Investor, Veterinary */}
           <div>
             <div className="text-center mb-6">
-              <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-slate-400">
-                Four Dedicated Trust Roles
-              </span>
-              <h3 className="text-lg sm:text-xl font-extrabold font-display text-slate-900 dark:text-white mt-1">
-                Role-Based Architecture & Operational Responsibilities
+              <h3 className="text-lg sm:text-xl font-medium font-display text-slate-900 dark:text-white mt-1">
+                Core Values
               </h3>
             </div>
 
@@ -202,7 +191,7 @@ export default function LandingPage({
               {/* Role 1: Admin */}
               <div className="p-6 rounded-2xl border border-border-base bg-card-bg hover:border-amber-500 transition-all space-y-3 shadow-xs">
                 <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
-                  1. Platform Administrator
+                  Transparency
                 </h3>
                 <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                   Registry Supervisors and District Cooperative Officers who authenticate Land Titles, verify GPS perimeter beacons, manage identity KYC, oversee tripartite agreements, and disburse escrow capital milestones.
@@ -217,7 +206,7 @@ export default function LandingPage({
               {/* Role 2: Farmer */}
               <div className="p-6 rounded-2xl border border-border-base bg-card-bg hover:border-emerald-500 transition-all space-y-3 shadow-xs">
                 <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
-                  2. Smallholder Farmer
+                  Trust
                 </h3>
                 <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                   Skilled agricultural operators and livestock custodians who secure fertile leasehold land, access institutional working capital, log daily production telemetry in the FMS, and maintain herd welfare.
@@ -232,7 +221,7 @@ export default function LandingPage({
               {/* Role 3: Investor */}
               <div className="p-6 rounded-2xl border border-border-base bg-card-bg hover:border-purple-500 transition-all space-y-3 shadow-xs">
                 <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
-                  3. Capital Investor
+                  Shared Prosperity
                 </h3>
                 <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                   Urban and diaspora capital partners who fund high-yielding dairy herds (Friesian, Ayrshire) and commercial horticulture. Track real-time production analytics and receive automated M-Pesa dividends.
@@ -247,7 +236,7 @@ export default function LandingPage({
               {/* Role 4: Veterinary */}
               <div className="p-6 rounded-2xl border border-border-base bg-card-bg hover:border-teal-500 transition-all space-y-3 shadow-xs">
                 <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
-                  4. Certified Veterinarian
+                  Accountability
                 </h3>
                 <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                   Kenya Veterinary Board (KVB) licensed doctors and animal health technicians who receive dispatch alerts, conduct bi-weekly clinical audits, certify herd health, and record life events like calving and vaccinations.
@@ -279,7 +268,7 @@ export default function LandingPage({
               <div className="space-y-2 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/60">
                 <div className="text-emerald-600 dark:text-emerald-400 font-bold text-xs uppercase tracking-wider flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                  1. Tripartite & Escrow Binding
+                  Tripartite & Escrow Binding
                 </div>
                 <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                   Parties formulate legally binding agricultural contracts backed by Kenya Land Act Section 12. Investor funds are locked safely in Safaricom Daraja M-Pesa escrow buffers, protected against unauthorized disbursement until verified milestones are approved.
@@ -289,7 +278,7 @@ export default function LandingPage({
               <div className="space-y-2 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/60">
                 <div className="text-emerald-600 dark:text-emerald-400 font-bold text-xs uppercase tracking-wider flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                  2. Daily FMS & Telemetry
+                  Daily FMS & Telemetry
                 </div>
                 <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                   Farmers record daily milk, crop, and input entries via our mobile Farm Management System. Our algorithmic engine benchmarks yield volumes against 7-day rolling moving averages, alerting stakeholders immediately to any anomalous drop.
@@ -299,7 +288,7 @@ export default function LandingPage({
               <div className="space-y-2 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/60">
                 <div className="text-emerald-600 dark:text-emerald-400 font-bold text-xs uppercase tracking-wider flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                  3. Clinical Audits & Settlement
+                  Clinical Audits & Settlement
                 </div>
                 <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                   Accredited veterinarians inspect herds every 14 days, verifying biosecurity and animal health. Cooperative proceeds are calculated systematically and paid directly to member M-Pesa accounts based on agreed revenue-share ratios.
