@@ -2,6 +2,7 @@ import express from 'express';
 import { UserRole, FarmRecord } from '../src/types.js';
 import { AuthenticatedRequest } from './types.js';
 import { writeAuditLog } from './audit.js';
+import { canAccessFarm } from './uploadService.js';
 
 export function registerFarmRecordsRoutes(
   app: express.Express,
@@ -66,7 +67,7 @@ export function registerFarmRecordsRoutes(
 
     const validRecordTypes = [
       'FEED', 'INPUTS', 'LIVESTOCK', 'EXPENSE', 
-      'PRODUCTION', 'EVENT', 'MILESTONE', 'PURCHASE', 'LOSS', 'OTHER'
+      'PRODUCTION', 'EVENT', 'VACCINATION', 'MILESTONE', 'PURCHASE', 'LOSS', 'OTHER'
     ];
     if (!validRecordTypes.includes(recordType)) {
       return res.status(400).json({
@@ -74,12 +75,17 @@ export function registerFarmRecordsRoutes(
       });
     }
 
+    const normalizedFarmId = farmId ? String(farmId).trim().slice(0, 128) : `farm_${user.id}`;
+    const db = getDb();
+    if (!canAccessFarm(user, db, normalizedFarmId)) {
+      return res.status(403).json({ error: 'You may only record activity for your own farm.' });
+    }
     const newRecordId = `rec_${Date.now()}`;
     const timestamp = new Date().toISOString();
 
     const record: FarmRecord = {
       id: newRecordId,
-      farmId: farmId || `farm_${user.id}`,
+      farmId: normalizedFarmId,
       farmerId: user.id,
       farmerName: user.name,
       recordType,
@@ -105,7 +111,6 @@ export function registerFarmRecordsRoutes(
       ]
     };
 
-    const db = getDb();
     db.farmRecords ||= [];
     db.farmRecords.push(record);
 
