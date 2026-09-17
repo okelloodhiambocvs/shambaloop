@@ -117,7 +117,6 @@ export default function LoginModal({
 
   const investorUsers = usersList.filter(u => u.role === UserRole.INVESTOR);
   const farmerUsers = usersList.filter(u => u.role === UserRole.FARMER);
-  const landownerUsers = usersList.filter(u => u.role === UserRole.LANDOWNER);
   const adminUsers = usersList.filter(u => u.role === UserRole.ADMIN);
   const veterinarianUsers = usersList.filter(u => u.role === UserRole.VETERINARIAN);
 
@@ -251,12 +250,12 @@ export default function LoginModal({
               )}
 
               {/* Landowner Profile */}
-              {(targetRole === null || targetRole === UserRole.LANDOWNER || targetRole === 'dashboard') && (
+              {false && (
                 <div className="space-y-1.5">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
                     Landowner Profiles
                   </span>
-                  {landownerUsers.map(user => (
+                  {([] as User[]).map(user => (
                     <button
                       key={user.id}
                       onClick={() => void handleDemoLogin(user)}
