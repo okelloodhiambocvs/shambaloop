@@ -30,6 +30,12 @@ export function registerReviewsRoutes(
 
     const db = getDb();
     db.reviews ||= [];
+    const targetUser = db.users.find((u: any) => u.id === targetUserId);
+    if (!targetUser || targetUser.role === UserRole.ADMIN) return res.status(404).json({ error: 'Review target was not found.' });
+    const eligible = (partnershipId && db.partnerships?.some((p: any) => p.id === partnershipId && p.status === 'COMPLETED' && ((p.farmerId === user.id && p.investorId === targetUserId) || (p.investorId === user.id && p.farmerId === targetUserId)))) ||
+      (jobId && db.veterinaryJobs?.some((j: any) => j.id === jobId && j.status === 'COMPLETED' && ((j.farmerId === user.id && j.assignedVetId === targetUserId) || (j.assignedVetId === user.id && j.farmerId === targetUserId)))) ||
+      (proposalId && db.proposals?.some((p: any) => p.id === proposalId && p.status === 'ACCEPTED' && ((p.farmerId === user.id && p.investorId === targetUserId) || (p.investorId === user.id && p.farmerId === targetUserId))));
+    if (!eligible) return res.status(403).json({ error: 'Reviews require a completed or accepted shared engagement.' });
 
     // Rule: Prevent duplicate reviews for same target user in same engagement
     const engagementId = partnershipId || jobId || proposalId;
@@ -45,7 +51,6 @@ export function registerReviewsRoutes(
       });
     }
 
-    const targetUser = db.users.find((u: any) => u.id === targetUserId);
     const reviewId = `rev_${Date.now()}`;
     const timestamp = new Date().toISOString();
 
@@ -55,8 +60,8 @@ export function registerReviewsRoutes(
       reviewerName: user.name,
       reviewerRole: user.role,
       targetUserId,
-      targetUserName: targetUser ? targetUser.name : (targetUserName || 'Agribusiness Partner'),
-      targetUserRole: targetUser ? targetUser.role : (targetUserRole || UserRole.FARMER),
+      targetUserName: targetUser.name,
+      targetUserRole: targetUser.role,
       partnershipId,
       jobId,
       proposalId,
@@ -117,46 +122,30 @@ export function registerReviewsRoutes(
     db.veterinaryJobs ||= [];
     db.agreements ||= [];
 
-    const reviewedTargetIds = new Set(
-      db.reviews.filter((r: Review) => r.reviewerId === user.id).map((r: Review) => r.targetUserId)
-    );
+    const reviewedEngagements = new Set(db.reviews.filter((r: Review) => r.reviewerId === user.id).map((r: Review) => `${r.targetUserId}:${r.partnershipId || r.jobId || r.proposalId || ''}`));
 
-    const eligiblePartners: Array<{ id: string; name: string; role: UserRole; context: string }> = [];
+    const eligiblePartners: Array<{ id: string; name: string; role: UserRole; context: string; engagementId: string; engagementType: 'partnership' | 'job' }> = [];
 
-    // Check partnerships / matches
+    // Only completed engagements are reviewable; no demo or placeholder partners are returned.
     for (const p of db.partnerships) {
-      if (p.farmerId === user.id && !reviewedTargetIds.has(p.investorId)) {
-        eligiblePartners.push({ id: p.investorId, name: 'Victoria Mwangi (Investor)', role: UserRole.INVESTOR, context: 'Active Dairy Partnership' });
+      if (p.status === 'COMPLETED' && p.farmerId === user.id && !reviewedEngagements.has(`${p.investorId}:${p.id}`)) {
+        const investor = db.users.find((u: any) => u.id === p.investorId); if (investor) eligiblePartners.push({ id: investor.id, name: investor.name, role: investor.role, context: `Completed partnership (${p.id})`, engagementId: p.id, engagementType: 'partnership' });
       }
-      if (p.investorId === user.id && !reviewedTargetIds.has(p.farmerId)) {
-        eligiblePartners.push({ id: p.farmerId, name: 'Josphat Kiprop (Farmer)', role: UserRole.FARMER, context: 'Commercial Dairy Farm Partner' });
+      if (p.status === 'COMPLETED' && p.investorId === user.id && !reviewedEngagements.has(`${p.farmerId}:${p.id}`)) {
+        const farmer = db.users.find((u: any) => u.id === p.farmerId); if (farmer) eligiblePartners.push({ id: farmer.id, name: farmer.name, role: farmer.role, context: `Completed partnership (${p.id})`, engagementId: p.id, engagementType: 'partnership' });
       }
     }
 
     // Check veterinary jobs
     for (const j of db.veterinaryJobs) {
-      if (j.assignedVetId && j.farmerPhone === user.phone && !reviewedTargetIds.has(j.assignedVetId)) {
-        eligiblePartners.push({ id: j.assignedVetId, name: j.assignedVetName || 'Attending Vet', role: UserRole.VETERINARIAN, context: 'Clinical Farm Visit' });
+      if (j.status === 'COMPLETED' && j.assignedVetId && j.farmerId === user.id && !reviewedEngagements.has(`${j.assignedVetId}:${j.id}`)) {
+        eligiblePartners.push({ id: j.assignedVetId, name: j.assignedVetName || 'Attending Vet', role: UserRole.VETERINARIAN, context: 'Completed clinical farm visit', engagementId: j.id, engagementType: 'job' });
       }
-      if (j.assignedVetId === user.id) {
-        const farmer = db.users.find((u: any) => u.phone === j.farmerPhone);
-        if (farmer && !reviewedTargetIds.has(farmer.id)) {
-          eligiblePartners.push({ id: farmer.id, name: farmer.name, role: UserRole.FARMER, context: 'Farm Service Recipient' });
+      if (j.status === 'COMPLETED' && j.assignedVetId === user.id) {
+        const farmer = db.users.find((u: any) => u.id === j.farmerId);
+        if (farmer && !reviewedEngagements.has(`${farmer.id}:${j.id}`)) {
+          eligiblePartners.push({ id: farmer.id, name: farmer.name, role: UserRole.FARMER, context: 'Completed farm service', engagementId: j.id, engagementType: 'job' });
         }
-      }
-    }
-
-    // Default eligible partners for demo accounts if empty
-    if (eligiblePartners.length === 0) {
-      if (user.role === UserRole.FARMER) {
-        eligiblePartners.push({ id: 'user_3', name: 'Victoria Mwangi', role: UserRole.INVESTOR, context: 'Dairy Partnership' });
-        eligiblePartners.push({ id: 'user_4', name: 'Dr. Naomi Wanjiku', role: UserRole.VETERINARIAN, context: 'Veterinary Clinical Visit' });
-      } else if (user.role === UserRole.INVESTOR) {
-        eligiblePartners.push({ id: 'user_2', name: 'Josphat Kiprop', role: UserRole.FARMER, context: 'Dairy Farm Production' });
-        eligiblePartners.push({ id: 'user_4', name: 'Dr. Naomi Wanjiku', role: UserRole.VETERINARIAN, context: 'Livestock Health Certification' });
-      } else if (user.role === UserRole.VETERINARIAN) {
-        eligiblePartners.push({ id: 'user_2', name: 'Josphat Kiprop', role: UserRole.FARMER, context: 'Livestock Care' });
-        eligiblePartners.push({ id: 'user_3', name: 'Victoria Mwangi', role: UserRole.INVESTOR, context: 'Agricultural Investment Health Audit' });
       }
     }
 
