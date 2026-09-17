@@ -83,7 +83,6 @@ describe('Recharts render test', () => {
 
   test('opens every seeded role for Corporate Portal dashboard exploration', () => {
     const demoUsers = [
-      { id: 'user_1', phone: '0712345678', name: 'Landowner Demo', role: UserRole.LANDOWNER, verified: true, county: 'Nyandarua', createdAt: '2026-01-01' },
       { id: 'user_2', phone: '0722111222', name: 'Farmer Demo', role: UserRole.FARMER, verified: true, county: 'Uasin Gishu', createdAt: '2026-01-01' },
       { id: 'user_3', phone: '0733444555', name: 'Investor Demo', role: UserRole.INVESTOR, verified: true, county: 'Nairobi', createdAt: '2026-01-01' },
       { id: 'user_admin', phone: '0700000000', name: 'Admin Demo', role: UserRole.ADMIN, verified: true, county: 'Nairobi', createdAt: '2026-01-01' },
@@ -131,6 +130,9 @@ describe('Recharts render test', () => {
     }));
     expect(html).toContain('What needs attention');
     expect(html).toContain('Find investors');
+    expect(html).toContain('Farm Management System');
+    expect(html).toContain('Dispute Room');
+    expect(html).toContain('Reviews');
     expect(html).not.toContain('Farm Control Center');
   });
 
