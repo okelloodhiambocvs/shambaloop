@@ -253,6 +253,11 @@ export default function AdminPanel(props: AdminPanelProps) {
           <p className="text-xs text-slate-600 dark:text-slate-300">
             {selectedKyc.documentType.replaceAll('_', ' ')} · {selectedKyc.documentNumber}. Sensitive document details are only available through the protected record API.
           </p>
+          <div className="flex flex-wrap gap-2">{selectedKyc.documentIds?.map((id, index) => <button type="button" key={id} className="underline text-xs" onClick={async () => {
+            const response = await fetch(`/api/uploads/${encodeURIComponent(id)}`, { headers: { Authorization: `Bearer ${localStorage.getItem('sl_token') || ''}` } });
+            if (!response.ok) { window.alert('Unable to download this document.'); return; }
+            const url = URL.createObjectURL(await response.blob()); const anchor = document.createElement('a'); anchor.href = url; anchor.download = response.headers.get('content-disposition')?.match(/filename="([^"]+)"/)?.[1] || `identity-document-${index + 1}`; anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+          }}>Download document {index + 1}</button>)}</div>
           <History entries={selectedKyc.history || []} />
           <div className="flex flex-wrap gap-2">
             <button disabled={working} onClick={() => reviewKyc('APPROVED')} className="action-primary flex items-center gap-1.5">
