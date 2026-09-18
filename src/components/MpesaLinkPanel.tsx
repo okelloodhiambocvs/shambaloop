@@ -58,7 +58,7 @@ export function MpesaLinkPanel({
         Authorization: `Bearer ${authToken}`
       }
     })
-      .then(res => res.json())
+      .then(async res => { const data = await res.json(); if (!res.ok) throw new Error(data.error || 'Unable to load wallet status.'); return data; })
       .then(data => {
         if (!isMounted) return;
         if (data.mpesaLink) {
@@ -69,7 +69,7 @@ export function MpesaLinkPanel({
           if (data.mpesaLink.accountType) setAccountType(data.mpesaLink.accountType);
         }
       })
-      .catch(() => {})
+      .catch(error => { if (isMounted) setErrorMsg(error.message); })
       .finally(() => {
         if (isMounted) setLoading(false);
       });
@@ -169,7 +169,7 @@ export function MpesaLinkPanel({
               </h3>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Direct connection for instant escrow STK Push top-ups and automated B2C payout disbursements
+              Save your mobile number and confirm payments securely on your phone.
             </p>
           </div>
         </div>
@@ -193,7 +193,7 @@ export function MpesaLinkPanel({
               id="mpesa_wallet_status_disconnected"
             >
               <span className="h-2 w-2 rounded-full bg-amber-500"></span>
-              <span>Wallet Not Connected</span>
+              <span>{mpesaLink?.status === 'PENDING' ? 'Awaiting verification' : 'Wallet Not Connected'}</span>
             </div>
           )}
         </div>
@@ -304,23 +304,23 @@ export function MpesaLinkPanel({
               2. KYC Identity Matching
             </span>
             <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
-              Account holder name must match your legal registration to satisfy Central Bank of Kenya (CBK) AML/CFT rules.
+              Enter your registered name. Saving a number does not verify ownership or complete identity review.
             </p>
           </div>
 
           <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/70 dark:border-slate-800 space-y-1">
             <span className="font-bold text-emerald-600 dark:text-emerald-400 block text-[11px]">
-              3. Automated STK & B2C
+              3. Confirm your payment
             </span>
             <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
-              Instant STK Push on phone for deposit top-ups, and real-time B2C bulk disbursements directly to your line.
+              Use Deposit to request a payment prompt, then refresh the transaction status. Your number is verified only after confirmation.
             </p>
           </div>
         </div>
       </div>
 
       {/* INPUT FORM (When disconnected or editing) */}
-      {(!mpesaLink || isEditing) && (
+      {(mpesaLink?.status !== 'CONNECTED' || isEditing) && (
         <form onSubmit={handleLinkSubmit} className="space-y-4" id="form_link_mpesa_account">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -388,8 +388,8 @@ export function MpesaLinkPanel({
                 id="select_mpesa_account_type"
               >
                 <option value="PERSONAL">Personal Mobile Wallet (STK & B2C)</option>
-                <option value="TILL">Buy Goods / Till Number</option>
-                <option value="PAYBILL">Cooperative Paybill Account</option>
+
+
               </select>
             </div>
           </div>
@@ -397,7 +397,7 @@ export function MpesaLinkPanel({
           <div className="p-3 bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/40 rounded-xl text-[11px] text-emerald-800 dark:text-emerald-300 flex items-start gap-2">
             <Lock className="h-4 w-4 shrink-0 mt-0.5" />
             <p className="leading-normal">
-              Your connection details are encrypted and bound directly to Safaricom Daraja API Paybill 4128901. PIN entry is strictly executed on your mobile SIM handset.
+              Never enter your M-Pesa PIN on this website. Enter it only in the Safaricom payment prompt on your handset.
             </p>
           </div>
 
