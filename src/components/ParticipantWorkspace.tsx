@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { 
-  AlertCircle, ArrowDownToLine, ArrowUpFromLine, CheckCircle2, Download, FileText, Filter, 
-  MessageSquareQuote, PhoneCall, Plus, ShieldCheck, Smartphone, Star, UploadCloud, Wallet, Zap 
+import {
+  AlertCircle, ArrowDownToLine, ArrowUpFromLine, CheckCircle2, Download, FileText, Filter,
+  MessageSquareQuote, PhoneCall, Plus, ShieldCheck, Smartphone, Star, UploadCloud, Wallet, Zap
 } from 'lucide-react';
 import type { LivestockPartnership, User, UploadedFile, Review, LedgerTransaction } from '../types';
 import { sharedWorkspaceApi, readFileAsBase64 } from '../services/sharedWorkspaceService';
@@ -16,13 +16,13 @@ const formatDate = (v: string) => new Date(v).toLocaleDateString(undefined, {
   day: 'numeric'
 });
 
-export default function ParticipantWorkspace({ 
-  user, 
-  partnerships, 
-  mode 
-}: { 
-  user: User; 
-  partnerships: LivestockPartnership[]; 
+export default function ParticipantWorkspace({
+  user,
+  partnerships,
+  mode
+}: {
+  user: User;
+  partnerships: LivestockPartnership[];
   mode: Mode;
 }) {
   const [records, setRecords] = useState<any[]>([]);
@@ -39,7 +39,7 @@ export default function ParticipantWorkspace({
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
 
   // Wallet purpose & M-Pesa state
-  const defaultPurpose = user.role === 'investor' ? 'INVESTMENT_CAPITAL' : 'CLINICAL_SUPPLIES';
+  const defaultPurpose = user.role === 'investor' ? 'INVESTMENT_CAPITAL' : user.role === 'farmer' ? 'FEED_PURCHASE' : 'CLINICAL_SUPPLIES';
   const [walletTab, setWalletTab] = useState<'deposit' | 'withdraw'>('deposit');
   const [depositPurpose, setDepositPurpose] = useState(defaultPurpose);
   const [depositPhone, setDepositPhone] = useState(user.phone || '');
@@ -321,7 +321,7 @@ export default function ParticipantWorkspace({
           <div>
             <h3 className="text-sm font-bold dark:text-white">Cooperative Wallet & M-Pesa Escrow</h3>
             <p className="text-xs text-slate-500">
-              Direct Safaricom Daraja integration for instant escrow deposits, payouts, and ledger settlements.
+              Request M-Pesa deposits and check their confirmed status. Withdrawals remain pending until processed.
             </p>
           </div>
           {/* Daraja API live status badge */}
@@ -330,7 +330,7 @@ export default function ParticipantWorkspace({
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
             </span>
-            <span>Daraja Gateway: Paybill 4128901 • Active</span>
+            <span>M-Pesa payments</span>
           </div>
         </div>
 
@@ -541,7 +541,7 @@ export default function ParticipantWorkspace({
                     throw new Error(r.error);
                   }
                   setWithdrawAmount('');
-                }, `M-Pesa B2C Payout of KES ${amount.toLocaleString()} disbursed to ${phone}.`);
+                }, `M-Pesa B2C Payout of KES ${amount.toLocaleString()} requested for ${phone}; awaiting processing.`);
               }}
             >
               <div className="grid gap-3 sm:grid-cols-2">
@@ -584,7 +584,7 @@ export default function ParticipantWorkspace({
               </div>
 
               <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-xl text-[11px] text-amber-800 dark:text-amber-300">
-                Disbursements are processed in real-time to the recipient's Safaricom M-Pesa line via Daraja B2C Bulk API. Standard network carrier charges apply.
+                Withdrawals are requests and remain pending until a payout provider processes them.
               </div>
 
               <button
@@ -594,7 +594,7 @@ export default function ParticipantWorkspace({
                 id="participant_btn_disburse_mpesa_payout"
               >
                 <ArrowUpFromLine className="h-4 w-4" />
-                <span>{busy ? 'Processing Disbursement...' : 'Disburse to M-Pesa (B2C)'}</span>
+                <span>{busy ? 'Processing Disbursement...' : 'Request withdrawal'}</span>
               </button>
             </form>
           )}
@@ -615,8 +615,8 @@ export default function ParticipantWorkspace({
               </div>
               <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl text-xs text-slate-600 dark:text-slate-300 text-left space-y-1 font-mono">
                 <div className="flex justify-between"><span>Merchant:</span><strong>ShambaLoop Escrow</strong></div>
-                <div className="flex justify-between"><span>Paybill:</span><strong>4128901</strong></div>
-                <div className="flex justify-between"><span>Receipt:</span><strong>{stkData.receipt || 'NL9384K78'}</strong></div>
+
+                <div className="flex justify-between"><span>Receipt:</span><strong>{stkData.receipt || 'Awaiting confirmation'}</strong></div>
                 <div className="flex justify-between"><span>Status:</span><strong className="text-emerald-600">SETTLED</strong></div>
               </div>
               <button
@@ -693,6 +693,7 @@ export default function ParticipantWorkspace({
                         }`}>
                           {t.status}
                         </span>
+                        {t.status === 'PENDING' && t.type === 'DEPOSIT' && <button type="button" disabled={busy} className="ml-2 underline" onClick={() => void act(async () => { const result = await sharedWorkspaceApi.refreshPayment(t.id); if (result.error) throw new Error(result.error); }, 'Payment status refreshed.')}>Refresh status</button>}
                       </td>
                     </tr>
                   ))}
