@@ -1,100 +1,63 @@
 # ShambaLoop
 
-ShambaLoop is a TypeScript application for agricultural listings, land leases, livestock partnerships, verification requests, escrow simulations, and administrator-led platform operations.
+React/TypeScript dashboards for farmers, investors, veterinarians, and administrators, served by an Express API. Normal startup contains no demo profiles, proposals, listings, balances, or credentials. Integration fixtures are restricted to `NODE_ENV=test` and a temporary database.
 
-## Architecture
+## Local use
 
-The application is a single Node.js process. Express serves JSON APIs and, in development, Vite serves the React client. The data layer is a JSON document at `data/db.json`; audit events are append-only JSON lines in `data/audit_log.json`.
+Use Node.js 22 or newer.
 
-The admin dashboard uses the same APIs as the client. Administrative data and mutations are server-authorized; the browser does not determine whether a user is an administrator.
-
-## Stack
-
-- React 19, TypeScript, Vite, Tailwind CSS, Lucide
-- Node.js, Express, TypeScript
-- JWT access and refresh tokens, bcryptjs, Node crypto AES-256-GCM
-- Vitest
-
-## Project layout
-
-```text
-src/
-  components/       React dashboards and shared UI
-  hooks/            Client hooks
-  tests/            Component and API integration tests
-  utils/            Validation and API error handling
-  App.tsx           Application state and API integration
-  types.ts          Shared domain models
-server.ts           Express API and JSON persistence adapter
-data/               Runtime database and audit log (not source code)
-public/             Static assets and service worker
-```
-
-## Dashboards
-
-Farmer, investor, veterinary, landowner, and administrator dashboards remain separate. The farmer dashboard starts with current attention items, active collaborations, open proposals, and a next action. The investor dashboard starts with active collaborations, reports requiring attention, recent production and veterinary updates, and pending proposals. The veterinary dashboard starts with assigned and open jobs, linked livestock context, clinical reports, and follow-ups. The administrator dashboard starts with actionable KYC, listing, and dispute queues. These dashboards avoid decorative charts, simulated operating data, and duplicate statistics.
-
-Farmer APIs are scoped to the authenticated farmer: `/api/farmer/investors`, `/api/farmer/veterinarians`, `/api/farmer/proposals`, `/api/farmer/profile`, `/api/farmer/events`, and `/api/farmer/veterinary-jobs`. Production records use the existing livestock partnership endpoint with an ownership check. Veterinary reports are exposed through `/api/veterinary/reports` only to the linked farmer, investor, veterinarian, or an administrator.
-
-Investor APIs are scoped to the authenticated investor: `/api/investor/farmers` returns public farmer profiles and approved listings, `/api/investor/criteria` stores the investor's opportunity brief, `/api/investor/proposals` returns only proposals addressed to that investor, and `/api/investor/events` returns events for that investor's collaborations. Production remains available through the existing ownership-filtered livestock partnership endpoint.
-
-Veterinary APIs are scoped to the authenticated veterinarian: `/api/veterinary/jobs` exposes open requests and jobs assigned to that veterinarian; `/api/veterinary/partnerships` exposes livestock records only for accepted jobs; and `POST /api/veterinary/reports` derives the veterinarian, farmer, investor, animal, and collaboration from that assigned job.
-
-## Authentication and authorization
-
-Protected APIs require a signed Bearer JWT. Role checks run on the server for all administrator, farmer, and investor routes. Administrative APIs cover KYC review, user verification, listing moderation, tripartite match proposals, escrow disbursement, dispute resolution, user enumeration, and decision analytics. Farmer mutations derive ownership from the access token and validate farm-partnership ownership before writing production records, activities, or veterinary requests. Investor proposal decisions are limited to the addressed investor; investor discovery omits farmer phone details and private farm records.
-
-Self-service registration cannot create administrator accounts. User responses omit MFA secrets, backup codes, device-trust data, password hashes, access tokens, and refresh tokens. KYC queue results mask document numbers; a protected single-record endpoint is available for an administrator who needs to inspect a submission.
-
-## Environment
-
-Copy `.env.example` to `.env` and configure production secrets before deploying:
-
-```dotenv
-JWT_SECRET=replace-with-a-long-random-value
-REFRESH_TOKEN_SECRET=replace-with-a-different-long-random-value
-DB_ENCRYPTION_KEY=replace-with-a-32-byte-secret
-CORS_WHITELIST=https://your-domain.example
-NODE_ENV=production
-```
-
-The defaults in `server.ts` support local development only. Do not use them in a deployed environment. The process requires write access to `data/` for the current persistence adapter.
-
-## Setup and development
-
-```bash
-npm install
+```sh
+npm ci
+cp .env.example .env
 npm run dev
 ```
 
-The development server listens on port 3000. Open `http://localhost:3000`.
+Open http://localhost:3000. Register a participant through the login modal. Farmers and veterinarians must provide a passport photo, both ID sides, certification, and a chief's letter (JPEG/PNG/PDF, up to 2 MB each). Identity evidence is private and downloadable by its owner or an administrator; administrators review it in the KYC panel. Accept both policies and confirm the password.
 
-## Tests and verification
+To create the first administrator, stop the application, set `ADMIN_NAME`, `ADMIN_PHONE`, and `ADMIN_PASSWORD` in your environment, and run `npm run admin:create`. No default administrator password exists. Use a password of at least 12 characters including uppercase, lowercase, digits, and a symbol.
 
-```bash
+## Checks 
+
+```sh
 npm test
 npm run lint
-npm run build
-```
-
-`npm test` runs Vitest. The integration tests expect the Express server at `http://localhost:3000`; start `npm run dev` in a separate terminal when running them directly. `npm run lint` runs TypeScript type checking. There is no separate formatter or static-analysis script configured in `package.json`.
-
-## Build and deployment
-
-```bash
+npm audit
 npm run build
 npm start
 ```
 
-The build emits the Vite client and bundles the server to `dist/server.cjs`. Deploy the resulting process behind HTTPS, set the environment variables above, persist `data/` only for non-production/demo use, and configure health checks against `/api/health`.
+`npm run lint` is the project's TypeScript check (`tsc --noEmit`). Tests start their own server on an available port, isolate database/uploads in a temporary directory, and stop the server afterward. Network/socket permissions are required. `npm run check` runs all four checks. `npm start` serves the compiled app; set `NODE_ENV=production` for static production serving and required-secret validation.
 
-## Security architecture
+## Configuration and payments
 
-- JWT Bearer authentication and server-side RBAC
-- bcrypt password hashes and hashed refresh-token storage
-- AES-256-GCM encryption for newly submitted KYC document numbers
-- administrative audit events for verification, listing, user, matching, escrow, and dispute actions
-- request security headers, CORS allow-listing in production, and authentication rate limiting
-- ownership checks for supported non-administrative resources
+Generate independent secrets of at least 32 characters for `JWT_SECRET`, `REFRESH_TOKEN_SECRET`, and `DB_ENCRYPTION_KEY`; production refuses to boot without them.
 
-The JSON store and local audit file are suitable for development and demonstration, not multi-instance production deployment. See [SCALABILITY.md](SCALABILITY.md) for the practical migration path.
+Password recovery requires an HTTPS SMS adapter in `RECOVERY_WEBHOOK_URL` and its bearer secret in `RECOVERY_WEBHOOK_SECRET`. The server POSTs `{phone, token, expiresInMinutes}`. The adapter must deliver the code to the registered number. Codes expire after 15 minutes, are stored hashed, and can be used once. Resetting revokes prior sessions. Without a delivery adapter, recovery returns an explicit unavailable response.
+
+Configure the `DARAJA_*` values in `.env.example` using your [Safaricom Daraja application](https://developer.safaricom.co.ke/). Keep sandbox and production credentials separate. The callback URL must be publicly reachable over HTTPS. The API requests an STK prompt and queries Daraja to confirm settlement; an incoming callback alone never credits an account. Users enter their PIN only on their handset. Saving an M-Pesa number does not mark it verified; a confirmed payment for that number does. Use Refresh status in the wallet or Check payment in checkout.
+
+Live Daraja and SMS delivery require operator credentials and provider acceptance testing; automated tests do not establish live service availability. Payouts are reserved pending requests, **not completed B2C transfers**. A B2C processing/reconciliation worker remains to be implemented before automated withdrawals can be enabled. Email verification is unavailable until a delivery/verification provider is implemented.
+
+## Docker
+
+```sh
+docker compose up --build -d
+```
+
+Compose reads `.env`. The multistage image runs as the unprivileged `node` user, excludes runtime data/secrets from the build context, and persists `/app/data` in a named volume. Health checks use `/api/health`. Set TLS at your reverse proxy. Docker build verification requires access to a running Docker daemon.
+
+## Architecture and persistence
+
+- `src/components`: dashboard and shared interaction components.
+- `src/services`: browser API clients.
+- `server/*Service.ts`: authorization and domain routes.
+- `server/registrationDocuments.ts`: identity file validation and private storage.
+- `server/passwordRecovery.ts`: delivery adapter and single-use recovery.
+- `server/daraja.ts`, `marketplacePayments.ts`: provider integration and payment status.
+- `server/walletBalance.ts`: common available-balance and reservation rules.
+- `server/migrations.ts`: ordered JSON schema migrations.
+- `server.ts`: application composition, existing routes, and persistence.
+
+`DATA_DIR` contains `db.json`, private uploads, and an append-only audit log. Database replacement is atomic; malformed databases cause startup to stop rather than silently reseed. Back up this directory. This is a **single-process JSON store**, not a scalable transactional database: run one writer and stop it before administrative CLI changes. Multiple replicas and durable financial processing require migration to a transactional database and payment job queue. See `SCALABILITY.md` for the broader migration plan.
+
+The service worker caches static images/assets only, never authenticated API responses. Large image duplicates were removed; shared chart, animation, and React dependencies build as separate chunks.
