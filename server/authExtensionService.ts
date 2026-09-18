@@ -27,7 +27,7 @@ export function registerAuthExtensionRoutes(
     const db = getDb();
     const storedHash = db.passwordHashes[user.id];
 
-    if (storedHash && !bcrypt.compareSync(normalizedCurrent, storedHash)) {
+    if (!storedHash || !bcrypt.compareSync(normalizedCurrent, storedHash)) {
       writeAuditLog(user.id, 'password_change_failed_bad_current', `user:${user.id}`, null, null, req.ip || '127.0.0.1');
       return res.status(400).json({ error: 'Current password provided is incorrect.' });
     }
@@ -62,16 +62,7 @@ export function registerAuthExtensionRoutes(
     const targetUser = db.users.find((u: User) => u.id === user.id);
     if (!targetUser) return res.status(404).json({ error: 'User not found.' });
 
-    targetUser.isEmailVerified = true;
-    saveDb();
-
-    writeAuditLog(user.id, 'account_email_verified', `user:${user.id}`, null, { verified: true }, req.ip || '127.0.0.1');
-
-    res.json({
-      success: true,
-      message: 'Account communication credentials successfully verified.',
-      user: targetUser
-    });
+    return res.status(503).json({ error: 'Email verification delivery is not configured.' });
   });
 
   // Current session info
