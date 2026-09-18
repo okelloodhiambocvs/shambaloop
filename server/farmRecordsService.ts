@@ -75,6 +75,7 @@ export function registerFarmRecordsRoutes(
       });
     }
 
+    if (typeof description !== 'string' || !description.trim() || !Number.isFinite(Number(quantity)) || Number(quantity) < 0 || [quotationKES, actualPriceKES, rrpKES].some(value => value !== undefined && (!Number.isFinite(Number(value)) || Number(value) < 0)) || (date && (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date))))) return res.status(400).json({ error: 'Provide valid text, date, and non-negative finite quantities and prices.' });
     const normalizedFarmId = farmId ? String(farmId).trim().slice(0, 128) : `farm_${user.id}`;
     const db = getDb();
     if (!canAccessFarm(user, db, normalizedFarmId)) {
