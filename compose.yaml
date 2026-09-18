@@ -1,0 +1,15 @@
+services:
+  web:
+    build: .
+    ports:
+      - "3000:3000"
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      DATA_DIR: /app/data
+    volumes:
+      - shambaloop-data:/app/data
+    restart: unless-stopped
+    init: true
+volumes:
+  shambaloop-data:
