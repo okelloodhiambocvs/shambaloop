@@ -1,10 +1,10 @@
+import { useFarmerDirectory } from './hooks/useFarmerDirectory';
 import React, { useState, useEffect } from 'react';
 import { 
   User, UserRole, Listing, ListingType, LeaseAgreement, 
   LivestockPartnership, VerificationRequest, MpesaTransaction, VeterinaryReport,
   FarmerProposal, InvestorCriteria, InvestorFarmerProfile, FarmEvent, VeterinaryJob, TripartiteMatch, Dispute
 } from './types';
-import { DEMO_ACCOUNT_PROFILES } from './demoAccounts';
 import ListingCard from './components/ListingCard';
 import CreateListingModal from './components/CreateListingModal';
 import EscrowPaymentModal from './components/EscrowPaymentModal';
@@ -147,15 +147,6 @@ const CustomProductionDot = (props: any) => {
 const COUNTIES_LIST = ['All Counties', 'Nyandarua', 'Kiambu', 'Nakuru', 'Uasin Gishu', 'Nairobi'];
 
 // --- Canonical Seed Users Single Source of Truth ---
-export const CANONICAL_SEED_USERS = DEMO_ACCOUNT_PROFILES;
-
-const seedUsers: User[] = [
-  CANONICAL_SEED_USERS[UserRole.FARMER],
-  CANONICAL_SEED_USERS[UserRole.INVESTOR],
-  CANONICAL_SEED_USERS[UserRole.ADMIN],
-  CANONICAL_SEED_USERS[UserRole.VETERINARIAN]
-];
-
 export default function App() {
   const { logAction } = useAuditLogger();
 
@@ -179,61 +170,13 @@ export default function App() {
   }, [isDarkMode]);
 
   // Dynamic user list and session authentication states
-  const [usersList, setUsersList] = useState<User[]>(() => {
-    const stored = localStorage.getItem('sl_users_list');
-    const coreSeedIds = new Set(seedUsers.map(u => u.id));
-    const coreSeedPhones = new Set(seedUsers.map(u => u.phone));
-
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored) as User[];
-        // Purge any duplicate, obsolete, or extra 'user_' prefixed users
-        // and any custom-registered accounts matching core seed phone numbers to prevent duplicates
-        const filtered = parsed.filter(u => {
-          if (u.id.startsWith('user_') && !coreSeedIds.has(u.id)) {
-            return false;
-          }
-          if (!coreSeedIds.has(u.id) && coreSeedPhones.has(u.phone)) {
-            return false;
-          }
-          return true;
-        });
-
-        const idMap = new Map<string, User>();
-        // First populate seedUsers to guarantee exactly one of each official seed user is represented
-        seedUsers.forEach(u => idMap.set(u.id, u));
-
-        // Let's also enforce uniqueness by phone number to wipe out potential custom duplicates
-        const phoneMap = new Map<string, User>();
-        seedUsers.forEach(u => phoneMap.set(u.phone, u));
-
-        filtered.forEach(u => {
-          if (!idMap.has(u.id) && !phoneMap.has(u.phone)) {
-            idMap.set(u.id, u);
-            phoneMap.set(u.phone, u);
-          }
-        });
-
-        const merged = Array.from(idMap.values());
-        localStorage.setItem('sl_users_list', JSON.stringify(merged));
-        return merged;
-      } catch (err) {
-        console.error("Purging faulty custom session data:", err);
-      }
-    }
-    localStorage.setItem('sl_users_list', JSON.stringify(seedUsers));
-    return seedUsers;
-  });
+  const [usersList, setUsersList] = useState<User[]>([]);
 
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     const stored = localStorage.getItem('sl_current_user');
     if (stored) {
       try {
         const u = JSON.parse(stored) as User;
-        const matchingSeed = seedUsers.find(su => su.phone === u.phone || su.id === u.id);
-        if (matchingSeed) {
-          return matchingSeed;
-        }
         return u;
       } catch (err) {
         // Fallback below
@@ -242,17 +185,7 @@ export default function App() {
     return null; // Show landing page when not logged in
   });
 
-  const [veterinaryReports, setVeterinaryReports] = useState<VeterinaryReport[]>(() => {
-    const stored = localStorage.getItem('sl_veterinary_reports');
-    if (stored) {
-      try {
-        return JSON.parse(stored) as VeterinaryReport[];
-      } catch {
-        return [];
-      }
-    }
-    return [];
-  });
+  const [veterinaryReports, setVeterinaryReports] = useState<VeterinaryReport[]>([]);
 
   // Login Modal state for landing page & header
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -443,7 +376,10 @@ export default function App() {
     role: UserRole;
     county: string;
     password: string;
-    documents?: Record<string, string>;
+    documents?: Record<string, { name: string; dataUrl: string }>;
+    confirmPassword: string;
+    termsAccepted: boolean;
+    privacyAccepted: boolean;
   }): Promise<{ success: boolean; error?: string }> => {
     try {
       const { data, error } = await safeFetch<any>('/api/auth/register', {
@@ -479,12 +415,12 @@ export default function App() {
     activeFarms: 0,
     totalLeasedAcreage: 0,
     totalEscrowKES: 0,
-    registeredUsersCount: 4,
+    registeredUsersCount: 0,
     pendingVerificationsCount: 0
   });
   const [farmerInvestors, setFarmerInvestors] = useState<User[]>([]);
   const [farmerVeterinarians, setFarmerVeterinarians] = useState<User[]>([]);
-  const [investorFarmers, setInvestorFarmers] = useState<InvestorFarmerProfile[]>([]);
+  const farmerDirectory = useFarmerDirectory(currentUser?.role === UserRole.INVESTOR ? currentUser.id : null);
   const [investorCriteria, setInvestorCriteria] = useState<InvestorCriteria | null>(null);
 
   // Ecosystem state for 4-role dashboards (clean functional product without pre-populated figures)
@@ -548,8 +484,8 @@ export default function App() {
     showToast('Veterinary service request submitted.');
   };
 
-  const handleUpdateVetJobStatus = async (jobId: string, status: VeterinaryJob['status']) => {
-    const { data, error } = await veterinaryFetch<VeterinaryJob>(`/api/veterinary/jobs/${encodeURIComponent(jobId)}`, { method: 'PATCH', body: JSON.stringify({ status }) });
+  const handleUpdateVetJobStatus = async (jobId: string, status: VeterinaryJob['status'], completionNotes?: string) => {
+    const { data, error } = await veterinaryFetch<VeterinaryJob>(`/api/veterinary/jobs/${encodeURIComponent(jobId)}`, { method: 'PATCH', body: JSON.stringify({ status, completionNotes }) });
     if (error || !data) throw new Error(error || 'Could not update the veterinary job.');
     setVetJobs(previous => previous.map(job => job.id === data.id ? data : job));
     showToast(`Job status updated to ${status}.`);
@@ -1247,10 +1183,10 @@ export default function App() {
       }, 500);
 
     } catch (err) {
-      console.warn('Backend server cold restarting or offline. Falling back to robust offline sandbox data.', err);
-      addSyncLogMessage('Sync connection interrupted. Utilizing local cached data offline...');
+      console.warn('Backend connection unavailable.', err);
+      addSyncLogMessage('Sync connection interrupted. Changes have not been saved.');
       // In case server has not initialized completely, load defaults to stay 100% interactive
-      loadLocalBackupSandbox();
+      showToast('Unable to reach the server. Please retry when connected.');
     } finally {
       setNetworkLoading(false);
     }
@@ -1292,15 +1228,13 @@ export default function App() {
     const headers = { Authorization: `Bearer ${token}` };
     Promise.all([
       fetch('/api/livestock/partnerships', { headers }),
-      fetch('/api/investor/farmers', { headers }),
       fetch('/api/investor/proposals', { headers }),
       fetch('/api/investor/events', { headers }),
       fetch('/api/veterinary/reports', { headers }),
       fetch('/api/investor/criteria', { headers })
     ]).then(async responses => {
-      const [partnershipsResponse, farmersResponse, proposalsResponse, eventsResponse, reportsResponse, criteriaResponse] = responses;
+      const [partnershipsResponse, proposalsResponse, eventsResponse, reportsResponse, criteriaResponse] = responses;
       if (partnershipsResponse.ok) setPartnerships(await partnershipsResponse.json());
-      if (farmersResponse.ok) setInvestorFarmers(await farmersResponse.json());
       if (proposalsResponse.ok) setProposals(await proposalsResponse.json());
       if (eventsResponse.ok) setFarmEvents(await eventsResponse.json());
       if (reportsResponse.ok) setVeterinaryReports(await reportsResponse.json());
@@ -1373,458 +1307,23 @@ export default function App() {
     };
   }, []);
 
-  const loadLocalBackupSandbox = () => {
-    const savedListings = localStorage.getItem('sl_listings');
-    const savedLeases = localStorage.getItem('sl_leases');
-    const savedPartnerships = localStorage.getItem('sl_partnerships');
-    const savedVerifications = localStorage.getItem('sl_verifications');
-
-    if (savedListings) setListings(JSON.parse(savedListings));
-    else {
-      const defaultListings: Listing[] = [
-        {
-          id: 'list_1',
-          type: ListingType.LAND,
-          title: '5-Acre Flat Fertile Red Soil Plot',
-          description: 'Highly productive parcel suitable for high-yield white potatoes, cabbages or garden-pea operations. Already fenced off. Water is readily available through an on-site solar-pumped borehole feeding into gravity tanks. Easily accessible via primary graded feeder road 2km off the Ol Kalou tarmac.',
-          locationCounty: 'Nyandarua',
-          priceKES: 12000,
-          verified: true,
-          imageUrl: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800',
-          ownerId: 'user_1',
-          ownerName: 'Wanjiku Kamau',
-          ownerPhone: '0712345678',
-          landDetails: {
-            acreage: 5,
-            soilType: 'Volcanic Red Loam',
-            waterSource: 'Solar Borehole',
-            accessibility: 'Chipped Feeder Road',
-            idealCrops: ['Potatoes', 'Cabbages', 'Carrots']
-          },
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: 'list_2',
-          type: ListingType.LIVESTOCK,
-          title: 'High-Yield Friesian Dairy Heifers',
-          description: 'Listing for shared investment in 2 pedigree Friesian dairy cows registered with the Kenya Stud Book. Produces 24-26 Liters daily. Looking to partner with a skilled farm manager who already has fodder/silage prepared in Kiambu or Nakuru.',
-          locationCounty: 'Kiambu',
-          priceKES: 185000,
-          revenueSplitPercent: 40,
-          verified: true,
-          imageUrl: 'https://images.unsplash.com/photo-1570042225831-d98fa7577f1e?w=800',
-          ownerId: 'user_3',
-          ownerName: 'David Mwangi',
-          ownerPhone: '0733444555',
-          livestockDetails: {
-            species: 'dairy',
-            tagId: 'SL-KE-FR-901',
-            breed: 'Pure pedigree Friesian',
-            expectedYield: '22 - 26 Liters per day each',
-            revenueShareConfig: '60% Farmer (land/labor), 40% Investor (purchase)'
-          },
-          createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
-        },
-        {
-          id: 'list_3',
-          type: ListingType.OPPORTUNITY,
-          title: 'Contract Farming: 10,000 Broiler Feed Cycle',
-          description: 'Modern deep litter poultry structure ready in Nakuru. Fully funded chick purchase and feed schedules by landowner. Looking for 1 resident farm caretaker with poultry experience.',
-          locationCounty: 'Nakuru',
-          priceKES: 35000,
-          verified: true,
-          imageUrl: 'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=800',
-          ownerId: 'user_1',
-          ownerName: 'Wanjiku Kamau',
-          ownerPhone: '0712345678',
-          opportunityDetails: {
-            requiredSkills: ['Biosecurity hygiene', 'Vaccinations management'],
-            durationMonths: 6,
-            expectedWorkforce: 2,
-            compensationType: 'Profit-Share'
-          },
-          createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
-        }
-      ];
-      setListings(defaultListings);
-      localStorage.setItem('sl_listings', JSON.stringify(defaultListings));
-    }
-
-    if (savedLeases) setLeases(JSON.parse(savedLeases));
-    else {
-      const defaultLeases: LeaseAgreement[] = [
-        {
-          id: 'lease_abc',
-          listingId: 'list_1',
-          landownerId: 'user_1',
-          farmerId: 'user_2',
-          acreageLeased: 2,
-          pricePerAcreKES: 12000,
-          durationMonths: 12,
-          startDate: '2026-07-01',
-          status: 'SIGNED',
-          mpesaEscrowStatus: 'ESCROWED',
-          paymentsMade: 24000
-        }
-      ];
-      setLeases(defaultLeases);
-      localStorage.setItem('sl_leases', JSON.stringify(defaultLeases));
-    }
-
-    if (savedPartnerships) {
-      const parsed = JSON.parse(savedPartnerships);
-      if (Array.isArray(parsed) && parsed.length === 1 && parsed[0].id === 'part_xyz') {
-        parsed.push({
-          id: 'part_pqr',
-          listingId: 'list_2',
-          investorId: 'user_3',
-          farmerId: 'user_2',
-          animalTagId: 'SL-KE-AY-902',
-          animalType: 'dairy',
-          breed: 'Ayrshire Premium Heifer',
-          splitPercentInvestor: 40,
-          status: 'ACTIVE',
-          healthLogs: [
-            {
-              id: 'h_2',
-              date: '2026-06-11',
-              status: 'Healthy',
-              notes: 'Vaccination completed. Highly active feeding.',
-              recordedBy: 'Josphat Kiprop (Farmer)'
-            }
-          ],
-          productionLogs: [
-            {
-              id: 'p_2_1',
-              date: '2026-06-08',
-              metric: 'Milk Liters',
-              quantity: 18,
-              revenueKES: 1080,
-              investorPayoutKES: 432,
-              farmerPayoutKES: 648
-            },
-            {
-              id: 'p_2_2',
-              date: '2026-06-09',
-              metric: 'Milk Liters',
-              quantity: 19,
-              revenueKES: 1140,
-              investorPayoutKES: 456,
-              farmerPayoutKES: 684
-            },
-            {
-              id: 'p_2_3',
-              date: '2026-06-10',
-              metric: 'Milk Liters',
-              quantity: 21,
-              revenueKES: 1260,
-              investorPayoutKES: 504,
-              farmerPayoutKES: 756
-            },
-            {
-              id: 'p_2_4',
-              date: '2026-06-11',
-              metric: 'Milk Liters',
-              quantity: 20,
-              revenueKES: 1200,
-              investorPayoutKES: 480,
-              farmerPayoutKES: 720
-            },
-            {
-              id: 'p_2_5',
-              date: '2026-06-12',
-              metric: 'Milk Liters',
-              quantity: 22,
-              revenueKES: 1320,
-              investorPayoutKES: 528,
-              farmerPayoutKES: 792
-            }
-          ]
-        });
-        setPartnerships(parsed);
-        localStorage.setItem('sl_partnerships', JSON.stringify(parsed));
-      } else {
-        setPartnerships(parsed);
-      }
-    } else {
-      const defaultParts: LivestockPartnership[] = [
-        {
-          id: 'part_xyz',
-          listingId: 'list_2',
-          investorId: 'user_3',
-          farmerId: 'user_2',
-          animalTagId: 'SL-KE-FR-901',
-          animalType: 'dairy',
-          breed: 'Pure pedigree Friesian',
-          splitPercentInvestor: 40,
-          status: 'ACTIVE',
-          healthLogs: [
-            {
-              id: 'h_1',
-              date: '2026-06-11',
-              status: 'Healthy',
-              notes: 'General state remains robust. Rumen activity completely healthy.',
-              recordedBy: 'Josphat Kiprop (Farmer)'
-            }
-          ],
-          productionLogs: [
-            {
-              id: 'p_1',
-              date: '2026-06-08',
-              metric: 'Milk Liters',
-              quantity: 21,
-              revenueKES: 1260,
-              investorPayoutKES: 504,
-              farmerPayoutKES: 756
-            },
-            {
-              id: 'p_2',
-              date: '2026-06-09',
-              metric: 'Milk Liters',
-              quantity: 23,
-              revenueKES: 1380,
-              investorPayoutKES: 552,
-              farmerPayoutKES: 828
-            },
-            {
-              id: 'p_3',
-              date: '2026-06-10',
-              metric: 'Milk Liters',
-              quantity: 22,
-              revenueKES: 1320,
-              investorPayoutKES: 528,
-              farmerPayoutKES: 792
-            },
-            {
-              id: 'p_4',
-              date: '2026-06-11',
-              metric: 'Milk Liters',
-              quantity: 25,
-              revenueKES: 1500,
-              investorPayoutKES: 600,
-              farmerPayoutKES: 900
-            },
-            {
-              id: 'p_5',
-              date: '2026-06-12',
-              metric: 'Milk Liters',
-              quantity: 24,
-              revenueKES: 1440,
-              investorPayoutKES: 576,
-              farmerPayoutKES: 864
-            }
-          ]
-        },
-        {
-          id: 'part_pqr',
-          listingId: 'list_2',
-          investorId: 'user_3',
-          farmerId: 'user_2',
-          animalTagId: 'SL-KE-AY-902',
-          animalType: 'dairy',
-          breed: 'Ayrshire Premium Heifer',
-          splitPercentInvestor: 40,
-          status: 'ACTIVE',
-          healthLogs: [
-            {
-              id: 'h_2',
-              date: '2026-06-11',
-              status: 'Healthy',
-              notes: 'Vaccination completed. Highly active feeding.',
-              recordedBy: 'Josphat Kiprop (Farmer)'
-            }
-          ],
-          productionLogs: [
-            {
-              id: 'p_2_1',
-              date: '2026-06-08',
-              metric: 'Milk Liters',
-              quantity: 18,
-              revenueKES: 1080,
-              investorPayoutKES: 432,
-              farmerPayoutKES: 648
-            },
-            {
-              id: 'p_2_2',
-              date: '2026-06-09',
-              metric: 'Milk Liters',
-              quantity: 19,
-              revenueKES: 1140,
-              investorPayoutKES: 456,
-              farmerPayoutKES: 684
-            },
-            {
-              id: 'p_2_3',
-              date: '2026-06-10',
-              metric: 'Milk Liters',
-              quantity: 21,
-              revenueKES: 1260,
-              investorPayoutKES: 504,
-              farmerPayoutKES: 756
-            },
-            {
-              id: 'p_2_4',
-              date: '2026-06-11',
-              metric: 'Milk Liters',
-              quantity: 20,
-              revenueKES: 1200,
-              investorPayoutKES: 480,
-              farmerPayoutKES: 720
-            },
-            {
-              id: 'p_2_5',
-              date: '2026-06-12',
-              metric: 'Milk Liters',
-              quantity: 22,
-              revenueKES: 1320,
-              investorPayoutKES: 528,
-              farmerPayoutKES: 792
-            }
-          ]
-        }
-      ];
-      setPartnerships(defaultParts);
-      localStorage.setItem('sl_partnerships', JSON.stringify(defaultParts));
-    }
-
-    if (savedVerifications) setVerifications(JSON.parse(savedVerifications));
-    else {
-      const defaultVers: VerificationRequest[] = [
-        {
-          id: 'verify_req_1',
-          userId: 'user_2',
-          userName: 'Josphat Kiprop',
-          userRole: UserRole.FARMER,
-          documentType: 'TITLE_DEED',
-          documentNumber: 'BARINGO/SOY/15A',
-          notes: 'Submitting agricultural training course certs for confirmation.',
-          status: 'PENDING',
-          submittedAt: new Date().toISOString()
-        }
-      ];
-      setVerifications(defaultVers);
-      localStorage.setItem('sl_verifications', JSON.stringify(defaultVers));
-    }
-  };
-
-  // Sync state changes back to localStorage for persistence buffer
-  useEffect(() => {
-    if (listings.length > 0) localStorage.setItem('sl_listings', JSON.stringify(listings));
-    if (leases.length > 0) localStorage.setItem('sl_leases', JSON.stringify(leases));
-    if (partnerships.length > 0) localStorage.setItem('sl_partnerships', JSON.stringify(partnerships));
-    if (verifications.length > 0) localStorage.setItem('sl_verifications', JSON.stringify(verifications));
-    localStorage.setItem('sl_veterinary_reports', JSON.stringify(veterinaryReports));
-    
-    // Sync usersList back to localStorage, strictly filtering for and retaining only the approved seed accounts
-    const approvedSeedIds = ['user_1', 'user_2', 'user_3', 'user_admin', 'user_vet'];
-    const cleanUsersList = usersList.filter(u => approvedSeedIds.includes(u.id));
-    localStorage.setItem('sl_users_list', JSON.stringify(cleanUsersList));
-    
-    // Recalculate frontend KPIs
-    const activeF = leases.filter(a => a.status === 'SIGNED').length + partnerships.filter(p => p.status === 'ACTIVE').length;
-    const leasedAcres = leases.reduce((acc, cur) => acc + cur.acreageLeased, 0);
-    const lockedKES = leases.reduce((acc, cur) => acc + cur.paymentsMade, 0);
-
-    setAnalytics({
-      activeListings: listings.length,
-      activeFarms: activeF,
-      totalLeasedAcreage: leasedAcres,
-      totalEscrowKES: lockedKES,
-      registeredUsersCount: usersList.length,
-      pendingVerificationsCount: verifications.filter(v => v.status === 'PENDING').length
-    });
-  }, [listings, leases, partnerships, verifications, usersList, veterinaryReports]);
-
   // 2. Listing Operations
   const handleAddNewListing = async (newListingData: any) => {
-    // Schema verification
-    const valResult = validateSchema(newListingData, listingSchema);
-    if (!valResult.success) {
-      const firstErrorMsg = Object.values(valResult.errors)[0];
-      showToast(firstErrorMsg);
-      return;
-    }
-
-    try {
-      const { data, error } = await safeFetch<any>('/api/listings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newListingData)
-      });
-      if (!error && data) {
-        setListings([data, ...listings]);
-        logAction('submit_listing', { id: data.id, title: data.title, type: data.type, price: data.priceKES }, currentUser?.id, currentUser?.name);
-      } else {
-        // Fallback
-        const mockSaved = {
-          ...newListingData,
-          id: `list_${Date.now()}`,
-          verified: currentUser.role === UserRole.ADMIN // Admin immediately verified
-        };
-        setListings([mockSaved, ...listings]);
-        logAction('submit_listing_fallback', { title: mockSaved.title, type: mockSaved.type, price: mockSaved.priceKES }, currentUser?.id, currentUser?.name);
-      }
-    } catch (e) {
-      // Fallback
-      const mockSaved = {
-        ...newListingData,
-        id: `list_${Date.now()}`,
-        verified: currentUser.role === UserRole.ADMIN
-      };
-      setListings([mockSaved, ...listings]);
-      logAction('submit_listing_fallback', { title: mockSaved.title, type: mockSaved.type, price: mockSaved.priceKES }, currentUser?.id, currentUser?.name);
-    }
+    const { data, error } = await safeFetch<any>('/api/listings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newListingData) });
+    if (error || !data) { showToast(error || 'Unable to save listing.'); return; }
+    setListings(previous => [data, ...previous]);
     setIsListingModalOpen(false);
   };
 
-  // 3. Lease & Escrow trigger after Mpesa Payment succeeds
   const handlePaymentCompleted = async (agreementData: any) => {
-    if (selectedListingForAction?.type === ListingType.LAND) {
-      // Validate lease parameters!
-      const valResult = validateSchema(agreementData, leaseSchema);
-      if (!valResult.success) {
-        const firstErrorMsg = Object.values(valResult.errors)[0];
-        showToast(firstErrorMsg);
-        return;
-      }
-
-      try {
-        const { data, error } = await safeFetch<any>('/api/land/leases', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(agreementData)
-        });
-        if (!error && data) {
-          setLeases([data, ...leases]);
-          logAction('propose_lease', { id: data.id, listingId: data.listingId, acreage: data.acreageLeased, pricePerAcreKES: data.pricePerAcreKES }, currentUser?.id, currentUser?.name);
-        } else {
-          setLeases([agreementData, ...leases]);
-          logAction('propose_lease_fallback', { listingId: agreementData.listingId, acreage: agreementData.acreageLeased }, currentUser?.id, currentUser?.name);
-        }
-      } catch (e) {
-        setLeases([agreementData, ...leases]);
-        logAction('propose_lease_fallback', { listingId: agreementData.listingId, acreage: agreementData.acreageLeased }, currentUser?.id, currentUser?.name);
-      }
-    } else if (selectedListingForAction?.type === ListingType.LIVESTOCK) {
-      try {
-        const { data, error } = await safeFetch<any>('/api/livestock/partnerships', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(agreementData)
-        });
-        if (!error && data) {
-          setPartnerships([data, ...partnerships]);
-          logAction('sponsor_livestock', { id: data.id, listingId: data.listingId, species: data.animalType, breed: data.breed }, currentUser?.id, currentUser?.name);
-        } else {
-          setPartnerships([agreementData, ...partnerships]);
-          logAction('sponsor_livestock_fallback', { listingId: agreementData.listingId, breed: agreementData.breed }, currentUser?.id, currentUser?.name);
-        }
-      } catch (e) {
-        setPartnerships([agreementData, ...partnerships]);
-        logAction('sponsor_livestock_fallback', { listingId: agreementData.listingId, breed: agreementData.breed }, currentUser?.id, currentUser?.name);
-      }
+    const type = selectedListingForAction?.type;
+    if (type === ListingType.LAND || type === ListingType.LIVESTOCK) {
+      const endpoint = type === ListingType.LAND ? '/api/land/leases' : '/api/livestock/partnerships';
+      const { data, error } = await safeFetch<any>(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(agreementData) });
+      if (error || !data) throw new Error(error || 'Unable to save agreement. Your confirmed payment remains on record.');
+      if (type === ListingType.LAND) setLeases(previous => [data, ...previous]);
+      else setPartnerships(previous => [data, ...previous]);
     }
-
     setIsPaymentModalOpen(false);
     setSelectedListingForAction(null);
   };
@@ -2049,17 +1548,9 @@ export default function App() {
   };
 
   const handleDisburseEscrow = async (leaseId: string) => {
-    try {
-      await safeFetch('/api/land/leases/disburse', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ leaseId })
-      });
-      logAction('disburse_escrow', { leaseId }, currentUser?.id, currentUser?.name);
-    } catch (e) {}
-
-    setLeases(leases.map(l => l.id === leaseId ? { ...l, mpesaEscrowStatus: 'DISBURSED' } : l));
-    alert('Shamba payment disbursed from Escrow ledger directly to Landowner M-Pesa account!');
+    const { data, error } = await safeFetch<LeaseAgreement>('/api/land/leases/disburse', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ leaseId }) });
+    if (error || !data) { showToast(error || 'Disbursement unavailable.'); return; }
+    setLeases(previous => previous.map(lease => lease.id === leaseId ? data : lease));
   };
 
   const handleApproveUser = async (userId: string, status: 'APPROVED' | 'REJECTED') => {
@@ -2290,7 +1781,10 @@ export default function App() {
                 veterinaryReports={veterinaryReports}
                 proposals={proposals}
                 farmEvents={farmEvents}
-                farmers={investorFarmers}
+                farmers={farmerDirectory.farmers}
+                farmersLoading={farmerDirectory.loading}
+                farmersError={farmerDirectory.error}
+                onRefreshFarmers={farmerDirectory.refresh}
                 criteria={investorCriteria}
                 listings={listings}
                 onListingAction={(listing) => {
