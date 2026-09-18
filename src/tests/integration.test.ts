@@ -1,8 +1,9 @@
+import { registrationConsent } from './registrationFixture';
 import { describe, test, expect, beforeAll } from 'vitest';
 import jwt from 'jsonwebtoken';
 import { UserRole } from '../types';
 
-const BASE_URL = 'http://localhost:3000';
+const BASE_URL = process.env.TEST_BASE_URL!;
 
 describe('ShambaLoop End-to-End Integration Tests', () => {
   let jwtToken: string = '';
@@ -54,7 +55,7 @@ describe('ShambaLoop End-to-End Integration Tests', () => {
         name: 'Weak User',
         role: UserRole.FARMER,
         county: 'Kakamega',
-        password: '123'
+        ...registrationConsent('123'), password: '123'
       };
 
       const response = await fetch(`${BASE_URL}/api/auth/register`, {
@@ -76,7 +77,7 @@ describe('ShambaLoop End-to-End Integration Tests', () => {
         email: `tester_${testUserPhone}@shambaloop.test`,
         role: UserRole.FARMER,
         county: 'Kakamega',
-        password: 'SecureTestPassword99!'
+        ...registrationConsent('SecureTestPassword99!'), password: 'SecureTestPassword99!'
       };
 
       const response = await fetch(`${BASE_URL}/api/auth/register`, {
@@ -104,7 +105,7 @@ describe('ShambaLoop End-to-End Integration Tests', () => {
         name: 'Another Test Person',
         role: UserRole.FARMER,
         county: 'Nakuru',
-        password: 'SecureTestPassword99!'
+        ...registrationConsent('SecureTestPassword99!'), password: 'SecureTestPassword99!'
       };
 
       const response = await fetch(`${BASE_URL}/api/auth/register`, {
@@ -125,7 +126,7 @@ describe('ShambaLoop End-to-End Integration Tests', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           phone: testUserPhone,
-          password: 'SecureTestPassword99!'
+          ...registrationConsent('SecureTestPassword99!'), password: 'SecureTestPassword99!'
         })
       });
 
@@ -479,7 +480,7 @@ describe('ShambaLoop End-to-End Integration Tests', () => {
       const phone = `07${Math.floor(10000000 + Math.random() * 90000000)}`;
       const registration = await fetch(`${BASE_URL}/api/auth/register`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone, name: 'Second Farmer', role: UserRole.FARMER, county: 'Nakuru', password: 'SecondFarmerPassword99!' })
+        body: JSON.stringify({ phone, name: 'Second Farmer', role: UserRole.FARMER, county: 'Nakuru', ...registrationConsent('SecondFarmerPassword99!'), password: 'SecondFarmerPassword99!' })
       });
       expect(registration.status).toBe(201);
       secondFarmerToken = (await registration.json()).token;
@@ -523,7 +524,7 @@ describe('ShambaLoop End-to-End Integration Tests', () => {
       const phone = `07${Math.floor(10000000 + Math.random() * 90000000)}`;
       const registration = await fetch(`${BASE_URL}/api/auth/register`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone, name: 'Integration Investor', role: UserRole.INVESTOR, county: 'Nakuru', password: 'InvestorPassword99!' })
+        body: JSON.stringify({ phone, name: 'Integration Investor', role: UserRole.INVESTOR, county: 'Nakuru', ...registrationConsent('InvestorPassword99!'), password: 'InvestorPassword99!' })
       });
       expect(registration.status).toBe(201);
       const investor = await registration.json();
@@ -592,7 +593,7 @@ describe('ShambaLoop End-to-End Integration Tests', () => {
       const phone = `07${Math.floor(10000000 + Math.random() * 90000000)}`;
       const registration = await fetch(`${BASE_URL}/api/auth/register`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone, name: 'Second Investor', role: UserRole.INVESTOR, county: 'Nairobi', password: 'SecondInvestorPassword99!' })
+        body: JSON.stringify({ phone, name: 'Second Investor', role: UserRole.INVESTOR, county: 'Nairobi', ...registrationConsent('SecondInvestorPassword99!'), password: 'SecondInvestorPassword99!' })
       });
       expect(registration.status).toBe(201);
       secondInvestorToken = (await registration.json()).token;
