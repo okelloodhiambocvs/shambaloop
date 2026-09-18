@@ -90,7 +90,7 @@ export function sanitizeErrorMessage(rawMessage: string): string {
   }
 
   if (normalized.includes('failed to fetch') || normalized.includes('networkerror')) {
-    return 'Network connection is offline. Actions are queued for synchronization fallback.';
+    return 'Network connection is offline. Your change was not saved. Please retry.';
   }
 
   return rawMessage || 'An unexpected connection issue occurred. Please retry.';
@@ -130,7 +130,12 @@ export async function safeFetch<T = any>(
 ): Promise<{ data: T | null; error: string | null }> {
   const urlString = typeof input === 'string' ? input : (input as any).url || '';
   try {
-    const response = await fetch(input, init);
+    const headers = new Headers(init?.headers);
+    if (typeof input === 'string' && input.startsWith('/api/') && !headers.has('Authorization')) {
+      const token = localStorage.getItem('sl_token');
+      if (token) headers.set('Authorization', `Bearer ${token}`);
+    }
+    const response = await fetch(input, { ...init, headers });
     const contentType = response.headers.get('content-type');
     
     let responseData: any = null;
