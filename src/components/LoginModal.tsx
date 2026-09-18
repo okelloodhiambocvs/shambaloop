@@ -1,3 +1,5 @@
+import { TermsModalContent } from '../content/termsContent';
+import { PrivacyModalContent } from '../content/privacyContent';
 import React, { useState, useEffect } from 'react';
 import { User, UserRole } from '../types';
 import { Logo } from './BrandAssets';
@@ -17,7 +19,10 @@ interface LoginModalProps {
     role: UserRole;
     county: string;
     password: string;
-    documents?: Record<string, string>;
+    documents?: Record<string, { name: string; dataUrl: string }>;
+    confirmPassword: string;
+    termsAccepted: boolean;
+    privacyAccepted: boolean;
   }) => Promise<{ success: boolean; error?: string }>;
   isDarkMode?: boolean;
 }
@@ -32,7 +37,7 @@ export default function LoginModal({
   onCustomRegister,
   isDarkMode = false
 }: LoginModalProps) {
-  const demoModeEnabled = import.meta.env.DEV;
+  const demoModeEnabled = import.meta.env.MODE === 'test';
   const [tab, setTab] = useState<'quick' | 'phone' | 'register' | 'forgot'>(demoModeEnabled ? 'quick' : 'phone');
   
   // Login fields
@@ -46,6 +51,7 @@ export default function LoginModal({
   const [countyInput, setCountyInput] = useState('Nyandarua');
   const [confirmPasswordInput, setConfirmPasswordInput] = useState('');
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [policy, setPolicy] = useState<'terms' | 'privacy' | null>(null);
   const [termsAgreed, setTermsAgreed] = useState(false);
   const [roleInput, setRoleInput] = useState<UserRole>(() => {
     if (targetRole && targetRole !== 'dashboard') {
@@ -55,6 +61,8 @@ export default function LoginModal({
   });
 
   // Forgot password fields
+  const [recoveryRequested, setRecoveryRequested] = useState(false);
+  const [recoveryToken, setRecoveryToken] = useState('');
   const [forgotPhone, setForgotPhone] = useState('');
   const [forgotNewPassword, setForgotNewPassword] = useState('');
   const [forgotConfirmPassword, setForgotConfirmPassword] = useState('');
@@ -91,7 +99,9 @@ export default function LoginModal({
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > 2 * 1024 * 1024 || !['image/jpeg', 'image/png', 'application/pdf'].includes(file.type)) { setErrorMsg('Choose a JPEG, PNG, or PDF file no larger than 2 MB.'); return; }
     const reader = new FileReader();
+    reader.onerror = () => setErrorMsg('Unable to read the selected file.');
     reader.onload = () => {
       const sizeKB = Math.round(file.size / 1024);
       setUploadedDocs(prev => ({
@@ -152,13 +162,15 @@ export default function LoginModal({
       return;
     }
 
-    // Format documents map
-    const documentsMap: Record<string, string> = {};
-    if (uploadedDocs.passportPhoto) documentsMap['passport_photo'] = uploadedDocs.passportPhoto.name;
-    if (uploadedDocs.idFront) documentsMap['national_id_front'] = uploadedDocs.idFront.name;
-    if (uploadedDocs.idBack) documentsMap['national_id_back'] = uploadedDocs.idBack.name;
-    if (uploadedDocs.chiefLetter) documentsMap['chief_letter'] = uploadedDocs.chiefLetter.name;
-    if (uploadedDocs.certifications) documentsMap['certifications'] = uploadedDocs.certifications.name;
+    const documentsMap: Record<string, { name: string; dataUrl: string }> = {};
+    const fields = { passportPhoto: 'passport_photo', idFront: 'national_id_front', idBack: 'national_id_back', chiefLetter: 'chief_letter', certifications: 'certifications' } as const;
+    if (roleInput !== UserRole.INVESTOR) {
+      for (const [field, key] of Object.entries(fields)) {
+        const document = uploadedDocs[field as keyof typeof uploadedDocs];
+        if (!document) { setErrorMsg('Upload all five required identity documents.'); return; }
+        documentsMap[key] = { name: document.name, dataUrl: document.dataUrl };
+      }
+    }
 
     setLoading(true);
     const result = await onCustomRegister({
@@ -168,6 +180,9 @@ export default function LoginModal({
       role: roleInput,
       county: countyInput,
       password: passwordInput,
+      confirmPassword: confirmPasswordInput,
+      termsAccepted: termsAgreed,
+      privacyAccepted: termsAgreed,
       documents: Object.keys(documentsMap).length > 0 ? documentsMap : undefined
     });
     setLoading(false);
@@ -182,6 +197,17 @@ export default function LoginModal({
     e.preventDefault();
     setErrorMsg('');
     setForgotSuccessMsg('');
+    if (!recoveryRequested) {
+      setLoading(true);
+      try {
+        const response = await fetch('/api/auth/forgot-password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone: forgotPhone }) });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error);
+        setRecoveryRequested(true); setForgotSuccessMsg(data.message);
+      } catch (error) { setErrorMsg((error as Error).message || 'Recovery unavailable.'); }
+      finally { setLoading(false); }
+      return;
+    }
     if (!forgotPhone.trim() || !forgotNewPassword) {
       setErrorMsg('Please enter your registered phone number and new password.');
       return;
@@ -197,10 +223,10 @@ export default function LoginModal({
 
     setLoading(true);
     try {
-      const res = await fetch('/api/auth/forgot-password', {
+      const res = await fetch('/api/auth/recover-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: forgotPhone.trim(), newPassword: forgotNewPassword })
+        body: JSON.stringify({ token: recoveryToken, newPassword: forgotNewPassword, confirmPassword: forgotConfirmPassword })
       });
       const data = await res.json();
       setLoading(false);
@@ -664,7 +690,7 @@ export default function LoginModal({
                         {uploadedDocs.passportPhoto ? 'Change' : 'Upload'}
                         <input
                           type="file"
-                          accept="image/*"
+                          accept="image/jpeg,image/png"
                           className="hidden"
                           onChange={(e) => handleFileUpload('passportPhoto', e)}
                           id="upload_passport_photo"
@@ -685,7 +711,7 @@ export default function LoginModal({
                           {uploadedDocs.idFront ? '✓' : 'Upload'}
                           <input
                             type="file"
-                            accept="image/*,.pdf"
+                            accept="image/jpeg,image/png,application/pdf"
                             className="hidden"
                             onChange={(e) => handleFileUpload('idFront', e)}
                             id="upload_id_front"
@@ -704,7 +730,7 @@ export default function LoginModal({
                           {uploadedDocs.idBack ? '✓' : 'Upload'}
                           <input
                             type="file"
-                            accept="image/*,.pdf"
+                            accept="image/jpeg,image/png,application/pdf"
                             className="hidden"
                             onChange={(e) => handleFileUpload('idBack', e)}
                             id="upload_id_back"
@@ -714,7 +740,7 @@ export default function LoginModal({
                     </div>
 
                     {/* Role Specific Requirements */}
-                    {roleInput === UserRole.FARMER ? (
+                    {(
                       <>
                         <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs">
                           <div className="flex items-center gap-2 overflow-hidden">
@@ -730,7 +756,7 @@ export default function LoginModal({
                             {uploadedDocs.chiefLetter ? 'Change' : 'Upload'}
                             <input
                               type="file"
-                              accept="image/*,.pdf"
+                              accept="image/jpeg,image/png,application/pdf"
                               className="hidden"
                               onChange={(e) => handleFileUpload('chiefLetter', e)}
                               id="upload_chief_letter"
@@ -742,7 +768,7 @@ export default function LoginModal({
                           <div className="flex items-center gap-2 overflow-hidden">
                             <FileText className="h-4 w-4 text-emerald-600 shrink-0" />
                             <div className="truncate">
-                              <span className="font-semibold block text-slate-900 dark:text-white">Farm Certifications (Optional)</span>
+                              <span className="font-semibold block text-slate-900 dark:text-white">{roleInput === UserRole.FARMER ? 'Farm Certifications (Required)' : 'KVB License / Certifications (Required)'}</span>
                               <span className="text-[10px] text-slate-500">
                                 {uploadedDocs.certifications ? `${uploadedDocs.certifications.name} (${uploadedDocs.certifications.size})` : 'GAP / Organic / Training certs'}
                               </span>
@@ -752,7 +778,7 @@ export default function LoginModal({
                             {uploadedDocs.certifications ? 'Change' : 'Upload'}
                             <input
                               type="file"
-                              accept="image/*,.pdf"
+                              accept="image/jpeg,image/png,application/pdf"
                               className="hidden"
                               onChange={(e) => handleFileUpload('certifications', e)}
                               id="upload_farmer_cert"
@@ -760,33 +786,12 @@ export default function LoginModal({
                           </label>
                         </div>
                       </>
-                    ) : (
-                      <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs">
-                        <div className="flex items-center gap-2 overflow-hidden">
-                          <FileText className="h-4 w-4 text-teal-600 shrink-0" />
-                          <div className="truncate">
-                            <span className="font-semibold block text-slate-900 dark:text-white">KVB License / Certifications</span>
-                            <span className="text-[10px] text-slate-500">
-                              {uploadedDocs.certifications ? `${uploadedDocs.certifications.name} (${uploadedDocs.certifications.size})` : 'Kenya Veterinary Board accreditation'}
-                            </span>
-                          </div>
-                        </div>
-                        <label className="shrink-0 ml-2 px-2.5 py-1 bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/60 border border-teal-300 dark:border-teal-800 text-teal-700 dark:text-teal-300 rounded-lg text-[10px] font-bold cursor-pointer transition">
-                          {uploadedDocs.certifications ? 'Change' : 'Upload'}
-                          <input
-                            type="file"
-                            accept="image/*,.pdf"
-                            className="hidden"
-                            onChange={(e) => handleFileUpload('certifications', e)}
-                            id="upload_vet_cert"
-                          />
-                        </label>
-                      </div>
                     )}
                   </div>
                 </div>
               )}
 
+              {policy && <section className="rounded border p-3"><button type="button" onClick={() => setPolicy(null)}>Close policy</button>{policy === 'terms' ? <TermsModalContent /> : <PrivacyModalContent />}</section>}
               {/* MANDATORY TERMS AND CONDITIONS & PRIVACY POLICY CHECKBOX */}
               <div className="pt-1">
                 <label className="flex items-start gap-2.5 cursor-pointer select-none">
@@ -799,7 +804,7 @@ export default function LoginModal({
                     id="modal_reg_terms_checkbox"
                   />
                   <span className="text-[11px] text-slate-600 dark:text-slate-400 leading-snug">
-                    I agree to the <span className="font-semibold text-emerald-600 dark:text-emerald-400 underline">Terms and Conditions</span> and <span className="font-semibold text-emerald-600 dark:text-emerald-400 underline">Privacy Policy</span>, and consent to regulatory KYC verification of uploaded documents.
+                    I agree to the <button type="button" onClick={() => setPolicy('terms')} className="underline">Terms and Conditions</button> and <button type="button" onClick={() => setPolicy('privacy')} className="underline">Privacy Policy</button>, and consent to regulatory KYC verification of uploaded documents.
                   </span>
                 </label>
               </div>
@@ -818,10 +823,11 @@ export default function LoginModal({
           {/* TAB 4: FORGOT PASSWORD */}
           {tab === 'forgot' && (
             <form onSubmit={handleForgotSubmit} className="space-y-4" id="modal_forgot_form">
+              {recoveryRequested && <label className="block text-sm">Recovery code<input required autoComplete="one-time-code" value={recoveryToken} onChange={event => setRecoveryToken(event.target.value)} className="w-full rounded border p-3 text-slate-900" /></label>}
               <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-xl text-xs text-slate-600 dark:text-slate-400 flex items-start gap-2">
                 <KeyRound className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
                 <p>
-                  Enter your registered Kenyan mobile number and choose a new secure password (minimum 12 characters).
+                  Request a recovery code on your registered mobile number, then enter it below with your new password.
                 </p>
               </div>
 
@@ -847,8 +853,8 @@ export default function LoginModal({
                 <div className="relative">
                   <input
                     type={showForgotNewPassword ? 'text' : 'password'}
-                    required
-                    minLength={12}
+                    required={recoveryRequested}
+                    minLength={recoveryRequested ? 12 : undefined}
                     placeholder="12+ characters (uppercase, lowercase, number, symbol)"
                     value={forgotNewPassword}
                     onChange={(e) => setForgotNewPassword(e.target.value)}
@@ -873,8 +879,8 @@ export default function LoginModal({
                 <div className="relative">
                   <input
                     type={showForgotConfirmPassword ? 'text' : 'password'}
-                    required
-                    minLength={12}
+                    required={recoveryRequested}
+                    minLength={recoveryRequested ? 12 : undefined}
                     placeholder="Re-enter new password"
                     value={forgotConfirmPassword}
                     onChange={(e) => setForgotConfirmPassword(e.target.value)}
@@ -898,7 +904,7 @@ export default function LoginModal({
                 className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all cursor-pointer shadow-md disabled:opacity-50"
                 id="modal_forgot_submit_btn"
               >
-                {loading ? 'Updating Password...' : 'Update Password & Sign In'}
+                {loading ? 'Please wait…' : recoveryRequested ? 'Reset password' : 'Send recovery code'}
               </button>
 
               <div className="text-center pt-1">
