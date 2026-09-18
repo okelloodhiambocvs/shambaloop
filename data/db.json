@@ -2735,6 +2735,17 @@
       "county": "Nairobi",
       "createdAt": "2026-09-18T09:44:13.747Z",
       "passwordResetRequired": false
+    },
+    {
+      "id": "user_1789731369688",
+      "phone": "0786692381",
+      "name": "Brayan Odhiambo",
+      "email": "okelloodhiambocvs@gmail.com",
+      "role": "investor",
+      "verified": false,
+      "county": "Kisumu",
+      "createdAt": "2026-09-18T11:36:09.688Z",
+      "passwordResetRequired": false
     }
   ],
   "listings": [
@@ -5826,7 +5837,8 @@
     "user_1789724652651": "$2b$10$IQZsygTdPBc5qTEeJtvzvOk8WeLHiN026zQVi/fT6ndS49/Eh9wCe",
     "user_1789724653476": "$2b$10$HAQOWvGzm.t0k9sP6h.qBOo9An9LbBwa9XB08MRiZ3xkWRkyXmHE2",
     "user_1789724653596": "$2b$10$CK6cKgiaa545d/QA3AjvUeEqvPUhhutpcN1d1/CiMjyn.VSyifGBu",
-    "user_1789724653747": "$2b$10$tXlKp0PWVBSYG0waLldjJ.QkJMiAv42xUEt1EyfPajBXZzfaUAxM."
+    "user_1789724653747": "$2b$10$tXlKp0PWVBSYG0waLldjJ.QkJMiAv42xUEt1EyfPajBXZzfaUAxM.",
+    "user_1789731369688": "$2b$10$qmtIm0H28zV7KCg2LGQ/YeiAn3YUz1mzgkMTfl1tHHWST3dLRQHRW"
   },
   "refreshTokens": [
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InVzZXJfMiIsImlhdCI6MTc4MTUxNTU3MCwiZXhwIjoxNzgyMTIwMzcwfQ.oBUC3PUhaTAOvmfSF5IbMyQO1yJ_bA-DijbFQzQgYx8",
@@ -6362,7 +6374,10 @@
     "ab7816a1e539925b80d943c0dc36bf01b872ce6ef0d10ea1e14ca0293fee3211",
     "da51f91c0eff26c8260ffcb6f88d9ac14da6e91d7b15429a71b9f6a04f653402",
     "7e6c5db047d3d8473fd77c0b7887cdc99a9578c44a7ce3ebad4f7f9785dd4caa",
-    "1d26bdde3c639fe2d3a480d524a8cf99680e3c58379eb20102654ddd95e05364"
+    "1d26bdde3c639fe2d3a480d524a8cf99680e3c58379eb20102654ddd95e05364",
+    "f8c46c009ba42d77cd7ac269f1c626e72a94cf2c05a0ee45923af3abfaa207ee",
+    "4bfeb0fa9d5bade93f6183843ed5478650662327395485a85c3dfd7780e5e9b9",
+    "d3920818458f2d927f0367f9545cae569d915c64d4f8ef059c6abdcd2a364629"
   ],
   "disputes": [
     {
