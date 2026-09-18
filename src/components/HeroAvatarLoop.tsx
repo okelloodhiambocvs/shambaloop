@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import babyCalfImg from '../assets/images/dairy_calf_baby_1789547904840.jpg';
-import fertileShambaImg from '../assets/images/kenyan_fertile_shamba_1789547934588.jpg';
-import pedigreeCowImg from '../assets/images/pedigree_cow_livestock_1789547947480.jpg';
-import africanFarmerImg from '../assets/images/african_farmer_portrait_1789549028340.jpg';
-import africanLivestockImg from '../assets/images/african_livestock_goat_1789549039925.jpg';
-import womanFarmerImg from '../assets/images/kenyan_woman_farmer_1789547975438.jpg';
-import babyLambImg from '../assets/images/baby_lamb_pasture_1789547988863.jpg';
+const babyCalfImg = '/images/dairy_calf_baby_1789547904840.jpg';
+const fertileShambaImg = '/images/kenyan_fertile_shamba_1789547934588.jpg';
+const pedigreeCowImg = '/images/pedigree_cow_livestock_1789547947480.jpg';
+const africanFarmerImg = '/images/african_farmer_portrait_1789549028340.jpg';
+const africanLivestockImg = '/images/african_livestock_goat_1789549039925.jpg';
+const womanFarmerImg = '/images/kenyan_woman_farmer_1789547975438.jpg';
+const babyLambImg = '/images/baby_lamb_pasture_1789547988863.jpg';
 
 export type LoopCategory = 'all' | 'livestock' | 'lands' | 'farmers';
 
