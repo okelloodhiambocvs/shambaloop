@@ -1,3 +1,10 @@
+import { findPublicFarmers } from './server/farmerDirectory.js';
+import { isFixtureRecord } from './src/domain/discovery.js';
+import { registerMarketplacePayments } from './server/marketplacePayments.js';
+import { registerPasswordRecovery } from './server/passwordRecovery.js';
+import { prepareDocuments, persistDocuments } from './server/registrationDocuments.js';
+import 'dotenv/config';
+import { seedTestData } from './server/testFixtures.js';
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
@@ -25,9 +32,16 @@ import { readRecentAuditLogs } from './server/audit.js';
 import { applyMigrations } from './server/migrations.js';
 
 const app = express();
-const PORT = 3000;
+const PORT = Number(process.env.PORT || 3000);
+if (process.env.NODE_ENV === 'production') {
+  for (const key of ['JWT_SECRET', 'REFRESH_TOKEN_SECRET', 'DB_ENCRYPTION_KEY']) {
+    if (!process.env[key] || process.env[key]!.length < 32) throw new Error(`${key} must be configured with at least 32 characters.`);
+  }
+}
 
-app.use(express.json());
+app.disable('x-powered-by');
+app.use('/api', (_req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
+app.use(express.json({ limit: '15mb' }));
 
 // Persistent Database Schema
 interface DatabaseSchema {
@@ -53,7 +67,7 @@ interface DatabaseSchema {
   schemaVersion?: number;
 }
 
-const DATA_DIR = path.join(process.cwd(), 'data');
+const DATA_DIR = path.resolve(process.env.DATA_DIR || path.join(process.cwd(), 'data'));
 const DB_FILE = path.join(DATA_DIR, 'db.json');
 const AUDIT_FILE = path.join(DATA_DIR, 'audit_log.json');
 
@@ -285,163 +299,6 @@ let db: DatabaseSchema = {
   investorCriteria: []
 };
 
-// Seed initial default accounts and records
-function seedDefaultData() {
-  db.users = Object.values(DEMO_ACCOUNT_PROFILES).map(user => ({ ...user }));
-
-  // Generate cryptographically secure temporary complex passwords for seeded accounts
-  function generateSecureTemporaryPassword(): string {
-    const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const lowercase = 'abcdefghijklmnopqrstuvwxyz';
-    const numbers = '0123456789';
-    const specials = '!@#$%^&*()_+~`|}{[]:;?><,./-="';
-    
-    const getRandomChar = (str: string) => str.charAt(crypto.randomInt(0, str.length));
-    
-    let password = [
-      getRandomChar(uppercase),
-      getRandomChar(uppercase),
-      getRandomChar(lowercase),
-      getRandomChar(lowercase),
-      getRandomChar(numbers),
-      getRandomChar(numbers),
-      getRandomChar(specials),
-      getRandomChar(specials),
-    ];
-    
-    const allChars = uppercase + lowercase + numbers + specials;
-    for (let i = 0; i < 8; i++) {
-      password.push(getRandomChar(allChars));
-    }
-    
-    return password.sort(() => crypto.randomBytes(1)[0] - 128).join('');
-  }
-
-  const tempPasses: Record<string, string> = {};
-  db.users.forEach(u => {
-    const tempPassword = generateSecureTemporaryPassword();
-    tempPasses[u.phone] = tempPassword;
-    db.passwordHashes[u.id] = bcrypt.hashSync(tempPassword, 10);
-    u.passwordResetRequired = true; // Force reset on first login
-  });
-  
-  // Log them to a developer file securely
-  try {
-    fs.writeFileSync(path.join(DATA_DIR, 'temporary_passwords.json'), JSON.stringify(tempPasses, null, 2), 'utf-8');
-    console.log('[SECURITY]: Generated secure temporary passwords inside data/temporary_passwords.json');
-  } catch (err) {
-    console.error('Failed to write temporary passwords to disk:', err);
-  }
-
-  db.listings = [
-    {
-      id: 'list_1',
-      type: ListingType.LAND,
-      title: '5-Acre Flat Fertile Red Soil Plot',
-      description: 'Highly productive parcel suitable for high-yield white potatoes, cabbages or garden-pea operations. Already fenced off. Water is readily available through an on-site solar-pumped borehole feeding into gravity tanks. Easily accessible via primary graded feeder road 2km off the Ol Kalou tarmac.',
-      locationCounty: 'Nyandarua',
-      priceKES: 12000,
-      verified: true,
-      imageUrl: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800',
-      ownerId: 'user_1',
-      ownerName: 'Wanjiku Kamau',
-      ownerPhone: '0712345678',
-      landDetails: {
-        acreage: 5,
-        soilType: 'Volcanic Red Loam',
-        waterSource: 'Solar Borehole',
-        accessibility: 'Chipped Feeder Road',
-        idealCrops: ['Potatoes', 'Cabbages', 'Carrots', 'Barley']
-      },
-      createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString()
-    },
-    {
-      id: 'list_2',
-      type: ListingType.LIVESTOCK,
-      title: 'High-Yield Friesian Dairy Heifers',
-      description: 'Listing for shared investment in 3 registered pure pedigree Friesian dairy cows currently in early second lactation. Producing average of 24 liters daily each. Seeking an experienced dairy farm manager in Kiambu/Nyandarua who can manage fodder production and milk logistics. We will split high-yield margins 60% (Farmer-Manager) and 40% (Investor) after input subtractions.',
-      locationCounty: 'Kiambu',
-      priceKES: 185000,
-      revenueSplitPercent: 40,
-      verified: true,
-      imageUrl: 'https://images.unsplash.com/photo-1570042225831-d98fa7577f1e?w=800',
-      ownerId: 'user_3',
-      ownerName: 'David Mwangi',
-      ownerPhone: '0733444555',
-      livestockDetails: {
-        species: 'dairy',
-        tagId: 'SL-KE-FR-901',
-        breed: 'Pure pedigree Friesian',
-        expectedYield: '22 - 26 Liters per day each',
-        revenueShareConfig: '60% Farmer (land/feed), 40% Investor (funding)'
-      },
-      createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
-    },
-    {
-      id: 'list_3',
-      type: ListingType.OPPORTUNITY,
-      title: 'Contract Farming: 10,000 Broiler Feed Cycle',
-      description: 'Seeking a skilled broiler poultry specialist to manage a clean modern poultry house in Nakuru (Lanet). Complete setup with automated drinkers, charcoal burners, heating grids and secure dry feed storage blocks already prepared. All starting chicks, vaccination schedules, and pre-purchased feeds are funded by the landowner investor. Offering handsome production-linked profit share.',
-      locationCounty: 'Nakuru',
-      priceKES: 35000,
-      verified: true,
-      imageUrl: 'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=800',
-      ownerId: 'user_1',
-      ownerName: 'Wanjiku Kamau',
-      ownerPhone: '0712345678',
-      opportunityDetails: {
-        requiredSkills: ['Poultry vaccination', 'Biosecurity management', 'Broiler feeding regimens'],
-        durationMonths: 6,
-        expectedWorkforce: 2,
-        compensationType: 'Profit-Share'
-      },
-      createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
-    },
-    {
-      id: 'list_4',
-      type: ListingType.LAND,
-      title: '15-Acre Black Cotton Maize Land in Eldoret',
-      description: 'Virgin land ready for commercial white maize or soya bean operations. Mechanized tractor accessibility is fully available. Highly reliable seasonal rainfall pattern.',
-      locationCounty: 'Uasin Gishu',
-      priceKES: 15000,
-      verified: false,
-      imageUrl: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=800',
-      ownerId: 'user_2',
-      ownerName: 'Josphat Kiprop',
-      ownerPhone: '0722111222',
-      landDetails: {
-        acreage: 15,
-        soilType: 'Deep Black Cotton',
-        waterSource: 'Rain-fed / Seasonal Stream',
-        accessibility: 'Graded bypass',
-        idealCrops: ['Maize', 'Wheat', 'Soyabeans']
-      },
-      createdAt: new Date().toISOString()
-    }
-  ];
-
-  db.agreements = [];
-
-  db.partnerships = [
-    {
-      id: 'part_xyz',
-      listingId: 'list_2',
-      investorId: 'user_3',
-      farmerId: 'user_2',
-      animalTagId: 'SL-KE-FR-901',
-      animalType: 'dairy',
-      breed: 'Pure pedigree Friesian',
-      splitPercentInvestor: 40,
-      status: 'ACTIVE',
-      healthLogs: [],
-      productionLogs: []
-    }
-  ];
-
-  db.verifications = [];
-  db.transactions = [];
-}
-
 // Read database from disk
 function loadDatabase() {
   if (fs.existsSync(DB_FILE)) {
@@ -464,11 +321,10 @@ function loadDatabase() {
       }));
       if (applyMigrations(db)) saveDatabase();
     } catch (err) {
-      console.error('Failed to parse database file. Initializing default seeds:', err);
-      seedDefaultData();
+      throw new Error('Database could not be loaded; refusing to overwrite existing data.', { cause: err });
     }
   } else {
-    seedDefaultData();
+    if (process.env.NODE_ENV === 'test') seedTestData(db, DATA_DIR);
     applyMigrations(db);
     saveDatabase();
   }
@@ -477,13 +333,14 @@ function loadDatabase() {
 // Write database to disk
 function saveDatabase() {
   try {
-    fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), 'utf-8');
+    fs.writeFileSync(`${DB_FILE}.tmp`, JSON.stringify(db, null, 2), { mode: 0o600 });
+    fs.renameSync(`${DB_FILE}.tmp`, DB_FILE);
   } catch (err) {
-    console.error('Failed to write database to disk:', err);
+    throw new Error('Database persistence failed.', { cause: err });
   }
 }
 
-const DEMO_SESSIONS_ENABLED = process.env.NODE_ENV !== 'production';
+const DEMO_SESSIONS_ENABLED = process.env.NODE_ENV === 'test';
 
 function ensureDevelopmentDemoAccounts(): boolean {
   if (!DEMO_SESSIONS_ENABLED) return false;
@@ -529,7 +386,7 @@ const REFRESH_SECRET = process.env.REFRESH_TOKEN_SECRET || 'shambaloop_refresh_s
 function generateSimulatedToken(user: User) {
   // Real JWT issued as the primary token
   return jwt.sign(
-    { id: user.id, role: user.role, name: user.name, phone: user.phone },
+    { id: user.id, role: user.role, name: user.name, phone: user.phone, sessionVersion: (user as any).sessionVersion || 0 },
     JWT_SECRET,
     { expiresIn: '30m' }
   );
@@ -583,6 +440,7 @@ const JWTAuthMiddleware = (req: AuthenticatedRequest, res: express.Response, nex
     return res.status(401).json({ error: 'Subscriber account could not be found.' });
   }
 
+  if ((decoded.sessionVersion || 0) !== ((matched as any).sessionVersion || 0)) return res.status(401).json({ error: 'Session revoked. Please sign in again.' });
   req.user = matched;
   next();
 };
@@ -618,7 +476,7 @@ const cleanText = (value: unknown, maxLength: number): string | null => {
 const normalizeKenyanPhone = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
   const normalized = value.trim().replace(/[\s()-]/g, '');
-  return /^(?:\+254|0)[17]\d{8}$/.test(normalized) ? normalized : null;
+  return /^(?:\+?254|0)[17]\d{8}$/.test(normalized) ? normalized.replace(/^\+?254/, '0') : null;
 };
 
 const normalizeEmail = (value: unknown): string | null => {
@@ -726,6 +584,8 @@ app.use((req, res, next) => {
   next();
 });
 
+app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
+
 // REST WEB ENDPOINTS
 
 // 1. Auth & Profiles Module
@@ -757,7 +617,12 @@ app.post('/api/auth/register', authRateLimiter, (req, res) => {
     });
   }
 
-  const newId = `user_${Date.now()}`;
+  if (req.body.termsAccepted !== true || req.body.privacyAccepted !== true) return res.status(400).json({ error: 'Accept the Terms and Conditions and Privacy Policy.' });
+  if (req.body.confirmPassword !== password) return res.status(400).json({ error: 'Passwords do not match.' });
+  let preparedDocuments;
+  try { preparedDocuments = prepareDocuments(role, req.body.documents); }
+  catch (error) { return res.status(400).json({ error: (error as Error).message }); }
+  const newId = `user_${crypto.randomUUID()}`;
   const newUser: User = {
     id: newId,
     phone: normalizedPhone,
@@ -770,20 +635,14 @@ app.post('/api/auth/register', authRateLimiter, (req, res) => {
     passwordResetRequired: false
   };
 
-  const documents = req.body.documents;
-  if (documents && typeof documents === 'object') {
-    (newUser as any).verificationDocuments = documents;
-    db.verifications.push({
-      id: `verify_${Date.now()}`,
-      userId: newId,
-      userName: newUser.name,
-      userRole: newUser.role,
-      documentType: role === UserRole.FARMER ? 'CHIEF_LETTER_AND_ID' : role === UserRole.VETERINARIAN ? 'KVB_LICENSE_AND_ID' : 'NATIONAL_ID',
-      documentNumber: `REG-${newId}`,
-      notes: `Registration KYC submission: ${Object.keys(documents).join(', ')}`,
-      status: 'PENDING',
-      submittedAt: new Date().toISOString()
-    });
+  let files: UploadedFile[];
+  try { files = persistDocuments(newId, role, preparedDocuments); }
+  catch { return res.status(500).json({ error: 'Unable to save identity documents. Please retry.' }); }
+  (db.uploadedFiles ||= []).push(...files);
+  (newUser as any).consent = { termsAcceptedAt: new Date().toISOString(), privacyAcceptedAt: new Date().toISOString(), version: '2026-09-18' };
+  if (files.length) {
+    newUser.verificationStatus = 'PENDING';
+    db.verifications.push({ id: `verify_${crypto.randomUUID()}`, userId: newId, userName: newUser.name, userRole: role, documentType: role === UserRole.FARMER ? 'CHIEF_LETTER_AND_ID' : 'KVB_LICENSE_AND_ID', documentNumber: `REG-${newId}`, notes: 'Registration identity documents submitted.', status: 'PENDING', submittedAt: new Date().toISOString(), ...{ documentIds: files.map(file => file.id) } });
   }
 
   db.passwordHashes[newId] = bcrypt.hashSync(normalizedPassword, 10);
@@ -971,34 +830,7 @@ app.post('/api/auth/password-reset', sensitiveAuthRateLimiter, (req, res) => {
   res.json({ success: true, message: 'Password reset completed. Authenticate using your updated credentials.' });
 });
 
-app.post('/api/auth/forgot-password', sensitiveAuthRateLimiter, (req, res) => {
-  const { phone, newPassword } = req.body;
-  const normalizedPhone = normalizeKenyanPhone(phone);
-  const normalizedNewPassword = cleanCredential(newPassword);
-  if (!normalizedPhone || !normalizedNewPassword) {
-    return res.status(400).json({ error: 'Please enter your registered phone number and a new password.' });
-  }
-
-  const user = db.users.find(u => u.phone === normalizedPhone);
-  if (!user) {
-    return res.status(404).json({ error: 'No account registered with this phone number.' });
-  }
-
-  if (!validatePasswordStrength(normalizedNewPassword)) {
-    return res.status(400).json({
-      error: 'New password does not meet security rules. Minimum 12 characters, with an uppercase letter, a lowercase letter, a number, and a special character.'
-    });
-  }
-
-  db.passwordHashes[user.id] = bcrypt.hashSync(normalizedNewPassword, 10);
-  user.passwordResetRequired = false;
-  saveDatabase();
-  syncRefs();
-
-  writeAuditLog(user.id, 'forgot_password_recovered', `user:${user.id}`, null, null, req.ip || '127.0.0.1');
-
-  res.json({ success: true, message: 'Password updated successfully. You can now log in with your new password.' });
-});
+registerPasswordRecovery(app, sensitiveAuthRateLimiter, () => db, saveDatabase, normalizeKenyanPhone, validatePasswordStrength);
 
 app.post('/api/auth/refresh', authRateLimiter, (req, res) => {
   const refreshToken = cleanCredential(req.body?.refreshToken, 2048);
@@ -1117,7 +949,7 @@ app.put('/api/users/profile', JWTAuthMiddleware, (req: AuthenticatedRequest, res
 // 2. Listing Operations (Browse with search and filters)
 app.get('/api/listings', (req, res) => {
   const { county, type, minPrice, maxPrice, status } = req.query;
-  let filtered = db.listings.filter(listing => listing.moderationStatus === 'APPROVED');
+  let filtered = db.listings.filter(listing => !isFixtureRecord(listing)).filter(listing => listing.moderationStatus === 'APPROVED');
 
   if (county) {
     filtered = filtered.filter(l => l.locationCounty.toLowerCase() === (county as string).trim().toLowerCase());
@@ -1211,19 +1043,14 @@ app.delete('/api/listings/:id', JWTAuthMiddleware, (req: AuthenticatedRequest, r
   res.json({ success: true, message: 'Marketplace listing removed.' });
 });
 
+registerMarketplacePayments(app, JWTAuthMiddleware, () => db, saveDatabase);
+
 // 3. M-Pesa Interfacing
 app.post('/api/payments/stkpush', JWTAuthMiddleware, (req, res) => {
+  if (process.env.NODE_ENV !== 'test') return res.status(409).json({ error: 'Use the wallet deposit flow to initiate and verify an M-Pesa payment.' });
   const { phone, amount, purpose } = req.body;
   if (!phone || !amount) {
     return res.status(400).json({ error: 'Subscriber number and billing KES amount required.' });
-  }
-
-  // Safety protection for production context
-  if (process.env.NODE_ENV === 'production') {
-    if (!process.env.MPESA_SHORTCODE || !process.env.MPESA_PASSKEY) {
-      console.error('[CRITICAL]: Missing real M-Pesa credentials in production mode.');
-      return res.status(500).json({ error: 'Safaricom Daraja API gateway configuration is unconfigured.' });
-    }
   }
 
   const mpesaChar = 'RSTUXZ'.charAt(Math.floor(Math.random() * 6));
@@ -1259,46 +1086,14 @@ app.post('/api/payments/stkpush', JWTAuthMiddleware, (req, res) => {
 
 // Real STK M-Pesa Callback verification endpoint
 app.post('/api/payments/callback', (req, res) => {
-  const { Body } = req.body || {};
-  if (!Body || !Body.stkCallback) {
-    return res.status(400).json({ error: 'M-Pesa validation body is severely malformed.' });
-  }
-
-  const callback = Body.stkCallback;
-  const { MerchantRequestID, CheckoutRequestID, ResultCode, ResultDesc } = callback;
-
-  // Search transaction matching callback checkpoint
-  const tx = db.transactions.find(t => t.purpose.includes(CheckoutRequestID) || t.phoneNumber.includes(callback.CallbackMetadata?.Item?.[4]?.Value));
-  if (!tx) {
-    console.warn(`[M-PESA WALKOVER]: Unmatched checkout request callback logged: ${CheckoutRequestID}`);
-    return res.status(404).json({ error: 'Transaction matching checkout token could not be found.' });
-  }
-
-  // Prevent duplicate callbacks / replay exploits
-  if (tx.status !== 'PENDING') {
-    console.warn(`[M-PESA REPLAY BLOCKED]: Attempted duplicate payment callback for tx: ${tx.id}`);
-    return res.status(400).json({ error: 'Transaction has already been finalized.' });
-  }
-
-  if (ResultCode === 0) {
-    console.log(`[M-PESA RESOLVE]: Transaction success callback. Decoded: ${ResultDesc}`);
-    tx.status = 'SUCCESS';
-    writeAuditLog('system', 'billing_success_callback', `tx:${tx.id}`, null, { checkoutId: CheckoutRequestID }, 'safaricom-daraja-ip');
-  } else {
-    console.warn(`[M-PESA REJECT]: Customer checkout failed or timed out. Code: ${ResultCode}`);
-    tx.status = 'FAILED';
-    writeAuditLog('system', 'billing_failed_callback', `tx:${tx.id}`, null, { resultCode: ResultCode, desc: ResultDesc }, 'safaricom-daraja-ip');
-  }
-
-  saveDatabase();
-  syncRefs();
-  res.json({ ResultCode: 0, ResultDesc: 'Callback successfully delivered and consolidated.' });
+  // Callback input is untrusted. Settlement uses an authenticated provider query.
+  return res.status(202).json({ ResultCode: 0, ResultDesc: 'Accepted. Payment status must be queried with the provider.' });
 });
 
 // Simulate webhook callbacks explicitly for dynamic trials
 app.post('/api/payments/simulate-callback', (req, res) => {
   // Prevent mock success overrides in strict production configs
-  if (process.env.NODE_ENV === 'production') {
+  if (process.env.NODE_ENV !== 'test') {
     return res.status(403).json({ error: 'Dynamic manual callback simulation is disabled in production environments.' });
   }
 
@@ -1320,6 +1115,19 @@ app.post('/api/payments/simulate-callback', (req, res) => {
 
 // 4. Land Leasing & Escrow Disbursements
 app.post('/api/land/leases', JWTAuthMiddleware, (req: AuthenticatedRequest, res) => {
+  if (process.env.NODE_ENV !== 'test') {
+    const payment = db.transactions.find((item: any) => item.id === req.body.paymentId && item.userId === req.user!.id && item.listingId === req.body.listingId && item.status === 'SUCCESS' && !item.used) as any;
+    if (!payment) return res.status(409).json({ error: 'A confirmed, unused payment for this listing is required.' });
+    const listing = db.listings.find(item => item.id === req.body.listingId);
+    if (!listing) return res.status(404).json({ error: 'Listing not found.' });
+    req.body.landownerId = listing.ownerId;
+    req.body.acreageLeased = payment.acreageLeased;
+    req.body.durationMonths = payment.durationMonths;
+    req.body.pricePerAcreKES = listing.priceKES;
+    req.body.farmerId = listing.ownerId;
+    payment.used = true;
+  }
+
   const { listingId, landownerId, farmerId, acreageLeased, pricePerAcreKES, durationMonths, startDate } = req.body;
 
   const resolvedFarmerId = req.user ? req.user.id : (farmerId || 'user_2');
@@ -1335,7 +1143,7 @@ app.post('/api/land/leases', JWTAuthMiddleware, (req: AuthenticatedRequest, res)
     startDate: startDate || new Date().toISOString().split('T')[0],
     status: 'SIGNED',
     mpesaEscrowStatus: 'ESCROWED', // Holds escrow status correctly
-    paymentsMade: Number(acreageLeased) * Number(pricePerAcreKES) * Number(durationMonths || 1)
+    paymentsMade: Math.round(Number(acreageLeased) * Number(pricePerAcreKES) * Number(durationMonths || 12) / 12)
   };
 
   db.agreements.push(newAgreement);
@@ -1351,6 +1159,7 @@ app.get('/api/land/leases', JWTAuthMiddleware, (req: AuthenticatedRequest, res) 
 });
 
 app.post('/api/land/leases/disburse', JWTAuthMiddleware, requireRole([UserRole.ADMIN]), (req: AuthenticatedRequest, res) => {
+  if (process.env.NODE_ENV !== 'test') return res.status(503).json({ error: 'Escrow payout processing is not configured. No funds have been disbursed.' });
   const { leaseId } = req.body;
   const item = db.agreements.find(a => a.id === leaseId);
   if (!item) {
@@ -1367,6 +1176,19 @@ app.post('/api/land/leases/disburse', JWTAuthMiddleware, requireRole([UserRole.A
 
 // 5. Shared Livestock Equity & Partnerships
 app.post('/api/livestock/partnerships', JWTAuthMiddleware, (req: AuthenticatedRequest, res) => {
+  if (process.env.NODE_ENV !== 'test') {
+    const payment = db.transactions.find((item: any) => item.id === req.body.paymentId && item.userId === req.user!.id && item.listingId === req.body.listingId && item.status === 'SUCCESS' && !item.used) as any;
+    if (!payment) return res.status(409).json({ error: 'A confirmed, unused payment for this listing is required.' });
+    const listing = db.listings.find(item => item.id === req.body.listingId);
+    if (!listing) return res.status(404).json({ error: 'Listing not found.' });
+    req.body.landownerId = listing.ownerId;
+    req.body.acreageLeased = payment.acreageLeased;
+    req.body.durationMonths = payment.durationMonths;
+    req.body.pricePerAcreKES = listing.priceKES;
+    req.body.farmerId = listing.ownerId;
+    payment.used = true;
+  }
+
   const { listingId, investorId, farmerId, animalTagId, animalType, breed, splitPercentInvestor } = req.body;
 
   const resolvedInvestorId = req.user ? req.user.id : (investorId || 'user_3');
@@ -1580,23 +1402,7 @@ app.get('/api/investor/farmers', JWTAuthMiddleware, investorOnly, (req, res) => 
   const sector = queryFilter(req.query.sector);
   if (query === null || county === null || sector === null) return res.status(400).json({ error: 'Search filters must be short text values.' });
 
-  const farmers = db.users.filter(user => user.role === UserRole.FARMER).filter(user => {
-    const listings = db.listings.filter(listing => listing.ownerId === user.id && listing.moderationStatus === 'APPROVED');
-    const searchable = `${user.name} ${user.county} ${(user.farmSpecialties || []).join(' ')} ${listings.map(listing => `${listing.title} ${listing.description}`).join(' ')}`.toLowerCase();
-    return (!query || searchable.includes(query.toLowerCase())) && (!county || user.county.toLowerCase() === county.toLowerCase()) && (!sector || searchable.includes(sector.toLowerCase()));
-  }).map(user => ({
-    id: user.id,
-    name: user.name,
-    county: user.county,
-    verified: user.verified,
-    createdAt: user.createdAt,
-    farmSpecialties: user.farmSpecialties || [],
-    seekingLandAcreage: user.seekingLandAcreage,
-    listings: db.listings.filter(listing => listing.ownerId === user.id && listing.moderationStatus === 'APPROVED').map(listing => {
-      const { ownerPhone, ...publicListing } = listing;
-      return publicListing;
-    })
-  }));
+  const farmers = findPublicFarmers(db, { query, county, sector });
   res.json(farmers);
 });
 
@@ -1780,9 +1586,15 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   });
 });
 
+app.use('/api', (_req, res) => res.status(404).json({ error: 'API endpoint not found.' }));
+app.use((error: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  const status = error.type === 'entity.too.large' ? 413 : error instanceof SyntaxError ? 400 : 500;
+  res.status(status).json({ error: status === 413 ? 'Request is too large.' : status === 400 ? 'Malformed JSON input.' : 'Unable to complete the request.' });
+});
+
 // Boot servers
 async function startServer() {
-  if (process.env.NODE_ENV !== 'production') {
+  if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
