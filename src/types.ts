@@ -45,7 +45,7 @@ export interface MpesaAccountLink {
   accountType: 'PERSONAL' | 'TILL' | 'PAYBILL';
   verified: boolean;
   linkedAt: string;
-  status: 'CONNECTED' | 'PENDING_VERIFICATION' | 'DISCONNECTED';
+  status: 'CONNECTED' | 'PENDING_VERIFICATION' | 'PENDING' | 'DISCONNECTED';
   darajaStatus: string;
 }
 
@@ -188,6 +188,7 @@ export interface VerificationRequest {
   userName: string;
   userRole: UserRole;
   documentType: 'ID_CARD' | 'TITLE_DEED' | 'LIVESTOCK_CERT' | 'CHIEF_LETTER_AND_ID' | 'KVB_LICENSE_AND_ID' | 'NATIONAL_ID' | 'DEGREE_CERTIFICATE' | 'PASSPORT_PHOTO';
+  documentIds?: string[];
   documentNumber: string;
   notes?: string;
   status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'MORE_INFO';
@@ -337,7 +338,7 @@ export interface UploadedFile {
   isPrivate: boolean;
   createdAt: string;
   farmId?: string;
-  documentType?: 'VACCINATION_REPORT' | 'FARM_PHOTO' | 'FEED_RECEIPT' | 'PAYMENT_RECEIPT' | 'EVENT_DOCUMENT' | 'VETERINARY_REPORT' | 'INVESTMENT_VERIFICATION' | 'OTHER';
+  documentType?: 'PASSPORT_PHOTO' | 'ID_FRONT' | 'ID_BACK' | 'CHIEF_LETTER' | 'KVB_LICENSE' | 'AGRICULTURAL_CERTIFICATE' | 'VACCINATION_REPORT' | 'FARM_PHOTO' | 'FEED_RECEIPT' | 'PAYMENT_RECEIPT' | 'EVENT_DOCUMENT' | 'VETERINARY_REPORT' | 'INVESTMENT_VERIFICATION' | 'OTHER';
   description?: string;
   relatedReportId?: string;
   relatedInvestmentBriefId?: string;
