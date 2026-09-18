@@ -11,6 +11,7 @@ export const sharedWorkspaceApi = {
   upload: (body: Record<string, unknown>) => api<{ file: UploadedFile }>('/api/uploads', { method: 'POST', body: JSON.stringify(body) }),
   wallet: () => api<WalletSummary>('/api/wallet/summary'),
   depositIntent: (amountKES: number, idempotencyKey: string, purpose?: string, phoneNumber?: string, autoSettle?: boolean) => api<{ transaction: LedgerTransaction; message?: string; mpesaReceipt?: string }>('/api/wallet/deposit', { method: 'POST', body: JSON.stringify({ amountKES, idempotencyKey, purpose, phoneNumber, autoSettle }) }),
+  refreshPayment: (id: string) => api(`/api/wallet/transactions/${encodeURIComponent(id)}/refresh`, { method: 'POST' }),
   payout: (amountKES: number, phoneNumber?: string, autoSettle?: boolean) => api<{ transaction: LedgerTransaction; message?: string; mpesaReceipt?: string }>('/api/wallet/payout', { method: 'POST', body: JSON.stringify({ amountKES, phoneNumber, autoSettle }) }),
   disputes: () => api<Dispute[]>('/api/disputes'),
   raiseDispute: (body: Record<string, unknown>) => api<{ dispute: Dispute }>('/api/disputes', { method: 'POST', body: JSON.stringify(body) }),
