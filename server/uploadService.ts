@@ -6,7 +6,7 @@ import { UserRole, UploadedFile } from '../src/types.js';
 import { AuthenticatedRequest } from './types.js';
 import { writeAuditLog } from './audit.js';
 
-const UPLOAD_DIR = path.join(process.cwd(), 'data', 'uploads');
+const UPLOAD_DIR = path.join(process.env.DATA_DIR || path.join(process.cwd(), 'data'), 'uploads');
 const ALLOWED_MIME_TYPES: Record<string, string> = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp', 'application/pdf': '.pdf' };
 const DOCUMENT_TYPES = new Set([
   'VACCINATION_REPORT', 'FARM_PHOTO', 'FEED_RECEIPT', 'PAYMENT_RECEIPT', 
@@ -18,7 +18,7 @@ const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
 const cleanText = (value: unknown, maximum: number) => typeof value === 'string' ? value.normalize('NFKC').replace(/[\u0000-\u001F\u007F<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, maximum) : '';
-function validSignature(buffer: Buffer, mimeType: string) {
+export function validSignature(buffer: Buffer, mimeType: string) {
   if (mimeType === 'image/jpeg') return buffer.length > 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
   if (mimeType === 'image/png') return buffer.length > 8 && buffer.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
   if (mimeType === 'image/webp') return buffer.length > 12 && buffer.subarray(0, 4).toString() === 'RIFF' && buffer.subarray(8, 12).toString() === 'WEBP';
