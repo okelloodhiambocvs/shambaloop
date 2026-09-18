@@ -1,3 +1,5 @@
+import { availableWalletBalance } from './walletBalance.js';
+import { darajaConfigured, normalizeMpesaPhone, initiateStk, queryStk } from './daraja.js';
 import express from 'express';
 import crypto from 'crypto';
 import { UserRole, LedgerTransaction, WalletSummary, MpesaAccountLink } from '../src/types.js';
@@ -52,9 +54,10 @@ export function registerWalletRoutes(
 
     for (const t of userTxns) {
       if (t.status === 'COMPLETED') {
+        if (t.type === 'PAYOUT') continue;
         if (user.role === UserRole.FARMER) {
           if (t.userId === user.id || t.payeeId === user.id) {
-            if (t.category === 'OPERATIONAL') {
+            if (t.category === 'OPERATIONAL' && t.type !== 'EXPENSE') {
               operationalFarmFundsKES += t.amountKES;
             } else if (t.category === 'PERSONAL_EARNINGS') {
               farmerEarningsKES += t.amountKES;
@@ -87,12 +90,12 @@ export function registerWalletRoutes(
           if (t.userId === user.id || t.payeeId === user.id) {
             earningsKES += t.amountKES;
             availableBalanceKES += t.amountKES;
-            if (t.type === 'RELEASE' || t.type === 'PAYOUT') {
+            if (t.type === 'RELEASE') {
               releasedKES += t.amountKES;
             }
           }
         }
-      } else if (t.status === 'PENDING') {
+      } else if (t.status === 'PENDING' && t.type !== 'PAYOUT') {
         pendingInKES += t.amountKES;
         if (user.role === UserRole.VETERINARIAN) {
           pendingJobPaymentsKES += t.amountKES;
@@ -105,7 +108,7 @@ export function registerWalletRoutes(
     const summary: WalletSummary = {
       userId: user.id,
       role: user.role,
-      availableBalanceKES: Math.max(0, availableBalanceKES),
+      availableBalanceKES: availableWalletBalance(user.id, user.role, db.ledgerTransactions),
       pendingInKES,
       approvedKES,
       releasedKES,
@@ -127,88 +130,34 @@ export function registerWalletRoutes(
   });
 
   // Creates a payment intent. Only a verified provider callback may credit a wallet.
-  app.post('/api/wallet/deposit', authMiddleware, (req: AuthenticatedRequest, res) => {
-    const user = req.user;
-    if (!user) return res.status(401).json({ error: 'Authentication required.' });
-
-    const { amountKES, phoneNumber, idempotencyKey, purpose } = req.body;
-    const amount = Number(amountKES);
-
-    if (!amount || isNaN(amount) || amount < 100 || amount > 10000000) {
-      return res.status(400).json({ error: 'Invalid deposit amount. Must be between KES 100 and KES 10,000,000.' });
-    }
-
+  app.post('/api/wallet/deposit', authMiddleware, async (req: AuthenticatedRequest, res) => {
+    const user = req.user!;
+    const amount = Number(req.body.amountKES);
+    const phone = normalizeMpesaPhone(req.body.phoneNumber || user.phone);
+    if (!Number.isSafeInteger(amount) || amount < 100 || amount > 250000 || !phone) return res.status(400).json({ error: 'Provide a valid M-Pesa number and whole KES amount between 100 and 250,000.' });
+    const db = getDb(); db.ledgerTransactions ||= [];
+    const key = typeof req.body.idempotencyKey === 'string' ? req.body.idempotencyKey.slice(0, 128) : crypto.randomUUID();
+    const existing = db.ledgerTransactions.find((t: any) => t.userId === user.id && t.idempotencyKey === key);
+    if (existing) return res.json({ success: true, transaction: existing });
+    try {
+      const result = await initiateStk(phone, amount, 'ShambaLoop');
+      const transaction = { id: crypto.randomUUID(), reference: result.CheckoutRequestID, userId: user.id, amountKES: amount, currency: 'KES', type: 'DEPOSIT', category: user.role === UserRole.INVESTOR ? 'INVESTMENT_CAPITAL' : 'PERSONAL_EARNINGS', status: 'PENDING', description: 'Awaiting M-Pesa confirmation', phoneNumber: phone, payerId: user.id, paymentProviderRef: result.CheckoutRequestID, idempotencyKey: key, timestamp: new Date().toISOString(), purpose: String(req.body.purpose || 'WALLET_DEPOSIT').slice(0, 100) };
+      db.ledgerTransactions.push(transaction); saveDb();
+      return res.status(201).json({ success: true, transaction, message: 'Approve the payment on your phone, then refresh its status.' });
+    } catch (error) { return res.status(503).json({ error: (error as Error).message }); }
+  });
+  app.post('/api/wallet/transactions/:id/refresh', authMiddleware, async (req: AuthenticatedRequest, res) => {
     const db = getDb();
-    db.ledgerTransactions ||= [];
-
-    // Idempotency check: prevent duplicate transactions
-    if (idempotencyKey) {
-      const existing = db.ledgerTransactions.find((t: LedgerTransaction) => t.idempotencyKey === idempotencyKey);
-      if (existing) {
-        return res.json({
-          success: true,
-          message: 'Deposit already processed (idempotent replay).',
-          transaction: existing
-        });
-      }
-    }
-
-    const ref = `DEP_${Date.now()}_${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
-    const purposeLabel = purpose || 'Operational Farm Funds';
-    const mpesaReceipt = `NL${Math.floor(1000 + Math.random() * 9000)}K78`;
-    const isCompleted = req.body.autoSettle !== false;
-
-    const txn: LedgerTransaction = {
-      id: `txn_${Date.now()}`,
-      reference: ref,
-      userId: user.id,
-      amountKES: amount,
-      currency: 'KES',
-      type: 'DEPOSIT',
-      category: user.role === UserRole.INVESTOR ? 'INVESTMENT_CAPITAL' : 'PERSONAL_EARNINGS',
-      status: isCompleted ? 'COMPLETED' : 'PENDING',
-      description: `M-Pesa STK Push: ${purposeLabel} (${mpesaReceipt}) from ${phoneNumber || user.phone}`,
-      payerId: user.id,
-      payerName: user.name,
-      paymentProviderRef: mpesaReceipt,
-      idempotencyKey: idempotencyKey || ref,
-      timestamp: new Date().toISOString()
-    };
-    (txn as any).purpose = purposeLabel;
-
-    db.ledgerTransactions.push(txn);
-
-    // Also record into db.transactions for Safaricom Daraja ledger consistency
-    db.transactions ||= [];
-    db.transactions.push({
-      id: `tx_${Date.now()}`,
-      transactionId: mpesaReceipt,
-      phoneNumber: phoneNumber || user.phone,
-      amountKES: amount,
-      purpose: purposeLabel,
-      status: isCompleted ? 'SUCCESS' : 'PENDING',
-      timestamp: new Date().toISOString()
-    });
-
-    saveDb();
-
-    writeAuditLog(
-      user.id,
-      'wallet_deposit',
-      `transaction:${txn.id}`,
-      null,
-      { amountKES: amount, ref, mpesaReceipt },
-      req.ip || '127.0.0.1'
-    );
-
-    res.status(201).json({
-      success: true,
-      message: isCompleted 
-        ? `M-Pesa deposit of KES ${amount.toLocaleString()} received successfully (Receipt: ${mpesaReceipt}).` 
-        : `Payment intent for KES ${amount.toLocaleString()} created. Awaiting STK confirmation.`,
-      transaction: txn,
-      mpesaReceipt
-    });
+    const transaction = (db.ledgerTransactions || []).find((t: any) => t.id === req.params.id && t.userId === req.user!.id && t.type === 'DEPOSIT');
+    if (!transaction) return res.status(404).json({ error: 'Payment not found.' });
+    if (transaction.status !== 'PENDING') return res.json({ transaction });
+    try {
+      const result = await queryStk(transaction.paymentProviderRef);
+      if (String(result.ResultCode) === '0') transaction.status = 'COMPLETED';
+      else if (result.ResultCode !== undefined) transaction.status = 'FAILED';
+      if (transaction.status === 'COMPLETED') { const user = db.users.find((u: any) => u.id === req.user!.id); if (user?.mpesaLink && normalizeMpesaPhone(user.mpesaLink.phoneNumber) === transaction.phoneNumber) { user.mpesaLink.status = 'CONNECTED'; user.mpesaLink.verified = true; user.mpesaLink.darajaStatus = 'Payment confirmed by Daraja'; } }
+      saveDb(); res.json({ transaction });
+    } catch (error) { res.status(503).json({ error: (error as Error).message }); }
   });
 
   // Milestone release: Controlled release of investment funds to operational farm funds
@@ -219,7 +168,7 @@ export function registerWalletRoutes(
     const { milestoneId, farmId, farmerId, amountKES, idempotencyKey, note } = req.body;
     const amount = Number(amountKES);
 
-    if (!farmerId || !amount || amount <= 0) {
+    if (!farmerId || !Number.isSafeInteger(amount) || amount <= 0) {
       return res.status(400).json({ error: 'Valid farmerId and amountKES are required.' });
     }
 
@@ -253,7 +202,7 @@ export function registerWalletRoutes(
     }
     const confirmedCapital = db.ledgerTransactions.filter((t: LedgerTransaction) => t.userId === user.id && t.status === 'COMPLETED' && (t.type === 'DEPOSIT' || t.type === 'RETURN')).reduce((sum: number, t: LedgerTransaction) => sum + t.amountKES, 0);
     const previouslyReleased = db.ledgerTransactions.filter((t: LedgerTransaction) => t.payerId === user.id && t.status === 'COMPLETED' && t.type === 'RELEASE').reduce((sum: number, t: LedgerTransaction) => sum + t.amountKES, 0);
-    if (user.role === UserRole.INVESTOR && amount > confirmedCapital - previouslyReleased) return res.status(409).json({ error: 'Insufficient confirmed wallet funds for this release.' });
+    if (user.role === UserRole.INVESTOR && amount > availableWalletBalance(user.id, user.role, db.ledgerTransactions)) return res.status(409).json({ error: 'Insufficient confirmed wallet funds for this release.' });
 
     const ref = `REL_${Date.now()}_${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
     const txn: LedgerTransaction = {
@@ -303,56 +252,23 @@ export function registerWalletRoutes(
     const { amountKES, phoneNumber } = req.body;
     const amount = Number(amountKES);
 
-    if (!amount || amount < 50) {
+    if (!Number.isSafeInteger(amount) || amount < 50) {
       return res.status(400).json({ error: 'Minimum payout is KES 50.' });
     }
 
     const db = getDb();
     db.ledgerTransactions ||= [];
 
-    // Calculate available balance by role
-    let availableBalance = 0;
-    if (user.role === UserRole.FARMER) {
-      const earned = db.ledgerTransactions
-        .filter((t: LedgerTransaction) => (t.userId === user.id || t.payeeId === user.id) && t.status === 'COMPLETED' && (t.category === 'PERSONAL_EARNINGS' || t.type === 'RELEASE'))
-        .reduce((sum: number, t: LedgerTransaction) => sum + t.amountKES, 0);
-      const paidOut = db.ledgerTransactions
-        .filter((t: LedgerTransaction) => t.userId === user.id && t.status !== 'FAILED' && t.type === 'PAYOUT')
-        .reduce((sum: number, t: LedgerTransaction) => sum + t.amountKES, 0);
-      availableBalance = Math.max(0, earned - paidOut);
-    } else if (user.role === UserRole.INVESTOR) {
-      const capitalIn = db.ledgerTransactions
-        .filter((t: LedgerTransaction) => t.userId === user.id && t.status === 'COMPLETED' && (t.type === 'DEPOSIT' || t.type === 'RETURN'))
-        .reduce((sum: number, t: LedgerTransaction) => sum + t.amountKES, 0);
-      const capitalOut = db.ledgerTransactions
-        .filter((t: LedgerTransaction) => (t.userId === user.id || t.payerId === user.id) && t.status === 'COMPLETED' && (t.type === 'ALLOCATION' || t.type === 'RELEASE' || t.type === 'PAYOUT'))
-        .reduce((sum: number, t: LedgerTransaction) => sum + t.amountKES, 0);
-      availableBalance = Math.max(0, capitalIn - capitalOut);
-    } else if (user.role === UserRole.VETERINARIAN) {
-      const earned = db.ledgerTransactions
-        .filter((t: LedgerTransaction) => (t.userId === user.id || t.payeeId === user.id) && t.status === 'COMPLETED' && (t.type === 'RELEASE' || t.type === 'PAYOUT' || t.category === 'PERSONAL_EARNINGS'))
-        .reduce((sum: number, t: LedgerTransaction) => sum + t.amountKES, 0);
-      const paidOut = db.ledgerTransactions
-        .filter((t: LedgerTransaction) => t.userId === user.id && t.status !== 'FAILED' && t.type === 'PAYOUT')
-        .reduce((sum: number, t: LedgerTransaction) => sum + t.amountKES, 0);
-      availableBalance = Math.max(0, earned - paidOut);
-    } else {
-      const cred = db.ledgerTransactions
-        .filter((t: LedgerTransaction) => (t.userId === user.id || t.payeeId === user.id) && t.status === 'COMPLETED' && t.type !== 'PAYOUT')
-        .reduce((sum: number, t: LedgerTransaction) => sum + t.amountKES, 0);
-      const deb = db.ledgerTransactions
-        .filter((t: LedgerTransaction) => t.userId === user.id && t.status !== 'FAILED' && t.type === 'PAYOUT')
-        .reduce((sum: number, t: LedgerTransaction) => sum + t.amountKES, 0);
-      availableBalance = Math.max(0, cred - deb);
-    }
+    const availableBalance = availableWalletBalance(user.id, user.role, db.ledgerTransactions);
 
     if (amount > availableBalance) {
       return res.status(409).json({ error: `Requested withdrawal of KES ${amount.toLocaleString()} exceeds your available wallet balance of KES ${availableBalance.toLocaleString()}.` });
     }
 
+    if (!normalizeMpesaPhone(phoneNumber || user.phone)) return res.status(400).json({ error: 'Enter a valid M-Pesa number.' });
     const ref = `WD_${Date.now()}_${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
-    const mpesaReceipt = `B2C_${Math.floor(1000 + Math.random() * 9000)}_KE`;
-    const isCompleted = req.body.autoSettle !== false;
+    const mpesaReceipt = ref;
+    const isCompleted = false;
 
     const txn: LedgerTransaction = {
       id: `txn_${Date.now()}`,
@@ -455,6 +371,8 @@ export function registerWalletRoutes(
       return res.status(400).json({ error: 'Account holder full name (as registered on M-Pesa) is required.' });
     }
 
+    if (!normalizeMpesaPhone(phoneNumber)) return res.status(400).json({ error: 'Enter a valid Kenyan mobile number.' });
+    if (accountType && accountType !== 'PERSONAL') return res.status(400).json({ error: 'Only personal M-Pesa mobile accounts are supported.' });
     const formattedDisplay = `+254 ${normalized.slice(3, 6)} ${normalized.slice(6, 9)} ${normalized.slice(9)}`;
 
     const db = getDb();
@@ -469,10 +387,10 @@ export function registerWalletRoutes(
       accountHolderName: accountHolderName.trim(),
       idNumber: typeof idNumber === 'string' ? idNumber.trim() : undefined,
       accountType: accountType === 'TILL' || accountType === 'PAYBILL' ? accountType : 'PERSONAL',
-      verified: true,
+      verified: false,
       linkedAt: new Date().toISOString(),
-      status: 'CONNECTED',
-      darajaStatus: 'Safaricom Daraja Production Active • Paybill 4128901'
+      status: 'PENDING',
+      darajaStatus: darajaConfigured() ? 'Number saved; awaiting payment confirmation' : 'Provider not configured'
     };
 
     userInDb.mpesaLink = mpesaLink;
@@ -489,7 +407,7 @@ export function registerWalletRoutes(
 
     res.json({
       success: true,
-      message: `M-Pesa line ${formattedDisplay} successfully linked to your cooperative wallet via Safaricom Daraja.`,
+      message: `M-Pesa line ${formattedDisplay} saved. Confirm a payment on your phone to verify the number.`,
       mpesaLink
     });
   });
