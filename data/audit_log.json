@@ -1,3 +1,0 @@
-{"timestamp":"2026-09-18T11:36:09.866Z","actor":"user_1789731369688","action":"register_account","resource":"user:user_1789731369688","previous_value":null,"new_value":{"name":"Brayan Odhiambo","phone":"0786692381","role":"investor"},"ip_address":"127.0.0.1"}
-{"timestamp":"2026-09-18T11:40:18.301Z","actor":"user_1789731369688","action":"login_success","resource":"user:user_1789731369688","previous_value":null,"new_value":{"phone":"0786692381"},"ip_address":"127.0.0.1"}
-{"timestamp":"2026-09-18T11:49:58.214Z","actor":"user_1789731369688","action":"login_success","resource":"user:user_1789731369688","previous_value":null,"new_value":{"phone":"0786692381"},"ip_address":"127.0.0.1"}

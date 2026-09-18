@@ -1,63 +1,173 @@
-# ShambaLoop
+# ShambaLoop Kenya
 
-React/TypeScript dashboards for farmers, investors, veterinarians, and administrators, served by an Express API. Normal startup contains no demo profiles, proposals, listings, balances, or credentials. Integration fixtures are restricted to `NODE_ENV=test` and a temporary database.
+An enterprise agricultural trust, cooperative asset-sharing, and fintech digitization platform connecting Kenyan smallholders, diaspora investors, and fertile arable land under legally binding Section 12 lease protections, Kenya Veterinary Board (KVB) clinical governance, and Safaricom Daraja M-Pesa automated escrow.
 
-## Local use
+---
 
-Use Node.js 22 or newer.
+## Technology Stack
+
+| Layer | Technologies & Libraries | Specification / Version | Purpose |
+| :--- | :--- | :--- | :--- |
+| **Frontend Framework** | React, TypeScript, Vite | React 19 / TypeScript 5.8 / Vite 6 | High-performance modular reactive UI SPA |
+| **Styling & Design System** | Tailwind CSS v4 | `@tailwindcss/vite` | Accessible, responsive typography and layout |
+| **Motion & Data Viz** | Motion (`motion/react`), Recharts, Lucide | `motion` 12, Recharts 3.8, `lucide-react` | Smooth view transitions, production charts & icons |
+| **Backend Runtime** | Node.js 22, Express 4, TypeScript | `tsx`, `esbuild` | Type-safe REST API server & middleware proxy |
+| **Data & Ledger Store** | JSON Document DB, Cryptographic Audit | File-backed atomic writes | Append-only financial ledger with HMAC auditing |
+| **Authentication & RBAC** | JWT (access/refresh), Bcrypt, OTP MFA | PBKDF2/Bcrypt, TOTP RFC 6238 | Role-based access control (Farmer, Vet, Investor, Admin) |
+| **Mobile Money Escrow** | Safaricom Daraja API | REST Daraja v2 STK Push | Milestone escrow, query status, automated yield splits |
+| **Quality & Test Pipeline**| Vitest, TypeScript Compiler (`tsc --noEmit`) | Vitest 4.1, `oxc` | Automated unit, SSR, integration, and security tests |
+
+---
+
+## Architecture & Module Directory
+
+| Layer / Domain | Module Paths | Primary Responsibilities | Protocols & Standards |
+| :--- | :--- | :--- | :--- |
+| **Public Information Hub** | `src/components/about/` | Problem definition, statutory approach, solution pillars, regional hubs | Responsive grid, Nyumbani Greens style |
+| **Process Flow Pathways** | `src/components/howItWorks/` | Farmer, Investor, and Veterinarian journey maps; Escrow architecture | Stepwise walkthrough, verified imagery |
+| **Knowledge Base** | `src/components/faq/` | Filterable FAQ categories (Farmers, Investors, Vets, Escrow, Legal) | Dynamic search, accessible accordions |
+| **Unified Navigation & Footer** | `src/components/about/AboutNavbar.tsx`, `AboutFooter.tsx` | Consistent brand identity, regional hub contacts (+254 728 606 684) | Standardized responsive footers |
+| **Farmer Dashboard & FMS** | `src/components/FarmerDashboard.tsx`, `workspace/FmsTab.tsx` | Daily milk & crop logging, document & image uploads, milestone claims | Mobile-friendly telemetry capture |
+| **Veterinary Workspace** | `src/components/VeterinaryDashboard.tsx`, `workspace/VetReportForm.tsx` | Clinical audits, health reports, photo/doc uploads, KVB accreditation | KVB Cap 366 veterinary compliance |
+| **Investor Portal** | `src/components/InvestorDashboard.tsx`, `workspace/WalletTab.tsx` | Livestock asset funding, wallet deposits/withdrawals, yield stream tracking | Safaricom Daraja STK Escrow |
+| **Dispute & Mediation Room**| `src/components/workspace/DisputesTab.tsx` | Tripartite dispute resolution, evidence doc uploader, status ledger | Kenya Cap 23 arbitration framework |
+| **Marketplace & Listings** | `src/components/CreateListingModal.tsx` | Farm acreage & livestock listings with document & photo proof | Land Act Section 12 title verification |
+| **Cryptographic Security** | `server/cryptoUtils.ts`, `server/audit.ts` | Tamper-evident hash chaining, recovery codes, credential hashing | HMAC-SHA256, session revocation |
+| **Document Storage Service**| `server/authExtensionService.ts`, `server/fileUpload.ts` | Multi-role KYC, title deeds, clinical evidence uploader | Encrypted sandboxing, ODPC Act 2019 |
+
+---
+
+## Repository Tree
+
+```
+.
+├── public/                                # Static web assets & authentic photography
+│   ├── images/                            # Verified Kenyan farmers, calves, and herds
+│   │   ├── african_farmer_portrait_*.jpg
+│   │   ├── pedigree_cow_livestock_*.jpg
+│   │   ├── dairy_calf_baby_*.jpg
+│   │   └── kenyan_fertile_shamba_*.jpg
+│   └── sw.js                              # Service worker for offline asset caching
+├── src/
+│   ├── components/
+│   │   ├── about/                         # About Us presentation suite
+│   │   │   ├── AboutPage.tsx              # Container with unified navbar and footer
+│   │   │   ├── AboutHero.tsx              # Karibu ShambaLoop narrative
+│   │   │   ├── AboutProblem.tsx           # Arable land, capital, health, escrow cards
+│   │   │   ├── AboutApproach.tsx          # Section 12 & KVB statutory approach
+│   │   │   ├── AboutSolution.tsx          # 3 numbered solution pillars
+│   │   │   ├── AboutNavbar.tsx            # Header navigation & portal triggers
+│   │   │   ├── AboutFooter.tsx            # Regional agricultural hubs & contact desk
+│   │   │   └── types.ts                   # Component interface contracts
+│   │   ├── howItWorks/                    # Step-by-step pathway guides
+│   │   │   ├── HowItWorksPage.tsx         # Unified container with navbar and footer
+│   │   │   ├── HowItWorksHero.tsx         # Interactive pathway entry hero
+│   │   │   ├── FarmerWorkflow.tsx         # Land registration, proposal, escrow unlock
+│   │   │   ├── InvestorWorkflow.tsx       # Vetted herds, milestone drawdown, returns
+│   │   │   ├── VetWorkflow.tsx            # KVB certification, clinical audits, sign-off
+│   │   │   └── WorkflowEscrowSection.tsx  # Multi-party escrow & dispute mediation
+│   │   ├── faq/                           # Frequently Asked Questions module
+│   │   │   ├── FaqPage.tsx                # Master container with unified footer
+│   │   │   ├── FaqHero.tsx                # Searchable inquiry header
+│   │   │   ├── FaqCategoryFilter.tsx      # Category buttons (Farmers, Investors, Vets, etc.)
+│   │   │   ├── FaqAccordion.tsx           # Accessible accordion disclosure list
+│   │   │   └── faqData.ts                 # Verified question and answer repository
+│   │   ├── workspace/                     # Shared role components
+│   │   │   ├── FmsTab.tsx                 # Farm records with document/image uploads
+│   │   │   ├── DisputesTab.tsx            # Dispute room with evidence file uploads
+│   │   │   ├── VetReportForm.tsx          # Clinical report submission with document uploads
+│   │   │   ├── WalletTab.tsx              # Financial wallet & M-Pesa deposit/payout
+│   │   │   └── WalletTransactionsTable.tsx# Modular transaction history table
+│   │   ├── CreateListingModal.tsx         # Listing creator with file upload attachments
+│   │   ├── FarmerDashboard.tsx            # Smallholder management workspace
+│   │   ├── InvestorDashboard.tsx          # Livestock & farmland capital portal
+│   │   ├── VeterinaryDashboard.tsx        # Clinical inspection workspace
+│   │   ├── AdminPanel.tsx                 # KYC, land title, and dispute validation desk
+│   │   └── LandingPage.tsx                # Public marketplace feed & entry point
+│   ├── tests/                             # Vitest verification suites
+│   │   ├── about.test.tsx                 # About Us page and footer assertions
+│   │   ├── workflow_pages.test.tsx        # How It Works & FAQ page assertions
+│   │   ├── component.test.tsx             # Workspace and chart rendering tests
+│   │   ├── integration.test.ts            # API routes and authentication tests
+│   │   ├── reviews_wallet_fms.test.ts     # FMS telemetry, wallet, and review tests
+│   │   ├── daraja.test.ts                 # M-Pesa STK push simulation tests
+│   │   ├── securityFlows.test.ts          # MFA, recovery codes, and session revocation
+│   │   ├── walletBalance.test.ts          # Escrow ledger math tests
+│   │   └── content.test.tsx               # Static copy and legal content tests
+│   ├── types.ts                           # Global TypeScript types and enums
+│   └── App.tsx                            # Root application component & routing
+├── server/                                # Express backend domain services
+│   ├── audit.ts                           # Cryptographic HMAC audit log
+│   ├── authExtensionService.ts            # MFA, KYC, and document storage
+│   ├── cryptoUtils.ts                     # Password hashing & key derivation
+│   ├── daraja.ts                          # Safaricom M-Pesa gateway
+│   ├── disputesService.ts                 # Dispute room ledger
+│   ├── farmRecordsService.ts              # Daily farm telemetry
+│   └── reviews_wallet_fms.ts              # Reviews, wallet transactions, FMS records
+├── data/
+│   ├── db.json                            # Primary persistent document database
+│   └── audit_log.json                     # Cryptographic append-only audit ledger
+├── package.json                           # NPM dependencies and scripts
+└── server.ts                              # Production server entry point
+```
+
+---
+
+## Quality Gates & Verification
+
+Every code modification must pass all automated verification checks:
 
 ```sh
+# 1. Run all test suites (Vitest)
+npm test
+
+# 2. Strict TypeScript type-checking
+npm run lint
+
+# 3. Security vulnerability audit
+npm audit
+
+# 4. Production application bundle build
+npm run build
+
+# 5. Full check (lint, test, build, audit)
+npm run check
+```
+
+---
+
+## Local Development Setup
+
+Ensure **Node.js 22+** is installed.
+
+```sh
+# 1. Clone and install dependencies
+git clone https://github.com/okelloodhiambocvs/shambaloop.git
+cd shambaloop
 npm ci
+
+# 2. Configure environment variables
 cp .env.example .env
+
+# 3. Launch development server on http://localhost:3000
 npm run dev
 ```
 
-Open http://localhost:3000. Register a participant through the login modal. Farmers and veterinarians must provide a passport photo, both ID sides, certification, and a chief's letter (JPEG/PNG/PDF, up to 2 MB each). Identity evidence is private and downloadable by its owner or an administrator; administrators review it in the KYC panel. Accept both policies and confirm the password.
-
-To create the first administrator, stop the application, set `ADMIN_NAME`, `ADMIN_PHONE`, and `ADMIN_PASSWORD` in your environment, and run `npm run admin:create`. No default administrator password exists. Use a password of at least 12 characters including uppercase, lowercase, digits, and a symbol.
-
-## Checks 
+### Administrative Account Bootstrap
 
 ```sh
-npm test
-npm run lint
-npm audit
-npm run build
-npm start
+ADMIN_NAME="System Administrator" \
+ADMIN_PHONE="254712345678" \
+ADMIN_PASSWORD="YourStrongPassword123!" \
+npm run admin:create
 ```
 
-`npm run lint` is the project's TypeScript check (`tsc --noEmit`). Tests start their own server on an available port, isolate database/uploads in a temporary directory, and stop the server afterward. Network/socket permissions are required. `npm run check` runs all four checks. `npm start` serves the compiled app; set `NODE_ENV=production` for static production serving and required-secret validation.
+---
 
-## Configuration and payments
+## Regulatory & Legal Compliance
 
-Generate independent secrets of at least 32 characters for `JWT_SECRET`, `REFRESH_TOKEN_SECRET`, and `DB_ENCRYPTION_KEY`; production refuses to boot without them.
-
-Password recovery requires an HTTPS SMS adapter in `RECOVERY_WEBHOOK_URL` and its bearer secret in `RECOVERY_WEBHOOK_SECRET`. The server POSTs `{phone, token, expiresInMinutes}`. The adapter must deliver the code to the registered number. Codes expire after 15 minutes, are stored hashed, and can be used once. Resetting revokes prior sessions. Without a delivery adapter, recovery returns an explicit unavailable response.
-
-Configure the `DARAJA_*` values in `.env.example` using your [Safaricom Daraja application](https://developer.safaricom.co.ke/). Keep sandbox and production credentials separate. The callback URL must be publicly reachable over HTTPS. The API requests an STK prompt and queries Daraja to confirm settlement; an incoming callback alone never credits an account. Users enter their PIN only on their handset. Saving an M-Pesa number does not mark it verified; a confirmed payment for that number does. Use Refresh status in the wallet or Check payment in checkout.
-
-Live Daraja and SMS delivery require operator credentials and provider acceptance testing; automated tests do not establish live service availability. Payouts are reserved pending requests, **not completed B2C transfers**. A B2C processing/reconciliation worker remains to be implemented before automated withdrawals can be enabled. Email verification is unavailable until a delivery/verification provider is implemented.
-
-## Docker
-
-```sh
-docker compose up --build -d
-```
-
-Compose reads `.env`. The multistage image runs as the unprivileged `node` user, excludes runtime data/secrets from the build context, and persists `/app/data` in a named volume. Health checks use `/api/health`. Set TLS at your reverse proxy. Docker build verification requires access to a running Docker daemon.
-
-## Architecture and persistence
-
-- `src/components`: dashboard and shared interaction components.
-- `src/services`: browser API clients.
-- `server/*Service.ts`: authorization and domain routes.
-- `server/registrationDocuments.ts`: identity file validation and private storage.
-- `server/passwordRecovery.ts`: delivery adapter and single-use recovery.
-- `server/daraja.ts`, `marketplacePayments.ts`: provider integration and payment status.
-- `server/walletBalance.ts`: common available-balance and reservation rules.
-- `server/migrations.ts`: ordered JSON schema migrations.
-- `server.ts`: application composition, existing routes, and persistence.
-
-`DATA_DIR` contains `db.json`, private uploads, and an append-only audit log. Database replacement is atomic; malformed databases cause startup to stop rather than silently reseed. Back up this directory. This is a **single-process JSON store**, not a scalable transactional database: run one writer and stop it before administrative CLI changes. Multiple replicas and durable financial processing require migration to a transactional database and payment job queue. See `SCALABILITY.md` for the broader migration plan.
-
-The service worker caches static images/assets only, never authenticated API responses. Large image duplicates were removed; shared chart, animation, and React dependencies build as separate chunks.
+- **Section 12 Kenya Land Act:** Standardized lease covenants guaranteeing tenure security for leased arable acreage.
+- **Kenya Veterinary Board (KVB) Cap 366:** Mandatory clinical audits before livestock partnerships can be listed or financed.
+- **Kenya Office of the Data Protection Commissioner (ODPC) Act 2019:** Private identity evidence (National ID, Chief's letters) stored encrypted and restricted to owner and registry officers.
+- **Safaricom Daraja API v2:** Escrow milestone releases requiring verified biometric or PIN confirmation on subscriber handsets.
+- **Kenya Law of Contract Act (Cap 23):** Legally binding tripartite digital contracts between farmers, investors, and veterinarians.

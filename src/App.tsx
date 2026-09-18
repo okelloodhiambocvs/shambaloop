@@ -27,6 +27,9 @@ import { FAQModalContent } from './content/faqContent';
 import { TermsModalContent } from './content/termsContent';
 import { PrivacyModalContent } from './content/privacyContent';
 import { CookieModalContent } from './content/cookieContent';
+import AboutPage from './components/about/AboutPage';
+import { HowItWorksPage } from './components/howItWorks/HowItWorksPage';
+import { FaqPage } from './components/faq/FaqPage';
 
 const CustomProductionTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
@@ -634,10 +637,51 @@ export default function App() {
   const [activeFooterDoc, setActiveFooterDoc] = useState<{ title: string; content: React.ReactNode } | null>(null);
   const [footerDocLoading, setFooterDocLoading] = useState(false);
 
+  const [currentView, setCurrentView] = useState<'marketplace' | 'about' | 'how-it-works' | 'faq'>(() => {
+    if (typeof window !== 'undefined') {
+      if (window.location.hash === '#about') return 'about';
+      if (window.location.hash === '#how-it-works') return 'how-it-works';
+      if (window.location.hash === '#faq') return 'faq';
+    }
+    return 'marketplace';
+  });
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      if (window.location.hash === '#about') {
+        setCurrentView('about');
+      } else if (window.location.hash === '#how-it-works') {
+        setCurrentView('how-it-works');
+      } else if (window.location.hash === '#faq') {
+        setCurrentView('faq');
+      } else {
+        setCurrentView('marketplace');
+      }
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
   const openFooterDoc = (title: string) => {
+    const norm = title.toLowerCase().trim();
+    if (norm === 'about us') {
+      setCurrentView('about');
+      window.location.hash = '#about';
+      return;
+    }
+    if (norm === 'how it works' || norm === 'how shambaloop works') {
+      setCurrentView('how-it-works');
+      window.location.hash = '#how-it-works';
+      return;
+    }
+    if (norm === 'faq' || norm === 'frequently asked questions' || norm === 'frequently asked questions (faq)' || norm === 'platform faqs') {
+      setCurrentView('faq');
+      window.location.hash = '#faq';
+      return;
+    }
     setFooterDocLoading(true);
     let content: React.ReactNode = null;
-    switch (title.toLowerCase().trim()) {
+    switch (norm) {
       case 'how it works':
       case 'how shambaloop works':
         content = <HowItWorksModalContent />;
@@ -1595,12 +1639,222 @@ export default function App() {
     ? veterinaryReports
     : veterinaryReports.filter(report => report.farmerId === currentUser?.id || report.investorId === currentUser?.id || report.veterinarianId === currentUser?.id);
 
+  if (currentView === 'about') {
+    return (
+      <>
+        <AboutPage
+          onBack={() => {
+            setCurrentView('marketplace');
+            window.history.replaceState(null, '', window.location.pathname);
+          }}
+          onLoginClick={(role) => openLoginModal(role)}
+          onOpenDoc={(title) => openFooterDoc(title)}
+          onNavigateHowItWorks={() => {
+            setCurrentView('how-it-works');
+            window.location.hash = '#how-it-works';
+          }}
+          onNavigateFaq={() => {
+            setCurrentView('faq');
+            window.location.hash = '#faq';
+          }}
+          isDarkMode={isDarkMode}
+          toggleTheme={toggleTheme}
+        />
+
+        {isLoginModalOpen && (
+          <LoginModal
+            isOpen={isLoginModalOpen}
+            onClose={() => setIsLoginModalOpen(false)}
+            targetRole={loginTargetRole}
+            usersList={usersList}
+            onDemoLogin={handleDemoLogin}
+            onCustomLogin={handleModalCustomLogin}
+            onCustomRegister={handleModalCustomRegister}
+            isDarkMode={isDarkMode}
+          />
+        )}
+
+        {activeFooterDoc && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs" id="landing_doc_modal_backdrop">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-xl w-full p-6 shadow-2xl relative max-h-[85vh] overflow-y-auto" id="landing_doc_modal_content">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 mb-4">
+                <h3 className="text-base font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                  {activeFooterDoc.title}
+                </h3>
+                <button
+                  onClick={() => setActiveFooterDoc(null)}
+                  className="p-1 px-2.5 rounded-lg text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer"
+                  id="landing_doc_modal_close_btn"
+                >
+                  Close
+                </button>
+              </div>
+              <div>
+                {footerDocLoading ? (
+                  <div className="py-12 flex flex-col items-center justify-center space-y-3">
+                    <BrandedLoader size="md" message="Loading cooperative document..." />
+                  </div>
+                ) : (
+                  activeFooterDoc.content
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </>
+    );
+  }
+
+  if (currentView === 'how-it-works') {
+    return (
+      <>
+        <HowItWorksPage
+          onBack={() => {
+            setCurrentView('marketplace');
+            window.history.replaceState(null, '', window.location.pathname);
+          }}
+          onLoginClick={(role) => openLoginModal(role)}
+          onOpenDoc={(title) => openFooterDoc(title)}
+          onNavigateAbout={() => {
+            setCurrentView('about');
+            window.location.hash = '#about';
+          }}
+          onNavigateFaq={() => {
+            setCurrentView('faq');
+            window.location.hash = '#faq';
+          }}
+          isDarkMode={isDarkMode}
+          toggleTheme={toggleTheme}
+        />
+
+        {isLoginModalOpen && (
+          <LoginModal
+            isOpen={isLoginModalOpen}
+            onClose={() => setIsLoginModalOpen(false)}
+            targetRole={loginTargetRole}
+            usersList={usersList}
+            onDemoLogin={handleDemoLogin}
+            onCustomLogin={handleModalCustomLogin}
+            onCustomRegister={handleModalCustomRegister}
+            isDarkMode={isDarkMode}
+          />
+        )}
+
+        {activeFooterDoc && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs" id="landing_doc_modal_backdrop">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-xl w-full p-6 shadow-2xl relative max-h-[85vh] overflow-y-auto" id="landing_doc_modal_content">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 mb-4">
+                <h3 className="text-base font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                  {activeFooterDoc.title}
+                </h3>
+                <button
+                  onClick={() => setActiveFooterDoc(null)}
+                  className="p-1 px-2.5 rounded-lg text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer"
+                  id="landing_doc_modal_close_btn"
+                >
+                  Close
+                </button>
+              </div>
+              <div>
+                {footerDocLoading ? (
+                  <div className="py-12 flex flex-col items-center justify-center space-y-3">
+                    <BrandedLoader size="md" message="Loading cooperative document..." />
+                  </div>
+                ) : (
+                  activeFooterDoc.content
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </>
+    );
+  }
+
+  if (currentView === 'faq') {
+    return (
+      <>
+        <FaqPage
+          onBack={() => {
+            setCurrentView('marketplace');
+            window.history.replaceState(null, '', window.location.pathname);
+          }}
+          onLoginClick={(role) => openLoginModal(role)}
+          onOpenDoc={(title) => openFooterDoc(title)}
+          onNavigateAbout={() => {
+            setCurrentView('about');
+            window.location.hash = '#about';
+          }}
+          onNavigateHowItWorks={() => {
+            setCurrentView('how-it-works');
+            window.location.hash = '#how-it-works';
+          }}
+          isDarkMode={isDarkMode}
+          toggleTheme={toggleTheme}
+        />
+
+        {isLoginModalOpen && (
+          <LoginModal
+            isOpen={isLoginModalOpen}
+            onClose={() => setIsLoginModalOpen(false)}
+            targetRole={loginTargetRole}
+            usersList={usersList}
+            onDemoLogin={handleDemoLogin}
+            onCustomLogin={handleModalCustomLogin}
+            onCustomRegister={handleModalCustomRegister}
+            isDarkMode={isDarkMode}
+          />
+        )}
+
+        {activeFooterDoc && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs" id="landing_doc_modal_backdrop">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-xl w-full p-6 shadow-2xl relative max-h-[85vh] overflow-y-auto" id="landing_doc_modal_content">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 mb-4">
+                <h3 className="text-base font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                  {activeFooterDoc.title}
+                </h3>
+                <button
+                  onClick={() => setActiveFooterDoc(null)}
+                  className="p-1 px-2.5 rounded-lg text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer"
+                  id="landing_doc_modal_close_btn"
+                >
+                  Close
+                </button>
+              </div>
+              <div>
+                {footerDocLoading ? (
+                  <div className="py-12 flex flex-col items-center justify-center space-y-3">
+                    <BrandedLoader size="md" message="Loading cooperative document..." />
+                  </div>
+                ) : (
+                  activeFooterDoc.content
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </>
+    );
+  }
+
   if (!currentUser) {
     return (
       <>
         <LandingPage
           onLoginClick={(role) => openLoginModal(role)}
           onOpenDoc={(title) => openFooterDoc(title)}
+          onNavigateAbout={() => {
+            setCurrentView('about');
+            window.location.hash = '#about';
+          }}
+          onNavigateHowItWorks={() => {
+            setCurrentView('how-it-works');
+            window.location.hash = '#how-it-works';
+          }}
+          onNavigateFaq={() => {
+            setCurrentView('faq');
+            window.location.hash = '#faq';
+          }}
           isDarkMode={isDarkMode}
           toggleTheme={toggleTheme}
         />

@@ -1,5 +1,10 @@
 import React, { useState } from 'react';
-import { ListingType, LandDetails, LivestockDetails, OpportunityDetails } from '../types';
+import { ListingType } from '../types';
+import { LandDetailsFields } from './listing/LandDetailsFields';
+import { LivestockDetailsFields } from './listing/LivestockDetailsFields';
+import { OpportunityDetailsFields } from './listing/OpportunityDetailsFields';
+import { ListingDocumentUploadField } from './listing/ListingDocumentUploadField';
+import { readFileAsBase64, sharedWorkspaceApi } from '../services/sharedWorkspaceService';
 
 interface CreateListingModalProps {
   onClose: () => void;
@@ -13,14 +18,25 @@ const KENYAN_COUNTIES = [
   'Nyandarua', 'Kiambu', 'Nakuru', 'Uasin Gishu', 'Trans Nzoia', 'Nairobi', 'Meru', 'Nyeri', 'Kericho', 'Kakamega'
 ];
 
-export default function CreateListingModal({ onClose, onSubmit, ownerId, ownerName, ownerPhone }: CreateListingModalProps) {
+export default function CreateListingModal({
+  onClose,
+  onSubmit,
+  ownerId,
+  ownerName,
+  ownerPhone,
+}: CreateListingModalProps) {
   const [type, setType] = useState<ListingType>(ListingType.LAND);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [locationCounty, setLocationCounty] = useState('Nyandarua');
   const [priceKES, setPriceKES] = useState<number>(10000);
   const [imageUrl, setImageUrl] = useState('');
-  
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Document upload state
+  const [documentFile, setDocumentFile] = useState<File | null>(null);
+  const [documentType, setDocumentType] = useState('LAND_TITLE_DEED');
+
   // Land specific inputs
   const [acreage, setAcreage] = useState<number>(2);
   const [soilType, setSoilType] = useState('Red Volcanic Loam');
@@ -44,69 +60,6 @@ export default function CreateListingModal({ onClose, onSubmit, ownerId, ownerNa
   const [skillInput, setSkillInput] = useState('');
   const [requiredSkills, setRequiredSkills] = useState<string[]>(['Fodder preparation', 'Dairy hygiene']);
 
-  const handleAddCrop = () => {
-    if (idealCropInput && !idealCrops.includes(idealCropInput)) {
-      setIdealCrops([...idealCrops, idealCropInput]);
-      setIdealCropInput('');
-    }
-  };
-
-  const handleAddSkill = () => {
-    if (skillInput && !requiredSkills.includes(skillInput)) {
-      setRequiredSkills([...requiredSkills, skillInput]);
-      setSkillInput('');
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title || !description || !priceKES) {
-      alert('Tafadhali jaza sehemu zote muhimu (Please fill in all mandatory fields)');
-      return;
-    }
-
-    const listingData: any = {
-      type,
-      title,
-      description,
-      locationCounty,
-      priceKES: Number(priceKES),
-      verified: false, // Starts as false prior to admin verification
-      imageUrl: imageUrl || getDefaultImage(type),
-      ownerId,
-      ownerName,
-      ownerPhone,
-    };
-
-    if (type === ListingType.LAND) {
-      listingData.landDetails = {
-        acreage: Number(acreage),
-        soilType,
-        waterSource,
-        accessibility,
-        idealCrops
-      };
-    } else if (type === ListingType.LIVESTOCK) {
-      listingData.revenueSplitPercent = Number(revenueSplitPercent);
-      listingData.livestockDetails = {
-        species,
-        tagId,
-        breed,
-        expectedYield,
-        revenueShareConfig
-      };
-    } else if (type === ListingType.OPPORTUNITY) {
-      listingData.opportunityDetails = {
-        requiredSkills,
-        durationMonths: Number(durationMonths),
-        expectedWorkforce: Number(expectedWorkforce),
-        compensationType
-      };
-    }
-
-    onSubmit(listingData);
-  };
-
   const getDefaultImage = (t: ListingType) => {
     switch (t) {
       case ListingType.LAND:
@@ -118,348 +71,125 @@ export default function CreateListingModal({ onClose, onSubmit, ownerId, ownerNa
     }
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title || !description || !priceKES) {
+      alert('Tafadhali jaza sehemu zote muhimu (Please fill in all mandatory fields)');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      let uploadedDocId = '';
+      if (documentFile) {
+        const base64 = await readFileAsBase64(documentFile);
+        const res = await sharedWorkspaceApi.upload({
+          fileName: documentFile.name,
+          mimeType: documentFile.type,
+          base64Data: base64,
+          documentType,
+        });
+        if (res.data?.file?.id) {
+          uploadedDocId = res.data.file.id;
+        }
+      }
+
+      const listingData: any = {
+        type,
+        title,
+        description,
+        locationCounty,
+        priceKES: Number(priceKES),
+        verified: false,
+        imageUrl: imageUrl || getDefaultImage(type),
+        ownerId,
+        ownerName,
+        ownerPhone,
+        supportingDocumentId: uploadedDocId || undefined,
+        supportingDocumentName: documentFile?.name || undefined,
+      };
+
+      if (type === ListingType.LAND) {
+        listingData.landDetails = { acreage: Number(acreage), soilType, waterSource, accessibility, idealCrops };
+      } else if (type === ListingType.LIVESTOCK) {
+        listingData.revenueSplitPercent = Number(revenueSplitPercent);
+        listingData.livestockDetails = { species, tagId, breed, expectedYield, revenueShareConfig };
+      } else if (type === ListingType.OPPORTUNITY) {
+        listingData.opportunityDetails = { requiredSkills, durationMonths: Number(durationMonths), expectedWorkforce: Number(expectedWorkforce), compensationType };
+      }
+
+      onSubmit(listingData);
+    } catch (err: any) {
+      alert(err.message || 'Error uploading supporting documents.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto" id="create_listing_modal_viewport">
-      <div className="bg-white rounded-2xl w-full max-w-2xl border border-agri-dirt-100 shadow-xl overflow-hidden max-h-[90vh] flex flex-col">
-        {/* Modal Header */}
-        <div className="bg-agri-green-900 px-6 py-4 flex items-center justify-between text-white select-none">
-          <div className="flex items-center gap-2">
-            <h2 className="text-lg font-bold font-display text-white m-0">Create Marketplace Listing</h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs select-none">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-100 dark:border-slate-800 max-h-[92vh] overflow-y-auto custom-scrollbar">
+        <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+          <div>
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Registry Gateway</span>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white">Publish New Agricultural Asset / Space</h2>
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-full transition-colors cursor-pointer text-white font-bold text-sm">
-            Close [X]
-          </button>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm font-bold p-1">✕</button>
         </div>
 
-        {/* Modal Body form */}
-        <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-5 text-xs flex-1">
-          {/* Warning disclaimer about Trust verification */}
-          <div className="bg-amber-50 rounded-xl p-3 border border-amber-100">
-            <div>
-              <p className="font-semibold text-amber-900 text-[11px] mb-0.5">ShambaLoop Transparency Accord</p>
-              <p className="text-[10px] text-amber-800 leading-relaxed">
-                Every listed asset begins with a "Pending Check" status. Local ward authorities or administrators will endorse ownership certificates (title deed details) prior to public syndication.
-              </p>
-            </div>
-          </div>
-
-          {/* Type Picker Selection */}
-          <div className="space-y-2">
-            <label className="block text-slate-700 font-bold uppercase tracking-wider text-[10px]">What are you listing?</label>
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                { type: ListingType.LAND, label: 'Lease Land' },
-                { type: ListingType.LIVESTOCK, label: 'Livestock Partnership' },
-                { type: ListingType.OPPORTUNITY, label: 'Farm Opportunity' }
-              ].map((item) => (
-                <button
-                  key={item.type}
-                  type="button"
-                  onClick={() => setType(item.type)}
-                  className={`flex items-center justify-center p-3 rounded-lg border font-semibold transition-all cursor-pointer ${
-                    type === item.type
-                      ? 'bg-agri-green-50 text-agri-green-900 border-agri-green-600 shadow-xs scale-[1.01]'
-                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                  }`}
-                >
-                  <span>{item.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Basic standard fields */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="block text-slate-700 font-bold uppercase tracking-wider text-[10px]">Listing Title *</label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g., 3-Acre parcel with tea plantation"
-                required
-                className="w-full p-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-1 focus:ring-agri-green-600 text-xs"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="block text-slate-700 font-bold uppercase tracking-wider text-[10px]">Kenyan County Hub *</label>
-              <select
-                value={locationCounty}
-                onChange={(e) => setLocationCounty(e.target.value)}
-                className="w-full p-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-1 focus:ring-agri-green-600 text-xs"
+        <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+          <div className="flex rounded-xl p-1 bg-slate-100 dark:bg-slate-800 gap-1">
+            {[ListingType.LAND, ListingType.LIVESTOCK, ListingType.OPPORTUNITY].map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setType(t)}
+                className={`flex-1 py-2 text-xs font-bold rounded-lg transition ${type === t ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-xs' : 'text-slate-600 dark:text-slate-400'}`}
               >
-                {KENYAN_COUNTIES.map((c) => (
-                  <option key={c} value={c}>{c} County</option>
-                ))}
+                {t === ListingType.LAND ? 'Farm Land' : t === ListingType.LIVESTOCK ? 'Livestock Co-ownership' : 'Labor / Management'}
+              </button>
+            ))}
+          </div>
+
+          <div>
+            <label className="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">Asset Title</label>
+            <input required type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. 5 Acres Prime Fertile Land" className="w-full p-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white" />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">County Location</label>
+              <select value={locationCounty} onChange={(e) => setLocationCounty(e.target.value)} className="w-full p-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white">
+                {KENYAN_COUNTIES.map((c) => (<option key={c} value={c}>{c}</option>))}
               </select>
             </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="block text-slate-700 font-bold uppercase tracking-wider text-[10px]">Description *</label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Provide exact details about access roads, soil preparation, history, or livestock yield records."
-              required
-              rows={3}
-              className="w-full p-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-1 focus:ring-agri-green-600 text-xs"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="block text-slate-700 font-bold uppercase tracking-wider text-[10px]">
-                {type === ListingType.LAND ? 'Price (KES per Acre / Year) *' : 
-                 type === ListingType.LIVESTOCK ? 'Animal Estimated Valuation (KES) *' : 'Monthly Stipend Basis (KES) *'}
-              </label>
-              <input
-                type="number"
-                value={priceKES}
-                onChange={(e) => setPriceKES(Number(e.target.value))}
-                required
-                min={1}
-                className="w-full p-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-1 focus:ring-agri-green-600 text-xs text-agri-green-900 font-bold"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="block text-slate-700 font-bold uppercase tracking-wider text-[10px]">Listing Cover Link (Optional)</label>
-              <input
-                type="text"
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                placeholder="Paste an Unsplash image link or leave empty for default"
-                className="w-full p-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-1 focus:ring-agri-green-600 text-xs"
-              />
+            <div>
+              <label className="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">Valuation / Price (KES)</label>
+              <input required type="number" min="500" value={priceKES} onChange={(e) => setPriceKES(Number(e.target.value))} className="w-full p-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white" />
             </div>
           </div>
 
-          {/* Conditional Fields: LAND details */}
+          <div>
+            <label className="text-[10px] uppercase font-bold text-slate-600 dark:text-slate-400">Description</label>
+            <textarea required rows={3} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe asset details..." className="w-full p-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white" />
+          </div>
+
           {type === ListingType.LAND && (
-            <div className="bg-amber-50/40 p-4 rounded-xl border border-amber-100/70 space-y-4">
-              <h3 className="text-[11px] font-bold text-amber-900 uppercase tracking-widest border-b border-amber-100/60 pb-1.5 flex items-center gap-1.5">
-                SPECIFIC LAND SPECIFICATIONS
-              </h3>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-bold text-slate-600">Total Acreage *</label>
-                  <input
-                    type="number"
-                    value={acreage}
-                    onChange={(e) => setAcreage(Number(e.target.value))}
-                    required
-                    className="w-full p-2 bg-white rounded border border-slate-200"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-bold text-slate-600">Soil Analysis</label>
-                  <input
-                    type="text"
-                    value={soilType}
-                    onChange={(e) => setSoilType(e.target.value)}
-                    placeholder="e.g. Clay, Red Volcanic, Sandy"
-                    className="w-full p-2 bg-white rounded border border-slate-200"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-bold text-slate-600">Water Infrastructure</label>
-                  <input
-                    type="text"
-                    value={waterSource}
-                    onChange={(e) => setWaterSource(e.target.value)}
-                    placeholder="e.g. Borehole, Gravity stream, rainfed"
-                    className="w-full p-2 bg-white rounded border border-slate-200"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[10px] uppercase font-bold text-slate-600">Ideal crops suggestion tagger</label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={idealCropInput}
-                    onChange={(e) => setIdealCropInput(e.target.value)}
-                    placeholder="Type crop e.g., Maize, Onion, Potatoes"
-                    className="flex-1 p-2 bg-white rounded border border-slate-200 text-xs"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddCrop}
-                    className="bg-amber-600 text-white rounded px-3 py-2 font-bold hover:bg-amber-700 transition"
-                  >
-                    Add
-                  </button>
-                </div>
-                {idealCrops.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mt-2">
-                    {idealCrops.map((c) => (
-                      <span key={c} className="bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full text-[10px] font-semibold flex items-center gap-1">
-                        <span>{c}</span>
-                        <button type="button" onClick={() => setIdealCrops(idealCrops.filter(i => i !== c))}>×</button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
+            <LandDetailsFields acreage={acreage} setAcreage={setAcreage} soilType={soilType} setSoilType={setSoilType} waterSource={waterSource} setWaterSource={setWaterSource} accessibility={accessibility} setAccessibility={setAccessibility} idealCropInput={idealCropInput} setIdealCropInput={setIdealCropInput} idealCrops={idealCrops} setIdealCrops={setIdealCrops} />
           )}
-
-          {/* Conditional Fields: LIVESTOCK details */}
           {type === ListingType.LIVESTOCK && (
-            <div className="bg-emerald-50/40 p-4 rounded-xl border border-emerald-100 space-y-4">
-              <h3 className="text-[11px] font-bold text-emerald-950 uppercase tracking-widest border-b border-emerald-100/60 pb-1.5 flex items-center gap-1.5">
-                LIVESTOCK ASSET RECORDS
-              </h3>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-bold text-slate-600">Animal Species</label>
-                  <select
-                    value={species}
-                    onChange={(e) => setSpecies(e.target.value as any)}
-                    className="w-full p-2 bg-white rounded border border-slate-200"
-                  >
-                    <option value="dairy">Dairy Cow (Ng'ombe)</option>
-                    <option value="poultry">Poultry (Kuku)</option>
-                    <option value="goat">Dairy Goat (Mbuzi)</option>
-                  </select>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-bold text-slate-600">Breed / Pedigree</label>
-                  <input
-                    type="text"
-                    value={breed}
-                    onChange={(e) => setBreed(e.target.value)}
-                    className="w-full p-2 bg-white rounded border border-slate-200"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-bold text-slate-600">Expected Milking Yield</label>
-                  <input
-                    type="text"
-                    value={expectedYield}
-                    onChange={(e) => setExpectedYield(e.target.value)}
-                    placeholder="e.g. 20 Liters daily"
-                    className="w-full p-2 bg-white rounded border border-slate-200"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-bold text-slate-600">Investor Profit split percentage (%)</label>
-                  <input
-                    type="number"
-                    value={revenueSplitPercent}
-                    onChange={(e) => setRevenueSplitPercent(Number(e.target.value))}
-                    max={100}
-                    min={1}
-                    className="w-full p-2 bg-white rounded border border-slate-200 text-xs font-bold text-emerald-900"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-bold text-slate-600">Revenue split contract description</label>
-                  <input
-                    type="text"
-                    value={revenueShareConfig}
-                    onChange={(e) => setRevenueShareConfig(e.target.value)}
-                    className="w-full p-2 bg-white rounded border border-slate-200 text-xs"
-                  />
-                </div>
-              </div>
-            </div>
+            <LivestockDetailsFields species={species} setSpecies={setSpecies} breed={breed} setBreed={setBreed} tagId={tagId} setTagId={setTagId} expectedYield={expectedYield} setExpectedYield={setExpectedYield} revenueSplitPercent={revenueSplitPercent} setRevenueSplitPercent={setRevenueSplitPercent} revenueShareConfig={revenueShareConfig} setRevenueShareConfig={setRevenueShareConfig} />
           )}
-
-          {/* Conditional Fields: OPPORTUNITY actions */}
           {type === ListingType.OPPORTUNITY && (
-            <div className="bg-amber-50/30 p-4 rounded-xl border border-amber-100 space-y-4">
-              <h3 className="text-[11px] font-bold text-amber-950 uppercase tracking-widest border-b border-amber-100 pb-1.5">
-                CONTRACT CO-FARMING OPPORTUNITIES
-              </h3>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-bold text-slate-600">Duration (Months)</label>
-                  <input
-                    type="number"
-                    value={durationMonths}
-                    onChange={(e) => setDurationMonths(Number(e.target.value))}
-                    className="w-full p-2 bg-white rounded border border-slate-200"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-bold text-slate-600">Required Workforce</label>
-                  <input
-                    type="number"
-                    value={expectedWorkforce}
-                    onChange={(e) => setExpectedWorkforce(Number(e.target.value))}
-                    className="w-full p-2 bg-white rounded border border-slate-200"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-bold text-slate-600">Payout Model</label>
-                  <select
-                    value={compensationType}
-                    onChange={(e) => setCompensationType(e.target.value as any)}
-                    className="w-full p-2 bg-white rounded border border-slate-200"
-                  >
-                    <option value="Salary">Fixed Salaried / Wages</option>
-                    <option value="Profit-Share">Pure Profit-Sharing</option>
-                    <option value="Mixed">Mixed (Salary + Bonus)</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[10px] uppercase font-bold text-slate-600">Required experience badges</label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={skillInput}
-                    onChange={(e) => setSkillInput(e.target.value)}
-                    placeholder="Type e.g., Poultry vaccination, pruning"
-                    className="flex-1 p-2 bg-white rounded border border-slate-200 text-xs"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddSkill}
-                    className="bg-emerald-600 text-white rounded px-3 py-2 font-bold hover:bg-emerald-700 transition"
-                  >
-                    Add
-                  </button>
-                </div>
-                {requiredSkills.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mt-2">
-                    {requiredSkills.map((s) => (
-                      <span key={s} className="bg-amber-100 text-amber-900 px-2.5 py-0.5 rounded-full text-[10px] font-semibold flex items-center gap-1">
-                        <span>{s}</span>
-                        <button type="button" onClick={() => setRequiredSkills(requiredSkills.filter(i => i !== s))}>×</button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
+            <OpportunityDetailsFields durationMonths={durationMonths} setDurationMonths={setDurationMonths} expectedWorkforce={expectedWorkforce} setExpectedWorkforce={setExpectedWorkforce} compensationType={compensationType} setCompensationType={setCompensationType} skillInput={skillInput} setSkillInput={setSkillInput} requiredSkills={requiredSkills} setRequiredSkills={setRequiredSkills} />
           )}
 
-          {/* Form Actions */}
-          <div className="flex items-center justify-end gap-3 pt-5 border-t border-slate-100">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px] hover:bg-slate-50 transition cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="bg-agri-green-900 hover:bg-agri-green-800 text-white px-5 py-2.5 rounded-xl font-bold uppercase tracking-wider text-[10px] flex items-center gap-2 shadow-sm transition active:scale-95 cursor-pointer"
-            >
-              Save Listing
+          <ListingDocumentUploadField documentFile={documentFile} onFileSelect={setDocumentFile} documentType={documentType} onTypeChange={setDocumentType} />
+
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-500 font-bold text-xs hover:bg-slate-50 dark:hover:bg-slate-800">Cancel</button>
+            <button type="submit" disabled={isSubmitting} className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-xl font-bold text-xs flex items-center gap-2 shadow-xs cursor-pointer disabled:opacity-50">
+              {isSubmitting ? 'Uploading & Saving...' : 'Save & Publish Asset'}
             </button>
           </div>
         </form>
