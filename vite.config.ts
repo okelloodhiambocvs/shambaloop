@@ -6,6 +6,7 @@ import {defineConfig} from 'vite';
 export default defineConfig(() => {
   return {
     plugins: [react(), tailwindcss()],
+    build: { rollupOptions: { output: { manualChunks: (id: string) => id.includes('/node_modules/') ? (id.includes('/recharts/') || id.includes('/d3-') ? 'charts' : 'vendor') : undefined } } },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
@@ -19,6 +20,7 @@ export default defineConfig(() => {
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },
     test: {
+      globalSetup: ['./src/tests/globalSetup.ts'],
       exclude: ['**/node_modules/**', '**/dist/**', '**/.kilo/**'],
     },
   };
