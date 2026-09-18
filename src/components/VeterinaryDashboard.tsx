@@ -6,43 +6,43 @@ import ReviewModal from './ReviewModal';
 import VerificationDocumentUploader from './VerificationDocumentUploader';
 import { readFileAsBase64, sharedWorkspaceApi } from '../services/sharedWorkspaceService';
 
-interface Props { 
-  currentUser: User; 
-  partnerships: LivestockPartnership[]; 
-  reports: VeterinaryReport[]; 
-  vetJobs: VeterinaryJob[]; 
-  onSaveReport: (input: { 
-    partnershipId: string; 
-    jobId: string; 
-    visitType: string; 
-    findings: string; 
-    recommendations: string; 
-    status: VeterinaryReport['status']; 
-    documents?: string[]; 
-    photos?: string[] 
-  }) => Promise<void>; 
-  onUpdateJobStatus: (id: string, status: VeterinaryJob['status']) => Promise<void>; 
+interface Props {
+  currentUser: User;
+  partnerships: LivestockPartnership[];
+  reports: VeterinaryReport[];
+  vetJobs: VeterinaryJob[];
+  onSaveReport: (input: {
+    partnershipId: string;
+    jobId: string;
+    visitType: string;
+    findings: string;
+    recommendations: string;
+    status: VeterinaryReport['status'];
+    documents?: string[];
+    photos?: string[]
+  }) => Promise<void>;
+  onUpdateJobStatus: (id: string, status: VeterinaryJob['status'], completionNotes?: string) => Promise<void>;
 }
 
 const date = (value: string) => new Date(value).toLocaleDateString();
 
-export default function VeterinaryDashboard({ 
-  currentUser, 
-  partnerships, 
-  reports, 
-  vetJobs, 
-  onSaveReport, 
-  onUpdateJobStatus 
+export default function VeterinaryDashboard({
+  currentUser,
+  partnerships,
+  reports,
+  vetJobs,
+  onSaveReport,
+  onUpdateJobStatus
 }: Props) {
   const [view, setView] = useState<'jobs' | 'report' | 'records' | 'fms' | 'wallet' | 'disputes' | 'reviews' | 'documents'>('jobs');
   const [partnershipId, setPartnershipId] = useState(partnerships[0]?.id || '');
   const [jobId, setJobId] = useState('');
   const [attachments, setAttachments] = useState<File[]>([]);
-  const [form, setForm] = useState({ 
-    visitType: 'Clinical check', 
-    findings: '', 
-    recommendations: '', 
-    status: 'FIT_FOR_PRODUCTION' as VeterinaryReport['status'] 
+  const [form, setForm] = useState({
+    visitType: 'Clinical check',
+    findings: '',
+    recommendations: '',
+    status: 'FIT_FOR_PRODUCTION' as VeterinaryReport['status']
   });
   const [busy, setBusy] = useState<string | null>(null);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
@@ -55,45 +55,47 @@ export default function VeterinaryDashboard({
     return partnerships.filter(partnership => assigned.some(job => job.farmId === partnership.id && job.status !== 'COMPLETED'));
   }, [assigned, partnerships]);
 
-  const changeJob = async (id: string, status: VeterinaryJob['status']) => { 
-    setBusy(id); 
-    try { 
-      await onUpdateJobStatus(id, status); 
-    } finally { 
-      setBusy(null); 
-    } 
+  const changeJob = async (id: string, status: VeterinaryJob['status']) => {
+    setBusy(id);
+    try {
+      const notes = status === 'COMPLETED' ? window.prompt('Describe the completed veterinary work:') : undefined;
+      if (status === 'COMPLETED' && !notes?.trim()) return;
+      await onUpdateJobStatus(id, status, notes || undefined);
+    } catch (error) { window.alert((error as Error).message || 'Unable to update job.'); } finally {
+      setBusy(null);
+    }
   };
 
-  const submit = async (event: React.FormEvent) => { 
-    event.preventDefault(); 
-    const job = assigned.find(item => item.id === jobId); 
-    if (!job) return; 
-    setBusy('report'); 
-    try { 
-      const uploaded = await Promise.all(attachments.map(async file => { 
-        const result = await sharedWorkspaceApi.upload({ 
-          fileName: file.name, 
-          mimeType: file.type, 
-          base64Data: await readFileAsBase64(file), 
-          farmId: job.farmId, 
-          documentType: file.type.startsWith('image/') ? 'FARM_PHOTO' : 'VETERINARY_REPORT' 
-        }); 
-        if (result.error || !result.data) throw new Error(result.error || 'Evidence upload failed.'); 
-        return { id: result.data.file.id, image: file.type.startsWith('image/') }; 
-      })); 
-      await onSaveReport({ 
-        partnershipId, 
-        jobId, 
-        ...form, 
-        documents: uploaded.filter(item => !item.image).map(item => item.id), 
-        photos: uploaded.filter(item => item.image).map(item => item.id) 
-      }); 
-      setAttachments([]); 
-      setForm({ visitType: 'Clinical check', findings: '', recommendations: '', status: 'FIT_FOR_PRODUCTION' }); 
-      setView('records'); 
-    } finally { 
-      setBusy(null); 
-    } 
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const job = assigned.find(item => item.id === jobId);
+    if (!job) return;
+    setBusy('report');
+    try {
+      const uploaded = await Promise.all(attachments.map(async file => {
+        const result = await sharedWorkspaceApi.upload({
+          fileName: file.name,
+          mimeType: file.type,
+          base64Data: await readFileAsBase64(file),
+          farmId: job.farmId,
+          documentType: file.type.startsWith('image/') ? 'FARM_PHOTO' : 'VETERINARY_REPORT'
+        });
+        if (result.error || !result.data) throw new Error(result.error || 'Evidence upload failed.');
+        return { id: result.data.file.id, image: file.type.startsWith('image/') };
+      }));
+      await onSaveReport({
+        partnershipId,
+        jobId,
+        ...form,
+        documents: uploaded.filter(item => !item.image).map(item => item.id),
+        photos: uploaded.filter(item => item.image).map(item => item.id)
+      });
+      setAttachments([]);
+      setForm({ visitType: 'Clinical check', findings: '', recommendations: '', status: 'FIT_FOR_PRODUCTION' });
+      setView('records');
+    } catch (error) { window.alert((error as Error).message || 'Unable to update job.'); } finally {
+      setBusy(null);
+    }
   };
 
   return (
@@ -116,9 +118,9 @@ export default function VeterinaryDashboard({
               ['disputes', 'Dispute Room'],
               ['reviews', 'Reviews']
             ] as const).map(([id, label]) => (
-              <button 
-                key={id} 
-                onClick={() => setView(id)} 
+              <button
+                key={id}
+                onClick={() => setView(id)}
                 className={`rounded-lg px-3 py-2 text-xs font-semibold ${view === id ? 'bg-teal-700 text-white' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200'}`}
               >
                 {label}
@@ -155,10 +157,11 @@ export default function VeterinaryDashboard({
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       {job.status === 'OPEN' && (
-                        <button disabled={busy === job.id} onClick={() => changeJob(job.id, 'IN_PROGRESS')} className="rounded-lg bg-teal-700 px-3 py-2 text-xs font-semibold text-white">
+                        <button disabled={busy === job.id} onClick={() => changeJob(job.id, 'ASSIGNED')} className="rounded-lg bg-teal-700 px-3 py-2 text-xs font-semibold text-white">
                           Accept
                         </button>
                       )}
+                      {job.status === 'ASSIGNED' && <button disabled={busy === job.id} onClick={() => changeJob(job.id, 'IN_PROGRESS')} className="rounded bg-teal-700 p-2 text-white">Start work</button>}
                       {job.status === 'IN_PROGRESS' && (
                         <>
                           <button onClick={() => { setPartnershipId(job.farmId); setJobId(job.id); setView('report'); }} className="rounded-lg bg-teal-700 px-3 py-2 text-xs font-semibold text-white">
@@ -268,10 +271,10 @@ export default function VeterinaryDashboard({
       )}
 
       {(view === 'fms' || view === 'wallet' || view === 'disputes' || view === 'reviews') && (
-        <ParticipantWorkspace 
-          user={currentUser} 
-          partnerships={partnerships.filter(partnership => assigned.some(job => job.farmId === partnership.id))} 
-          mode={view === 'disputes' ? 'disputes' : view === 'reviews' ? 'reviews' : view === 'fms' ? 'fms' : 'wallet'} 
+        <ParticipantWorkspace
+          user={currentUser}
+          partnerships={partnerships.filter(partnership => assigned.some(job => job.farmId === partnership.id))}
+          mode={view === 'disputes' ? 'disputes' : view === 'reviews' ? 'reviews' : view === 'fms' ? 'fms' : 'wallet'}
         />
       )}
 
@@ -292,28 +295,28 @@ export default function VeterinaryDashboard({
   );
 }
 
-function Metric({label, value, alert=false}: {label: string; value: number; alert?: boolean}) { 
+function Metric({label, value, alert=false}: {label: string; value: number; alert?: boolean}) {
   return (
     <div className="border-l-4 border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
       <p className="text-xs text-slate-500">{label}</p>
       <p className={`mt-1 text-2xl font-bold ${alert ? 'text-amber-700' : 'text-slate-950 dark:text-white'}`}>{value}</p>
     </div>
-  ); 
+  );
 }
 
-function Empty({text}: {text: string}) { 
-  return <p className="px-4 py-8 text-center text-xs text-slate-500">{text}</p>; 
+function Empty({text}: {text: string}) {
+  return <p className="px-4 py-8 text-center text-xs text-slate-500">{text}</p>;
 }
 
-function Field({label, children}: {label: string; children: React.ReactNode}) { 
+function Field({label, children}: {label: string; children: React.ReactNode}) {
   return (
     <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200">
       <span className="mb-1.5 block">{label}</span>
-      {React.isValidElement(children) 
+      {React.isValidElement(children)
         ? React.cloneElement(children as React.ReactElement<{className?: string}>, {
             className: 'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-normal text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white'
-          }) 
+          })
         : children}
     </label>
-  ); 
+  );
 }
