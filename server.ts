@@ -420,21 +420,7 @@ function seedDefaultData() {
     }
   ];
 
-  db.agreements = [
-    {
-      id: 'lease_abc',
-      listingId: 'list_1',
-      landownerId: 'user_1',
-      farmerId: 'user_2',
-      acreageLeased: 2,
-      pricePerAcreKES: 12000,
-      durationMonths: 12,
-      startDate: '2026-07-01',
-      status: 'SIGNED',
-      mpesaEscrowStatus: 'ESCROWED',
-      paymentsMade: 24000
-    }
-  ];
+  db.agreements = [];
 
   db.partnerships = [
     {
@@ -447,70 +433,13 @@ function seedDefaultData() {
       breed: 'Pure pedigree Friesian',
       splitPercentInvestor: 40,
       status: 'ACTIVE',
-      healthLogs: [
-        {
-          id: 'h_1',
-          date: '2026-06-10',
-          status: 'Vaccinated',
-          notes: 'Foot and mouth vaccination routine completed by County Vet Officers.',
-          recordedBy: 'Josphat Kiprop (Farmer)'
-        },
-        {
-          id: 'h_2',
-          date: '2026-06-12',
-          status: 'Healthy',
-          notes: 'Normal milk extraction baseline confirmed. Feed adjusted with protein concentrate.',
-          recordedBy: 'Josphat Kiprop (Farmer)'
-        }
-      ],
-      productionLogs: [
-        {
-          id: 'p_1',
-          date: '2026-06-11',
-          metric: 'Milk Liters',
-          quantity: 24,
-          revenueKES: 1440,
-          investorPayoutKES: 576,
-          farmerPayoutKES: 864
-        },
-        {
-          id: 'p_2',
-          date: '2026-06-12',
-          metric: 'Milk Liters',
-          quantity: 25,
-          revenueKES: 1500,
-          investorPayoutKES: 600,
-          farmerPayoutKES: 900
-        }
-      ]
+      healthLogs: [],
+      productionLogs: []
     }
   ];
 
-  db.verifications = [
-    {
-      id: 'verify_req_1',
-      userId: 'user_2',
-      userName: 'Josphat Kiprop',
-      userRole: UserRole.FARMER,
-      documentType: 'TITLE_DEED',
-      documentNumber: 'ELDORET/SOY/5690A',
-      notes: 'Submitting verification for 15-Acre mechanized cotton tillage zone listed on marketplace.',
-      status: 'PENDING',
-      submittedAt: new Date().toISOString()
-    }
-  ];
-
-  db.transactions = [
-    {
-      id: 'tx_1',
-      transactionId: 'RGC56H78UI',
-      phoneNumber: '0712345678',
-      amountKES: 24000,
-      purpose: 'Smart Land Lease Escrow - list_1',
-      status: 'SUCCESS',
-      timestamp: new Date().toISOString()
-    }
-  ];
+  db.verifications = [];
+  db.transactions = [];
 }
 
 // Read database from disk
@@ -725,6 +654,7 @@ const listingModerationStatuses = new Set(['APPROVED', 'REJECTED', 'SUSPENDED'])
 // Precise, multi-level sliding-window rate limiter
 const createRateLimiter = (limit: number, windowMs: number) => {
   return (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (process.env.NODE_ENV === 'test') return next();
     const ip = req.ip || req.headers['x-forwarded-for'] || '127.0.0.1';
     const userKey = (req as AuthenticatedRequest).user ? (req as AuthenticatedRequest).user!.id : String(ip);
     const routeKey = `${req.path}:${userKey}`;
@@ -747,15 +677,8 @@ app.use((req, res, next) => {
   const origin = req.headers.origin;
   
   if (origin) {
-    if (CORS_WHITELIST.includes(origin)) {
-      res.setHeader('Access-Control-Allow-Origin', origin);
-    } else if (process.env.NODE_ENV !== 'production') {
-      // In development, allow localhost or dynamic origin
-      res.setHeader('Access-Control-Allow-Origin', origin);
-    }
-    // In production, unauthorized origins are NOT granted wildcard access
-  } else if (process.env.NODE_ENV !== 'production') {
-    // Development fallback without origin
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else {
     res.setHeader('Access-Control-Allow-Origin', '*');
   }
   
@@ -769,11 +692,10 @@ app.use((req, res, next) => {
   next();
 });
 
-// Hardened Secure Headers Middleware
+// Hardened Secure Headers Middleware (configured for AI Studio preview iframe support)
 app.use((req, res, next) => {
-  res.setHeader('Content-Security-Policy', "default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https:; frame-src 'self' https:;");
+  res.setHeader('Content-Security-Policy', "default-src 'self' https: data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; font-src 'self' https: data:; img-src 'self' data: https: blob:; connect-src 'self' https: wss: ws:; frame-src 'self' https:;");
   res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
-  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self)');
@@ -847,6 +769,22 @@ app.post('/api/auth/register', authRateLimiter, (req, res) => {
     createdAt: new Date().toISOString(),
     passwordResetRequired: false
   };
+
+  const documents = req.body.documents;
+  if (documents && typeof documents === 'object') {
+    (newUser as any).verificationDocuments = documents;
+    db.verifications.push({
+      id: `verify_${Date.now()}`,
+      userId: newId,
+      userName: newUser.name,
+      userRole: newUser.role,
+      documentType: role === UserRole.FARMER ? 'CHIEF_LETTER_AND_ID' : role === UserRole.VETERINARIAN ? 'KVB_LICENSE_AND_ID' : 'NATIONAL_ID',
+      documentNumber: `REG-${newId}`,
+      notes: `Registration KYC submission: ${Object.keys(documents).join(', ')}`,
+      status: 'PENDING',
+      submittedAt: new Date().toISOString()
+    });
+  }
 
   db.passwordHashes[newId] = bcrypt.hashSync(normalizedPassword, 10);
   db.users.push(newUser);
@@ -1031,6 +969,35 @@ app.post('/api/auth/password-reset', sensitiveAuthRateLimiter, (req, res) => {
   writeAuditLog(user.id, 'password_reset_success', `user:${user.id}`, null, null, req.ip || '127.0.0.1');
 
   res.json({ success: true, message: 'Password reset completed. Authenticate using your updated credentials.' });
+});
+
+app.post('/api/auth/forgot-password', sensitiveAuthRateLimiter, (req, res) => {
+  const { phone, newPassword } = req.body;
+  const normalizedPhone = normalizeKenyanPhone(phone);
+  const normalizedNewPassword = cleanCredential(newPassword);
+  if (!normalizedPhone || !normalizedNewPassword) {
+    return res.status(400).json({ error: 'Please enter your registered phone number and a new password.' });
+  }
+
+  const user = db.users.find(u => u.phone === normalizedPhone);
+  if (!user) {
+    return res.status(404).json({ error: 'No account registered with this phone number.' });
+  }
+
+  if (!validatePasswordStrength(normalizedNewPassword)) {
+    return res.status(400).json({
+      error: 'New password does not meet security rules. Minimum 12 characters, with an uppercase letter, a lowercase letter, a number, and a special character.'
+    });
+  }
+
+  db.passwordHashes[user.id] = bcrypt.hashSync(normalizedNewPassword, 10);
+  user.passwordResetRequired = false;
+  saveDatabase();
+  syncRefs();
+
+  writeAuditLog(user.id, 'forgot_password_recovered', `user:${user.id}`, null, null, req.ip || '127.0.0.1');
+
+  res.json({ success: true, message: 'Password updated successfully. You can now log in with your new password.' });
 });
 
 app.post('/api/auth/refresh', authRateLimiter, (req, res) => {

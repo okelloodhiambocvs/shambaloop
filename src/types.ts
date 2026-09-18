@@ -33,6 +33,20 @@ export interface User {
   mfaType?: 'none' | 'email' | 'sms' | 'totp';
   mfaBackupCodes?: string[];
   deviceTrustExpiresAt?: string;
+
+  // Safaricom Daraja M-Pesa Account Linking
+  mpesaLink?: MpesaAccountLink;
+}
+
+export interface MpesaAccountLink {
+  phoneNumber: string;
+  accountHolderName: string;
+  idNumber?: string;
+  accountType: 'PERSONAL' | 'TILL' | 'PAYBILL';
+  verified: boolean;
+  linkedAt: string;
+  status: 'CONNECTED' | 'PENDING_VERIFICATION' | 'DISCONNECTED';
+  darajaStatus: string;
 }
 
 export enum ListingType {
@@ -173,7 +187,7 @@ export interface VerificationRequest {
   userId: string;
   userName: string;
   userRole: UserRole;
-  documentType: 'ID_CARD' | 'TITLE_DEED' | 'LIVESTOCK_CERT';
+  documentType: 'ID_CARD' | 'TITLE_DEED' | 'LIVESTOCK_CERT' | 'CHIEF_LETTER_AND_ID' | 'KVB_LICENSE_AND_ID' | 'NATIONAL_ID' | 'DEGREE_CERTIFICATE' | 'PASSPORT_PHOTO';
   documentNumber: string;
   notes?: string;
   status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'MORE_INFO';
@@ -264,6 +278,7 @@ export interface LedgerTransaction {
   relatedEntityId?: string;
   relatedEntityType?: 'FARM' | 'PROPOSAL' | 'JOB' | 'MILESTONE' | 'COLLABORATION';
   description: string;
+  purpose?: string;
   payerId?: string;
   payerName?: string;
   payeeId?: string;
@@ -291,6 +306,7 @@ export interface WalletSummary {
   pendingJobPaymentsKES?: number;
   earningsKES?: number;
   recentTransactions: LedgerTransaction[];
+  mpesaLink?: MpesaAccountLink;
 }
 
 export interface Review {

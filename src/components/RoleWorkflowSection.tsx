@@ -502,8 +502,8 @@ export default function RoleWorkflowSection({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-              <div className="p-3 rounded-xl bg-purple-50/50 dark:bg-purple-950/20 border border-purple-200/50 dark:border-purple-800/40 space-y-1">
-                <div className="font-bold text-purple-900 dark:text-purple-300 uppercase tracking-wider text-[10px]">
+              <div className="p-3 rounded-xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-800/40 space-y-1">
+                <div className="font-bold text-amber-900 dark:text-amber-300 uppercase tracking-wider text-[10px]">
                   1. Capital Provider (Investor)
                 </div>
                 <p className="text-slate-600 dark:text-slate-300 text-[11px] leading-relaxed">

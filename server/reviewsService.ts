@@ -12,7 +12,7 @@ export function registerReviewsRoutes(
   // Create a new review
   app.post('/api/reviews', authMiddleware, (req: AuthenticatedRequest, res) => {
     const user = req.user!;
-    const { targetUserId, targetUserName, targetUserRole, rating, title, comment, partnershipId, jobId, proposalId } = req.body;
+    const { targetUserId, rating, title, comment, partnershipId, jobId, proposalId } = req.body;
 
     if (!targetUserId || !rating || !comment) {
       return res.status(400).json({ error: 'Target user ID, rating (1-5), and review comment are required.' });
@@ -31,23 +31,37 @@ export function registerReviewsRoutes(
     const db = getDb();
     db.reviews ||= [];
     const targetUser = db.users.find((u: any) => u.id === targetUserId);
-    if (!targetUser || targetUser.role === UserRole.ADMIN) return res.status(404).json({ error: 'Review target was not found.' });
-    const eligible = (partnershipId && db.partnerships?.some((p: any) => p.id === partnershipId && p.status === 'COMPLETED' && ((p.farmerId === user.id && p.investorId === targetUserId) || (p.investorId === user.id && p.farmerId === targetUserId)))) ||
-      (jobId && db.veterinaryJobs?.some((j: any) => j.id === jobId && j.status === 'COMPLETED' && ((j.farmerId === user.id && j.assignedVetId === targetUserId) || (j.assignedVetId === user.id && j.farmerId === targetUserId)))) ||
-      (proposalId && db.proposals?.some((p: any) => p.id === proposalId && p.status === 'ACCEPTED' && ((p.farmerId === user.id && p.investorId === targetUserId) || (p.investorId === user.id && p.farmerId === targetUserId))));
-    if (!eligible) return res.status(403).json({ error: 'Reviews require a completed or accepted shared engagement.' });
+    if (!targetUser || targetUser.role === UserRole.ADMIN) {
+      return res.status(404).json({ error: 'Review target was not found or is an administrator.' });
+    }
 
-    // Rule: Prevent duplicate reviews for same target user in same engagement
+    // Role-based matrix rule:
+    // Veterinarian -> Farmer or Investor
+    // Investor -> Farmer or Veterinarian
+    // Farmer -> Investor or Veterinarian
+    const allowedTargetRoles = 
+      user.role === UserRole.VETERINARIAN ? [UserRole.FARMER, UserRole.INVESTOR] :
+      user.role === UserRole.INVESTOR ? [UserRole.FARMER, UserRole.VETERINARIAN] :
+      user.role === UserRole.FARMER ? [UserRole.INVESTOR, UserRole.VETERINARIAN] :
+      [];
+
+    if (!allowedTargetRoles.includes(targetUser.role)) {
+      return res.status(400).json({ 
+        error: `As a ${user.role}, you can only submit reviews for ${allowedTargetRoles.join(' or ')}.` 
+      });
+    }
+
+    // Rule: Prevent duplicate reviews for same target user in same engagement or within short window
     const engagementId = partnershipId || jobId || proposalId;
     const existing = db.reviews.find((r: Review) => 
       r.reviewerId === user.id && 
       r.targetUserId === targetUserId &&
-      ((engagementId && (r.partnershipId === engagementId || r.jobId === engagementId || r.proposalId === engagementId)) || (!engagementId))
+      (engagementId ? (r.partnershipId === engagementId || r.jobId === engagementId || r.proposalId === engagementId) : true)
     );
 
     if (existing) {
       return res.status(400).json({ 
-        error: 'Duplicate review prevented: You have already submitted feedback for this partner engagement.' 
+        error: 'Duplicate review prevented: You have already submitted feedback for this partner.' 
       });
     }
 
@@ -62,9 +76,9 @@ export function registerReviewsRoutes(
       targetUserId,
       targetUserName: targetUser.name,
       targetUserRole: targetUser.role,
-      partnershipId,
-      jobId,
-      proposalId,
+      partnershipId: partnershipId ? String(partnershipId) : undefined,
+      jobId: jobId ? String(jobId) : undefined,
+      proposalId: proposalId ? String(proposalId) : undefined,
       rating: Math.round(numRating),
       title: title ? String(title).trim().slice(0, 100) : undefined,
       comment: String(comment).trim().slice(0, 1000),
@@ -79,7 +93,7 @@ export function registerReviewsRoutes(
       'review_submitted',
       `review:${reviewId}`,
       null,
-      { targetUserId, rating: review.rating },
+      { targetUserId, targetRole: targetUser.role, rating: review.rating },
       req.ip || '127.0.0.1'
     );
 
@@ -112,44 +126,126 @@ export function registerReviewsRoutes(
     });
   });
 
-  // Get eligible partners that the current user can review
+  // Get public reviews and rating summary for any specific user
+  app.get('/api/reviews/user/:userId', authMiddleware, (req: AuthenticatedRequest, res) => {
+    const db = getDb();
+    db.reviews ||= [];
+    const targetUserId = req.params.userId;
+    const targetUser = db.users.find((u: any) => u.id === targetUserId);
+    if (!targetUser) return res.status(404).json({ error: 'User not found' });
+
+    const received = db.reviews.filter((r: Review) => r.targetUserId === targetUserId);
+    const avgRating = received.length > 0
+      ? (received.reduce((acc: number, r: Review) => acc + r.rating, 0) / received.length).toFixed(1)
+      : '5.0';
+
+    res.json({
+      targetUserId,
+      targetUserName: targetUser.name,
+      targetUserRole: targetUser.role,
+      averageRating: Number(avgRating),
+      totalReceived: received.length,
+      reviews: received
+    });
+  });
+
+  // Get candidate review targets categorized by role for the current user
+  app.get('/api/reviews/candidates', authMiddleware, (req: AuthenticatedRequest, res) => {
+    const user = req.user!;
+    const db = getDb();
+    db.reviews ||= [];
+    db.users ||= [];
+    db.partnerships ||= [];
+    db.veterinaryJobs ||= [];
+
+    const allowedTargetRoles = 
+      user.role === UserRole.VETERINARIAN ? [UserRole.FARMER, UserRole.INVESTOR] :
+      user.role === UserRole.INVESTOR ? [UserRole.FARMER, UserRole.VETERINARIAN] :
+      user.role === UserRole.FARMER ? [UserRole.INVESTOR, UserRole.VETERINARIAN] :
+      [];
+
+    const alreadyReviewedTargetIds = new Set(
+      db.reviews.filter((r: Review) => r.reviewerId === user.id).map((r: Review) => r.targetUserId)
+    );
+
+    const candidates = db.users
+      .filter((u: any) => u.id !== user.id && allowedTargetRoles.includes(u.role) && u.role !== UserRole.ADMIN)
+      .map((u: any) => {
+        // Check if there is an active/completed engagement
+        let context = `${u.county ? u.county + ' County • ' : ''}Verified ${u.role}`;
+        let engagementId: string | undefined;
+
+        const partnership = db.partnerships.find((p: any) => 
+          (p.farmerId === user.id && p.investorId === u.id) || 
+          (p.investorId === user.id && p.farmerId === u.id)
+        );
+        if (partnership) {
+          context = `Cooperative Partnership (${partnership.status})`;
+          engagementId = partnership.id;
+        }
+
+        const job = db.veterinaryJobs.find((j: any) => 
+          (j.farmerId === user.id && j.assignedVetId === u.id) || 
+          (j.assignedVetId === user.id && j.farmerId === u.id)
+        );
+        if (job) {
+          context = `Veterinary Health Audit (${job.status})`;
+          engagementId = job.id;
+        }
+
+        return {
+          id: u.id,
+          name: u.name,
+          role: u.role,
+          county: u.county || 'Kenya',
+          context,
+          engagementId,
+          alreadyReviewed: alreadyReviewedTargetIds.has(u.id)
+        };
+      });
+
+    res.json({
+      allowedTargetRoles,
+      candidates
+    });
+  });
+
+  // Get eligible partners that the current user can review (backwards compatibility)
   app.get('/api/reviews/eligible-partners', authMiddleware, (req: AuthenticatedRequest, res) => {
     const user = req.user!;
     const db = getDb();
     db.reviews ||= [];
     db.partnerships ||= [];
-    db.matches ||= [];
     db.veterinaryJobs ||= [];
-    db.agreements ||= [];
+    db.users ||= [];
 
     const reviewedEngagements = new Set(db.reviews.filter((r: Review) => r.reviewerId === user.id).map((r: Review) => `${r.targetUserId}:${r.partnershipId || r.jobId || r.proposalId || ''}`));
 
     const eligiblePartners: Array<{ id: string; name: string; role: UserRole; context: string; engagementId: string; engagementType: 'partnership' | 'job' }> = [];
 
-    // Only completed engagements are reviewable; no demo or placeholder partners are returned.
     for (const p of db.partnerships) {
-      if (p.status === 'COMPLETED' && p.farmerId === user.id && !reviewedEngagements.has(`${p.investorId}:${p.id}`)) {
-        const investor = db.users.find((u: any) => u.id === p.investorId); if (investor) eligiblePartners.push({ id: investor.id, name: investor.name, role: investor.role, context: `Completed partnership (${p.id})`, engagementId: p.id, engagementType: 'partnership' });
+      if (p.farmerId === user.id && !reviewedEngagements.has(`${p.investorId}:${p.id}`)) {
+        const investor = db.users.find((u: any) => u.id === p.investorId);
+        if (investor) eligiblePartners.push({ id: investor.id, name: investor.name, role: investor.role, context: `Partnership (${p.id})`, engagementId: p.id, engagementType: 'partnership' });
       }
-      if (p.status === 'COMPLETED' && p.investorId === user.id && !reviewedEngagements.has(`${p.farmerId}:${p.id}`)) {
-        const farmer = db.users.find((u: any) => u.id === p.farmerId); if (farmer) eligiblePartners.push({ id: farmer.id, name: farmer.name, role: farmer.role, context: `Completed partnership (${p.id})`, engagementId: p.id, engagementType: 'partnership' });
+      if (p.investorId === user.id && !reviewedEngagements.has(`${p.farmerId}:${p.id}`)) {
+        const farmer = db.users.find((u: any) => u.id === p.farmerId);
+        if (farmer) eligiblePartners.push({ id: farmer.id, name: farmer.name, role: farmer.role, context: `Partnership (${p.id})`, engagementId: p.id, engagementType: 'partnership' });
       }
     }
 
-    // Check veterinary jobs
     for (const j of db.veterinaryJobs) {
-      if (j.status === 'COMPLETED' && j.assignedVetId && j.farmerId === user.id && !reviewedEngagements.has(`${j.assignedVetId}:${j.id}`)) {
-        eligiblePartners.push({ id: j.assignedVetId, name: j.assignedVetName || 'Attending Vet', role: UserRole.VETERINARIAN, context: 'Completed clinical farm visit', engagementId: j.id, engagementType: 'job' });
+      if (j.assignedVetId && j.farmerId === user.id && !reviewedEngagements.has(`${j.assignedVetId}:${j.id}`)) {
+        eligiblePartners.push({ id: j.assignedVetId, name: j.assignedVetName || 'Attending Vet', role: UserRole.VETERINARIAN, context: 'Clinical farm visit', engagementId: j.id, engagementType: 'job' });
       }
-      if (j.status === 'COMPLETED' && j.assignedVetId === user.id) {
+      if (j.assignedVetId === user.id) {
         const farmer = db.users.find((u: any) => u.id === j.farmerId);
         if (farmer && !reviewedEngagements.has(`${farmer.id}:${j.id}`)) {
-          eligiblePartners.push({ id: farmer.id, name: farmer.name, role: UserRole.FARMER, context: 'Completed farm service', engagementId: j.id, engagementType: 'job' });
+          eligiblePartners.push({ id: farmer.id, name: farmer.name, role: UserRole.FARMER, context: 'Farm clinical service', engagementId: j.id, engagementType: 'job' });
         }
       }
     }
 
-    // Deduplicate by partner id
     const unique = Array.from(new Map(eligiblePartners.map(item => [item.id, item])).values())
       .filter(item => item.id !== user.id);
 

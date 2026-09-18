@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, UserRole } from '../types';
 import { Logo } from './BrandAssets';
+import { Eye, EyeOff, Upload, CheckCircle2, FileText, ShieldCheck, KeyRound, AlertCircle } from 'lucide-react';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ interface LoginModalProps {
     role: UserRole;
     county: string;
     password: string;
+    documents?: Record<string, string>;
   }) => Promise<{ success: boolean; error?: string }>;
   isDarkMode?: boolean;
 }
@@ -31,18 +33,44 @@ export default function LoginModal({
   isDarkMode = false
 }: LoginModalProps) {
   const demoModeEnabled = import.meta.env.DEV;
-  const [tab, setTab] = useState<'quick' | 'phone' | 'register'>(demoModeEnabled ? 'quick' : 'phone');
+  const [tab, setTab] = useState<'quick' | 'phone' | 'register' | 'forgot'>(demoModeEnabled ? 'quick' : 'phone');
+  
+  // Login fields
   const [phoneInput, setPhoneInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Register fields
   const [nameInput, setNameInput] = useState('');
   const [emailInput, setEmailInput] = useState('');
   const [countyInput, setCountyInput] = useState('Nyandarua');
+  const [confirmPasswordInput, setConfirmPasswordInput] = useState('');
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [termsAgreed, setTermsAgreed] = useState(false);
   const [roleInput, setRoleInput] = useState<UserRole>(() => {
     if (targetRole && targetRole !== 'dashboard') {
       return targetRole;
     }
     return UserRole.FARMER;
   });
+
+  // Forgot password fields
+  const [forgotPhone, setForgotPhone] = useState('');
+  const [forgotNewPassword, setForgotNewPassword] = useState('');
+  const [forgotConfirmPassword, setForgotConfirmPassword] = useState('');
+  const [showForgotNewPassword, setShowForgotNewPassword] = useState(false);
+  const [showForgotConfirmPassword, setShowForgotConfirmPassword] = useState(false);
+  const [forgotSuccessMsg, setForgotSuccessMsg] = useState('');
+
+  // Document uploads for KYC (Farmers & Vets)
+  const [uploadedDocs, setUploadedDocs] = useState<{
+    passportPhoto?: { name: string; size: string; dataUrl: string };
+    idFront?: { name: string; size: string; dataUrl: string };
+    idBack?: { name: string; size: string; dataUrl: string };
+    chiefLetter?: { name: string; size: string; dataUrl: string };
+    certifications?: { name: string; size: string; dataUrl: string };
+  }>({});
+
   const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -52,9 +80,31 @@ export default function LoginModal({
     }
     if (targetRole === 'dashboard') setTab(demoModeEnabled ? 'quick' : 'phone');
     setErrorMsg('');
+    setForgotSuccessMsg('');
   }, [targetRole, isOpen]);
 
   if (!isOpen) return null;
+
+  const handleFileUpload = (
+    field: 'passportPhoto' | 'idFront' | 'idBack' | 'chiefLetter' | 'certifications',
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const sizeKB = Math.round(file.size / 1024);
+      setUploadedDocs(prev => ({
+        ...prev,
+        [field]: {
+          name: file.name,
+          size: `${sizeKB} KB`,
+          dataUrl: reader.result as string
+        }
+      }));
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleDemoLogin = async (user: User) => {
     setErrorMsg('');
@@ -89,6 +139,27 @@ export default function LoginModal({
       setErrorMsg('Name, phone number, and password are required.');
       return;
     }
+    if (passwordInput !== confirmPasswordInput) {
+      setErrorMsg('Passwords do not match. Please re-enter your password to confirm.');
+      return;
+    }
+    if (passwordInput.length < 12) {
+      setErrorMsg('Password must be at least 12 characters with uppercase, lowercase, number, and special character.');
+      return;
+    }
+    if (!termsAgreed) {
+      setErrorMsg('You must agree to the Terms and Conditions and Privacy Policy to register.');
+      return;
+    }
+
+    // Format documents map
+    const documentsMap: Record<string, string> = {};
+    if (uploadedDocs.passportPhoto) documentsMap['passport_photo'] = uploadedDocs.passportPhoto.name;
+    if (uploadedDocs.idFront) documentsMap['national_id_front'] = uploadedDocs.idFront.name;
+    if (uploadedDocs.idBack) documentsMap['national_id_back'] = uploadedDocs.idBack.name;
+    if (uploadedDocs.chiefLetter) documentsMap['chief_letter'] = uploadedDocs.chiefLetter.name;
+    if (uploadedDocs.certifications) documentsMap['certifications'] = uploadedDocs.certifications.name;
+
     setLoading(true);
     const result = await onCustomRegister({
       name: nameInput.trim(),
@@ -96,7 +167,8 @@ export default function LoginModal({
       email: emailInput.trim() || undefined,
       role: roleInput,
       county: countyInput,
-      password: passwordInput
+      password: passwordInput,
+      documents: Object.keys(documentsMap).length > 0 ? documentsMap : undefined
     });
     setLoading(false);
     if (!result.success) {
@@ -106,8 +178,51 @@ export default function LoginModal({
     }
   };
 
-  // Filter seed / quick users by role if specified
+  const handleForgotSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg('');
+    setForgotSuccessMsg('');
+    if (!forgotPhone.trim() || !forgotNewPassword) {
+      setErrorMsg('Please enter your registered phone number and new password.');
+      return;
+    }
+    if (forgotNewPassword !== forgotConfirmPassword) {
+      setErrorMsg('New passwords do not match.');
+      return;
+    }
+    if (forgotNewPassword.length < 12) {
+      setErrorMsg('Password must be at least 12 characters with uppercase, lowercase, number, and special character.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: forgotPhone.trim(), newPassword: forgotNewPassword })
+      });
+      const data = await res.json();
+      setLoading(false);
+      if (!res.ok) {
+        setErrorMsg(data.error || 'Password reset could not be completed.');
+      } else {
+        setForgotSuccessMsg('Password successfully updated! Redirecting to sign in...');
+        setPhoneInput(forgotPhone.trim());
+        setPasswordInput(forgotNewPassword);
+        setTimeout(() => {
+          setTab('phone');
+          setForgotSuccessMsg('');
+        }, 1500);
+      }
+    } catch {
+      setLoading(false);
+      setErrorMsg('Authentication server is unavailable. Please try again.');
+    }
+  };
+
   const roleDisplayTitle = () => {
+    if (tab === 'forgot') return 'Reset Your Password';
     if (targetRole === UserRole.INVESTOR) return 'Log In as Investor';
     if (targetRole === UserRole.FARMER) return 'Log In as Farmer';
     if (targetRole === UserRole.VETERINARIAN) return 'Log In as Veterinarian';
@@ -122,9 +237,9 @@ export default function LoginModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs select-none" id="login_modal_container">
-      <div className="relative w-full max-w-md bg-card-bg text-text-base rounded-3xl shadow-2xl border border-border-base overflow-hidden flex flex-col max-h-[90vh]" id="login_modal_box">
+      <div className="relative w-full max-w-lg bg-card-bg text-text-base rounded-3xl shadow-2xl border border-border-base overflow-hidden flex flex-col max-h-[90vh]" id="login_modal_box">
         {/* Header */}
-        <div className="p-6 pb-4 border-b border-border-base flex justify-between items-start">
+        <div className="p-6 pb-4 border-b border-border-base flex justify-between items-start shrink-0">
           <div className="flex items-center gap-3">
             <Logo size={36} variant="symbol" />
             <div>
@@ -146,17 +261,19 @@ export default function LoginModal({
         </div>
 
         {/* Tab switcher */}
-        <div className="p-4 pb-0">
+        <div className="p-4 pb-0 shrink-0">
           <div className="flex gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
-            {demoModeEnabled && <button
-              onClick={() => { setTab('quick'); setErrorMsg(''); }}
-              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                tab === 'quick' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400'
-              }`}
-              id="modal_tab_quick"
-            >
-              1-Click Role Login
-            </button>}
+            {demoModeEnabled && (
+              <button
+                onClick={() => { setTab('quick'); setErrorMsg(''); }}
+                className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                  tab === 'quick' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400'
+                }`}
+                id="modal_tab_quick"
+              >
+                1-Click Role Login
+              </button>
+            )}
             <button
               onClick={() => { setTab('phone'); setErrorMsg(''); }}
               className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
@@ -164,7 +281,7 @@ export default function LoginModal({
               }`}
               id="modal_tab_phone"
             >
-              Phone Login
+              Sign In
             </button>
             <button
               onClick={() => { setTab('register'); setErrorMsg(''); }}
@@ -175,168 +292,145 @@ export default function LoginModal({
             >
               Register
             </button>
+            {tab === 'forgot' && (
+              <button
+                onClick={() => { setTab('forgot'); }}
+                className="flex-1 py-1.5 text-xs font-bold rounded-lg transition-all bg-emerald-600 text-white shadow-xs"
+                id="modal_tab_forgot"
+              >
+                Reset Password
+              </button>
+            )}
           </div>
         </div>
 
         {/* Modal Body */}
-        <div className="p-6 overflow-y-auto space-y-4">
+        <div className="p-6 overflow-y-auto flex-1 space-y-4">
           {errorMsg && (
-            <div className="p-3 text-xs bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900 rounded-xl" id="login_modal_error">
-              {errorMsg}
+            <div className="p-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900 rounded-xl text-rose-700 dark:text-rose-400 text-xs flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <span>{errorMsg}</span>
             </div>
           )}
 
-          {/* TAB 1: QUICK ROLE 1-CLICK SELECT */}
-          {tab === 'quick' && (
-            <div className="space-y-3" id="quick_role_select_list">
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                {targetRole === 'dashboard' ? 'Choose a seeded demo account to explore its dashboard:' : 'Select an account profile below to instantly log in:'}
+          {forgotSuccessMsg && (
+            <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 rounded-xl text-emerald-700 dark:text-emerald-400 text-xs flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 shrink-0" />
+              <span>{forgotSuccessMsg}</span>
+            </div>
+          )}
+
+          {/* TAB 1: 1-CLICK DEMO ROLES (One per role) */}
+          {tab === 'quick' && demoModeEnabled && (
+            <div className="space-y-4">
+              <p className="text-xs text-slate-600 dark:text-slate-400">
+                Choose a seeded demo account to explore its dashboard:
               </p>
 
-              {/* Investor Profile */}
-              {(targetRole === null || targetRole === UserRole.INVESTOR || targetRole === 'dashboard') && (
-                <div className="space-y-1.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">
-                    Investor Profiles
-                  </span>
-                  {investorUsers.map(user => (
-                    <button
-                      key={user.id}
-                      onClick={() => void handleDemoLogin(user)}
-                      disabled={loading}
-                      className="w-full p-3 rounded-xl border border-purple-200 dark:border-purple-900/60 bg-purple-50/40 dark:bg-purple-950/20 hover:border-purple-500 hover:shadow-xs transition-all text-left flex items-center justify-between cursor-pointer"
-                      id={`quick_user_btn_${user.id}`}
-                    >
-                      <div>
-                        <div className="font-bold text-xs text-slate-900 dark:text-white">{user.name}</div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400">
-                          {user.county} • Budget: KES {user.investmentBudgetKES?.toLocaleString() || '1.2M'}
-                        </div>
-                      </div>
-                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-purple-600 text-white">
-                        Enter Investor
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
-
               {/* Farmer Profile */}
-              {(targetRole === null || targetRole === UserRole.FARMER || targetRole === 'dashboard') && (
-                <div className="space-y-1.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                    Farmer Profiles
+              {farmerUsers.slice(0, 1).map(user => (
+                <button
+                  key={user.id}
+                  onClick={() => void handleDemoLogin(user)}
+                  disabled={loading}
+                  className="w-full p-3.5 rounded-2xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/40 dark:bg-emerald-950/20 hover:border-emerald-500 hover:shadow-sm transition-all text-left flex items-center justify-between cursor-pointer"
+                  id={`quick_user_btn_${user.id}`}
+                >
+                  <div>
+                    <div className="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
+                      {user.name}
+                      <span className="text-[10px] bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 font-semibold px-2 py-0.5 rounded-full">Farmer</span>
+                    </div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      {user.county} County • Livestock & Crop Management
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition">
+                    Enter Farmer
                   </span>
-                  {farmerUsers.map(user => (
-                    <button
-                      key={user.id}
-                      onClick={() => void handleDemoLogin(user)}
-                      disabled={loading}
-                      className="w-full p-3 rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/40 dark:bg-emerald-950/20 hover:border-emerald-500 hover:shadow-xs transition-all text-left flex items-center justify-between cursor-pointer"
-                      id={`quick_user_btn_${user.id}`}
-                    >
-                      <div>
-                        <div className="font-bold text-xs text-slate-900 dark:text-white">{user.name}</div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400">
-                          {user.county} • {user.farmSpecialties?.join(', ') || 'Dairy Breeding'}
-                        </div>
-                      </div>
-                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-emerald-600 text-white">
-                        Enter Farmer
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
+                </button>
+              ))}
 
-              {/* Landowner Profile */}
-              {false && (
-                <div className="space-y-1.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-                    Landowner Profiles
+              {/* Investor Profile */}
+              {investorUsers.slice(0, 1).map(user => (
+                <button
+                  key={user.id}
+                  onClick={() => void handleDemoLogin(user)}
+                  disabled={loading}
+                  className="w-full p-3.5 rounded-2xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/40 dark:bg-amber-950/20 hover:border-amber-500 hover:shadow-sm transition-all text-left flex items-center justify-between cursor-pointer"
+                  id={`quick_user_btn_${user.id}`}
+                >
+                  <div>
+                    <div className="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
+                      {user.name}
+                      <span className="text-[10px] bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300 font-semibold px-2 py-0.5 rounded-full">Investor</span>
+                    </div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      {user.county} • Capital Allocation & Shared Yields
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white transition">
+                    Enter Investor
                   </span>
-                  {([] as User[]).map(user => (
-                    <button
-                      key={user.id}
-                      onClick={() => void handleDemoLogin(user)}
-                      disabled={loading}
-                      className="w-full p-3 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/40 dark:bg-amber-950/20 hover:border-amber-500 hover:shadow-xs transition-all text-left flex items-center justify-between cursor-pointer"
-                      id={`quick_user_btn_${user.id}`}
-                    >
-                      <div>
-                        <div className="font-bold text-xs text-slate-900 dark:text-white">{user.name}</div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400">
-                          {user.county} • 12 Acres Available for Lease
-                        </div>
-                      </div>
-                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-amber-600 text-white">
-                        Enter Landowner
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* Admin / Supervisor Profile */}
-              {(targetRole === null || targetRole === UserRole.ADMIN || targetRole === 'dashboard') && (
-                <div className="space-y-1.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                    System Supervisor / Dashboard Admin
-                  </span>
-                  {adminUsers.map(user => (
-                    <button
-                      key={user.id}
-                      onClick={() => void handleDemoLogin(user)}
-                      disabled={loading}
-                      className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 hover:border-slate-500 hover:shadow-xs transition-all text-left flex items-center justify-between cursor-pointer"
-                      id={`quick_user_btn_${user.id}`}
-                    >
-                      <div>
-                        <div className="font-bold text-xs text-slate-900 dark:text-white">{user.name}</div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400">
-                          {user.county} • Cooperative Supervisor
-                        </div>
-                      </div>
-                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-slate-900 dark:bg-slate-700 text-white">
-                        Enter Admin
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
+                </button>
+              ))}
 
               {/* Veterinary Profile */}
-              {(targetRole === UserRole.VETERINARIAN || targetRole === 'dashboard') && veterinarianUsers.length > 0 && (
-                <div className="space-y-1.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                    Veterinary Profiles
+              {veterinarianUsers.slice(0, 1).map(user => (
+                <button
+                  key={user.id}
+                  onClick={() => void handleDemoLogin(user)}
+                  disabled={loading}
+                  className="w-full p-3.5 rounded-2xl border border-teal-200 dark:border-teal-900/60 bg-teal-50/40 dark:bg-teal-950/20 hover:border-teal-500 hover:shadow-sm transition-all text-left flex items-center justify-between cursor-pointer"
+                  id={`quick_user_btn_${user.id}`}
+                >
+                  <div>
+                    <div className="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
+                      {user.name}
+                      <span className="text-[10px] bg-teal-100 dark:bg-teal-900/60 text-teal-700 dark:text-teal-300 font-semibold px-2 py-0.5 rounded-full">Veterinarian</span>
+                    </div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      {user.county} • Clinical Livestock Health Care
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-lg bg-teal-600 hover:bg-teal-700 text-white transition">
+                    Enter Vet
                   </span>
-                  {veterinarianUsers.map(user => (
-                    <button
-                      key={user.id}
-                      onClick={() => void handleDemoLogin(user)}
-                      disabled={loading}
-                      className="w-full p-3 rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/40 dark:bg-emerald-950/20 hover:border-emerald-500 hover:shadow-xs transition-all text-left flex items-center justify-between cursor-pointer"
-                      id={`quick_user_btn_${user.id}`}
-                    >
-                      <div>
-                        <div className="font-bold text-xs text-slate-900 dark:text-white">{user.name}</div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400">{user.county} · Veterinary field services</div>
-                      </div>
-                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-emerald-600 text-white">Enter Veterinary</span>
-                    </button>
-                  ))}
-                </div>
-              )}
+                </button>
+              ))}
+
+              {/* Admin Profile */}
+              {adminUsers.slice(0, 1).map(user => (
+                <button
+                  key={user.id}
+                  onClick={() => void handleDemoLogin(user)}
+                  disabled={loading}
+                  className="w-full p-3.5 rounded-2xl border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 hover:border-slate-500 hover:shadow-sm transition-all text-left flex items-center justify-between cursor-pointer"
+                  id={`quick_user_btn_${user.id}`}
+                >
+                  <div>
+                    <div className="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
+                      {user.name}
+                      <span className="text-[10px] bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold px-2 py-0.5 rounded-full">Admin</span>
+                    </div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      {user.county} • Regulatory Compliance & KYC Supervisor
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-lg bg-slate-900 dark:bg-slate-700 text-white transition">
+                    Enter Admin
+                  </span>
+                </button>
+              ))}
             </div>
           )}
 
-          {/* TAB 2: PHONE NUMBER LOGIN */}
+          {/* TAB 2: PHONE & PASSWORD LOGIN */}
           {tab === 'phone' && (
             <form onSubmit={handlePhoneSubmit} className="space-y-4" id="modal_phone_login_form">
               <div>
                 <label className="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1.5">
-                  Phone Number
+                  Kenyan Mobile Number
                 </label>
                 <input
                   type="text"
@@ -349,19 +443,40 @@ export default function LoginModal({
                 />
               </div>
 
-              {targetRole === 'dashboard' && (
-                <div>
-                  <label className="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1.5">Password</label>
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">
+                    Password
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => { setTab('forgot'); setForgotPhone(phoneInput); setErrorMsg(''); }}
+                    className="text-[11px] font-semibold text-emerald-600 hover:text-emerald-500 transition cursor-pointer"
+                    id="btn_forgot_password"
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
+                <div className="relative">
                   <input
-                    type="password"
-                    required
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Enter your account password"
                     value={passwordInput}
                     onChange={(e) => setPasswordInput(e.target.value)}
-                    className="w-full p-3 text-sm rounded-xl border border-border-base bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full p-3 pr-10 text-sm rounded-xl border border-border-base bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     id="modal_login_password_input"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer p-1"
+                    title={showPassword ? 'Hide Password' : 'Show Password'}
+                    id="toggle_login_password_visibility"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
                 </div>
-              )}
+              </div>
 
               <button
                 type="submit"
@@ -369,14 +484,14 @@ export default function LoginModal({
                 className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all cursor-pointer shadow-md disabled:opacity-50"
                 id="modal_login_submit_btn"
               >
-                {loading ? 'Logging in...' : 'Log In to Dashboard'}
+                {loading ? 'Signing In...' : 'Log In to Dashboard'}
               </button>
             </form>
           )}
 
           {/* TAB 3: NEW ACCOUNT REGISTRATION */}
           {tab === 'register' && (
-            <form onSubmit={handleRegisterSubmit} className="space-y-3" id="modal_register_form">
+            <form onSubmit={handleRegisterSubmit} className="space-y-3.5" id="modal_register_form">
               <div>
                 <label className="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">
                   Full Name
@@ -394,7 +509,7 @@ export default function LoginModal({
 
               <div>
                 <label className="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">
-                  Phone Number
+                  Kenyan Mobile Number
                 </label>
                 <input
                   type="text"
@@ -409,32 +524,15 @@ export default function LoginModal({
 
               <div>
                 <label className="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">
-                  Email (Optional)
+                  Email Address (Optional)
                 </label>
                 <input
                   type="email"
-                  placeholder="e.g. kevin@gmail.com"
+                  placeholder="e.g. kevin@shambaloop.ke"
                   value={emailInput}
                   onChange={(e) => setEmailInput(e.target.value)}
                   className="w-full p-2.5 text-xs rounded-xl border border-border-base bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   id="modal_reg_email"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">
-                  Password
-                </label>
-                <input
-                  type="password"
-                  required
-                  minLength={12}
-                  autoComplete="new-password"
-                  placeholder="12+ characters with upper, lower, number, symbol"
-                  value={passwordInput}
-                  onChange={(e) => setPasswordInput(e.target.value)}
-                  className="w-full p-2.5 text-xs rounded-xl border border-border-base bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  id="modal_reg_password"
                 />
               </div>
 
@@ -476,14 +574,342 @@ export default function LoginModal({
                 </div>
               </div>
 
+              {/* Password & Confirm Password */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div>
+                  <label className="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      minLength={12}
+                      autoComplete="new-password"
+                      placeholder="12+ characters"
+                      value={passwordInput}
+                      onChange={(e) => setPasswordInput(e.target.value)}
+                      className="w-full p-2.5 pr-8 text-xs rounded-xl border border-border-base bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      id="modal_reg_password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                      title={showPassword ? 'Hide Password' : 'Show Password'}
+                      id="toggle_reg_password"
+                    >
+                      {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">
+                    Confirm Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      required
+                      minLength={12}
+                      autoComplete="new-password"
+                      placeholder="Confirm password"
+                      value={confirmPasswordInput}
+                      onChange={(e) => setConfirmPasswordInput(e.target.value)}
+                      className="w-full p-2.5 pr-8 text-xs rounded-xl border border-border-base bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      id="modal_reg_confirm_password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                      title={showConfirmPassword ? 'Hide Password' : 'Show Password'}
+                      id="toggle_reg_confirm_password"
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* ROLE-SPECIFIC VERIFICATION DOCUMENT UPLOADS */}
+              {(roleInput === UserRole.FARMER || roleInput === UserRole.VETERINARIAN) && (
+                <div className="p-3.5 rounded-2xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/30 dark:bg-emerald-950/20 space-y-2.5">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-800 dark:text-emerald-300">
+                    <ShieldCheck className="h-4 w-4" />
+                    <span>
+                      {roleInput === UserRole.FARMER ? 'Farmer Verification Documents' : 'Veterinarian Accreditation Documents'}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-normal">
+                    {roleInput === UserRole.FARMER
+                      ? 'Upload your passport photo, National ID (both sides), letter from your local Chief, and relevant agricultural certifications for trust vetting.'
+                      : 'Upload your passport photo, National ID (both sides), and Kenya Veterinary Board (KVB) accreditation / degree certificates.'}
+                  </p>
+
+                  <div className="grid grid-cols-1 gap-2 pt-1">
+                    {/* Passport Photo */}
+                    <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs">
+                      <div className="flex items-center gap-2 overflow-hidden">
+                        <FileText className="h-4 w-4 text-emerald-600 shrink-0" />
+                        <div className="truncate">
+                          <span className="font-semibold block text-slate-900 dark:text-white">Passport Photo</span>
+                          <span className="text-[10px] text-slate-500">
+                            {uploadedDocs.passportPhoto ? `${uploadedDocs.passportPhoto.name} (${uploadedDocs.passportPhoto.size})` : 'Clear front-facing portrait'}
+                          </span>
+                        </div>
+                      </div>
+                      <label className="shrink-0 ml-2 px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 rounded-lg text-[10px] font-bold cursor-pointer transition">
+                        {uploadedDocs.passportPhoto ? 'Change' : 'Upload'}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => handleFileUpload('passportPhoto', e)}
+                          id="upload_passport_photo"
+                        />
+                      </label>
+                    </div>
+
+                    {/* ID Photos Both Sides */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs">
+                        <div className="truncate">
+                          <span className="font-semibold block text-slate-900 dark:text-white text-[11px]">ID Front Side</span>
+                          <span className="text-[9px] text-slate-500 truncate block">
+                            {uploadedDocs.idFront ? uploadedDocs.idFront.name : 'Photo & details'}
+                          </span>
+                        </div>
+                        <label className="shrink-0 ml-1.5 px-2 py-1 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 rounded-lg text-[10px] font-bold cursor-pointer">
+                          {uploadedDocs.idFront ? '✓' : 'Upload'}
+                          <input
+                            type="file"
+                            accept="image/*,.pdf"
+                            className="hidden"
+                            onChange={(e) => handleFileUpload('idFront', e)}
+                            id="upload_id_front"
+                          />
+                        </label>
+                      </div>
+
+                      <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs">
+                        <div className="truncate">
+                          <span className="font-semibold block text-slate-900 dark:text-white text-[11px]">ID Back Side</span>
+                          <span className="text-[9px] text-slate-500 truncate block">
+                            {uploadedDocs.idBack ? uploadedDocs.idBack.name : 'Serial & thumbprint'}
+                          </span>
+                        </div>
+                        <label className="shrink-0 ml-1.5 px-2 py-1 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 rounded-lg text-[10px] font-bold cursor-pointer">
+                          {uploadedDocs.idBack ? '✓' : 'Upload'}
+                          <input
+                            type="file"
+                            accept="image/*,.pdf"
+                            className="hidden"
+                            onChange={(e) => handleFileUpload('idBack', e)}
+                            id="upload_id_back"
+                          />
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Role Specific Requirements */}
+                    {roleInput === UserRole.FARMER ? (
+                      <>
+                        <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs">
+                          <div className="flex items-center gap-2 overflow-hidden">
+                            <FileText className="h-4 w-4 text-emerald-600 shrink-0" />
+                            <div className="truncate">
+                              <span className="font-semibold block text-slate-900 dark:text-white">Letter from Chief</span>
+                              <span className="text-[10px] text-slate-500">
+                                {uploadedDocs.chiefLetter ? `${uploadedDocs.chiefLetter.name} (${uploadedDocs.chiefLetter.size})` : 'Location chief verification letter'}
+                              </span>
+                            </div>
+                          </div>
+                          <label className="shrink-0 ml-2 px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 rounded-lg text-[10px] font-bold cursor-pointer transition">
+                            {uploadedDocs.chiefLetter ? 'Change' : 'Upload'}
+                            <input
+                              type="file"
+                              accept="image/*,.pdf"
+                              className="hidden"
+                              onChange={(e) => handleFileUpload('chiefLetter', e)}
+                              id="upload_chief_letter"
+                            />
+                          </label>
+                        </div>
+
+                        <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs">
+                          <div className="flex items-center gap-2 overflow-hidden">
+                            <FileText className="h-4 w-4 text-emerald-600 shrink-0" />
+                            <div className="truncate">
+                              <span className="font-semibold block text-slate-900 dark:text-white">Farm Certifications (Optional)</span>
+                              <span className="text-[10px] text-slate-500">
+                                {uploadedDocs.certifications ? `${uploadedDocs.certifications.name} (${uploadedDocs.certifications.size})` : 'GAP / Organic / Training certs'}
+                              </span>
+                            </div>
+                          </div>
+                          <label className="shrink-0 ml-2 px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 rounded-lg text-[10px] font-bold cursor-pointer transition">
+                            {uploadedDocs.certifications ? 'Change' : 'Upload'}
+                            <input
+                              type="file"
+                              accept="image/*,.pdf"
+                              className="hidden"
+                              onChange={(e) => handleFileUpload('certifications', e)}
+                              id="upload_farmer_cert"
+                            />
+                          </label>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs">
+                        <div className="flex items-center gap-2 overflow-hidden">
+                          <FileText className="h-4 w-4 text-teal-600 shrink-0" />
+                          <div className="truncate">
+                            <span className="font-semibold block text-slate-900 dark:text-white">KVB License / Certifications</span>
+                            <span className="text-[10px] text-slate-500">
+                              {uploadedDocs.certifications ? `${uploadedDocs.certifications.name} (${uploadedDocs.certifications.size})` : 'Kenya Veterinary Board accreditation'}
+                            </span>
+                          </div>
+                        </div>
+                        <label className="shrink-0 ml-2 px-2.5 py-1 bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/60 border border-teal-300 dark:border-teal-800 text-teal-700 dark:text-teal-300 rounded-lg text-[10px] font-bold cursor-pointer transition">
+                          {uploadedDocs.certifications ? 'Change' : 'Upload'}
+                          <input
+                            type="file"
+                            accept="image/*,.pdf"
+                            className="hidden"
+                            onChange={(e) => handleFileUpload('certifications', e)}
+                            id="upload_vet_cert"
+                          />
+                        </label>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* MANDATORY TERMS AND CONDITIONS & PRIVACY POLICY CHECKBOX */}
+              <div className="pt-1">
+                <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    required
+                    checked={termsAgreed}
+                    onChange={(e) => setTermsAgreed(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                    id="modal_reg_terms_checkbox"
+                  />
+                  <span className="text-[11px] text-slate-600 dark:text-slate-400 leading-snug">
+                    I agree to the <span className="font-semibold text-emerald-600 dark:text-emerald-400 underline">Terms and Conditions</span> and <span className="font-semibold text-emerald-600 dark:text-emerald-400 underline">Privacy Policy</span>, and consent to regulatory KYC verification of uploaded documents.
+                  </span>
+                </label>
+              </div>
+
               <button
                 type="submit"
                 disabled={loading}
                 className="w-full mt-2 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all cursor-pointer shadow-md disabled:opacity-50"
                 id="modal_reg_submit_btn"
               >
-                {loading ? 'Creating Account...' : 'Sign Up & Enter'}
+                {loading ? 'Creating Account...' : 'Complete Registration'}
               </button>
+            </form>
+          )}
+
+          {/* TAB 4: FORGOT PASSWORD */}
+          {tab === 'forgot' && (
+            <form onSubmit={handleForgotSubmit} className="space-y-4" id="modal_forgot_form">
+              <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-xl text-xs text-slate-600 dark:text-slate-400 flex items-start gap-2">
+                <KeyRound className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+                <p>
+                  Enter your registered Kenyan mobile number and choose a new secure password (minimum 12 characters).
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1.5">
+                  Registered Mobile Number
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. 0712345678"
+                  value={forgotPhone}
+                  onChange={(e) => setForgotPhone(e.target.value)}
+                  className="w-full p-3 text-sm rounded-xl border border-border-base bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  id="modal_forgot_phone_input"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1.5">
+                  New Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showForgotNewPassword ? 'text' : 'password'}
+                    required
+                    minLength={12}
+                    placeholder="12+ characters (uppercase, lowercase, number, symbol)"
+                    value={forgotNewPassword}
+                    onChange={(e) => setForgotNewPassword(e.target.value)}
+                    className="w-full p-3 pr-10 text-sm rounded-xl border border-border-base bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    id="modal_forgot_new_password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowForgotNewPassword(!showForgotNewPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer p-1"
+                    title={showForgotNewPassword ? 'Hide Password' : 'Show Password'}
+                  >
+                    {showForgotNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1.5">
+                  Confirm New Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showForgotConfirmPassword ? 'text' : 'password'}
+                    required
+                    minLength={12}
+                    placeholder="Re-enter new password"
+                    value={forgotConfirmPassword}
+                    onChange={(e) => setForgotConfirmPassword(e.target.value)}
+                    className="w-full p-3 pr-10 text-sm rounded-xl border border-border-base bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    id="modal_forgot_confirm_password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowForgotConfirmPassword(!showForgotConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer p-1"
+                    title={showForgotConfirmPassword ? 'Hide Password' : 'Show Password'}
+                  >
+                    {showForgotConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all cursor-pointer shadow-md disabled:opacity-50"
+                id="modal_forgot_submit_btn"
+              >
+                {loading ? 'Updating Password...' : 'Update Password & Sign In'}
+              </button>
+
+              <div className="text-center pt-1">
+                <button
+                  type="button"
+                  onClick={() => { setTab('phone'); setErrorMsg(''); }}
+                  className="text-xs text-slate-500 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
+                >
+                  Remembered your password? <span className="text-emerald-600 dark:text-emerald-400 font-semibold underline">Back to Sign In</span>
+                </button>
+              </div>
             </form>
           )}
         </div>

@@ -10,11 +10,12 @@ export const farmerWorkspaceApi = {
   documents: (farmId: string) => request<UploadedFile[]>(`/api/farms/${encodeURIComponent(farmId)}/documents`),
   upload: (body: Record<string, unknown>) => request<{ file: UploadedFile }>('/api/uploads', { method: 'POST', body: JSON.stringify(body) }),
   wallet: () => request<WalletSummary>('/api/wallet/summary'),
-  createDepositIntent: (amountKES: number, idempotencyKey: string) => request<{ transaction: LedgerTransaction }>('/api/wallet/deposit', { method: 'POST', body: JSON.stringify({ amountKES, idempotencyKey }) }),
+  createDepositIntent: (amountKES: number, idempotencyKey: string, purpose?: string) => request<{ transaction: LedgerTransaction }>('/api/wallet/deposit', { method: 'POST', body: JSON.stringify({ amountKES, idempotencyKey, purpose }) }),
   disputes: () => request<Dispute[]>('/api/disputes'),
   raiseDispute: (body: Record<string, unknown>) => request<{ dispute: Dispute }>('/api/disputes', { method: 'POST', body: JSON.stringify(body) }),
   reviews: () => request<{ received: Review[]; written: Review[]; averageRating: number }>('/api/reviews/my'),
   eligibleReviews: () => request<Array<{ id: string; name: string; role: string; context: string; engagementId: string; engagementType: 'partnership' | 'job' }>>('/api/reviews/eligible-partners'),
+  reviewCandidates: () => request<{ allowedTargetRoles: string[]; candidates: Array<{ id: string; name: string; role: string; county: string; context: string; engagementId?: string; engagementType?: string; alreadyReviewed: boolean }> }>('/api/reviews/candidates'),
   submitReview: (body: Record<string, unknown>) => request<{ review: Review }>('/api/reviews', { method: 'POST', body: JSON.stringify(body) }),
 };
 

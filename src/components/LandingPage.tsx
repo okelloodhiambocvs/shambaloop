@@ -138,10 +138,10 @@ export default function LandingPage({
             </p>
 
             {/* Action CTA Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-1">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-3">
               <button
                 onClick={() => onLoginClick('dashboard')}
-                className="w-full sm:w-auto px-3 py-1.5 rounded-md bg-[#1F6B3D] hover:bg-[#185530] text-white text-xs font-medium tracking-wide shadow-sm transition-all cursor-pointer"
+                className="w-full sm:w-auto px-7 py-3.5 rounded-xl bg-[#1F6B3D] hover:bg-[#185530] text-white text-base font-bold tracking-wide shadow-md transition-all cursor-pointer text-center"
                 id="hero_cta_join_free_btn"
               >
                 <span>Explore Marketplace</span>
@@ -153,7 +153,7 @@ export default function LandingPage({
                   if (el) el.scrollIntoView({ behavior: 'smooth' });
                   else onOpenDoc('How It Works');
                 }}
-                className="w-full sm:w-auto px-3 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-white text-xs font-medium tracking-wide shadow-xs transition-all cursor-pointer"
+                className="w-full sm:w-auto px-7 py-3.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white/90 dark:bg-slate-800/90 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-900 dark:text-white text-base font-bold tracking-wide shadow-sm transition-all cursor-pointer text-center"
                 id="hero_cta_how_it_works_btn"
               >
                 How It Works
@@ -219,7 +219,7 @@ export default function LandingPage({
               </div>
 
               {/* Role 3: Investor */}
-              <div className="p-6 rounded-2xl border border-border-base bg-card-bg hover:border-purple-500 transition-all space-y-3 shadow-xs">
+              <div className="p-6 rounded-2xl border border-border-base bg-card-bg hover:border-amber-500 transition-all space-y-3 shadow-xs">
                 <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
                   Shared Prosperity
                 </h3>
@@ -328,216 +328,80 @@ export default function LandingPage({
         </div>
       </section>
 
-      {/* Landing Page Short Links Section */}
-      <section className="py-12 px-4 sm:px-6 lg:px-8 border-b border-border-base bg-bg-base" id="landing_short_links_section">
-        <div className="max-w-6xl mx-auto space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-border-base gap-2">
-            <div>
-              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
-                Platform Policies & Quick Information
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Explore our cooperative documentation and legal governance guidelines.
-              </p>
+      {/* Landing page footer with 3 short links on the left of the logo and 3 short links on the right */}
+      <footer className={`mt-auto border-t py-8 transition-colors ${isDarkMode ? 'border-slate-800 bg-slate-950' : 'border-slate-200 bg-white'}`} id="landing_footer">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
+            {/* Left 3 short links: About Us, FAQs, How It Works */}
+            <div className="flex flex-wrap items-center justify-center gap-4 sm:justify-start sm:gap-6 text-xs font-semibold text-slate-600 dark:text-slate-400">
+              <button
+                type="button"
+                onClick={() => onOpenDoc('About Us')}
+                className="hover:text-emerald-600 dark:hover:text-emerald-400 transition cursor-pointer"
+                id="footer_shortlink_about_us"
+              >
+                About Us
+              </button>
+              <span className="hidden sm:inline text-slate-300 dark:text-slate-700">•</span>
+              <button
+                type="button"
+                onClick={() => onOpenDoc('FAQ')}
+                className="hover:text-emerald-600 dark:hover:text-emerald-400 transition cursor-pointer"
+                id="footer_shortlink_faq"
+              >
+                FAQs
+              </button>
+              <span className="hidden sm:inline text-slate-300 dark:text-slate-700">•</span>
+              <button
+                type="button"
+                onClick={() => onOpenDoc('How It Works')}
+                className="hover:text-emerald-600 dark:hover:text-emerald-400 transition cursor-pointer"
+                id="footer_shortlink_how_it_works"
+              >
+                How It Works
+              </button>
             </div>
-            <span className="text-[10px] font-mono text-brand-green dark:text-brand-green-300 font-bold uppercase">
-              Kenya ODPC & Cap 490 Compliant
-            </span>
+
+            {/* Center Logo */}
+            <div className="flex items-center justify-center shrink-0">
+              <Logo size={40} variant="symbol" isDarkMode={isDarkMode} />
+            </div>
+
+            {/* Right 3 short links: Terms and Conditions, Privacy Policy, Cookie Tracking */}
+            <div className="flex flex-wrap items-center justify-center gap-4 sm:justify-end sm:gap-6 text-xs font-semibold text-slate-600 dark:text-slate-400">
+              <button
+                type="button"
+                onClick={() => onOpenDoc('Terms and Conditions')}
+                className="hover:text-emerald-600 dark:hover:text-emerald-400 transition cursor-pointer"
+                id="footer_shortlink_terms_conditions"
+              >
+                Terms and Conditions
+              </button>
+              <span className="hidden sm:inline text-slate-300 dark:text-slate-700">•</span>
+              <button
+                type="button"
+                onClick={() => onOpenDoc('Privacy Notice')}
+                className="hover:text-emerald-600 dark:hover:text-emerald-400 transition cursor-pointer"
+                id="footer_shortlink_privacy_policy"
+              >
+                Privacy Policy
+              </button>
+              <span className="hidden sm:inline text-slate-300 dark:text-slate-700">•</span>
+              <button
+                type="button"
+                onClick={() => onOpenDoc('Cookies Notice')}
+                className="hover:text-emerald-600 dark:hover:text-emerald-400 transition cursor-pointer"
+                id="footer_shortlink_cookie_tracking"
+              >
+                Cookie Tracking
+              </button>
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-center">
-            {/* 1. About Us */}
-            <button
-              onClick={() => onOpenDoc('About Us')}
-              className="p-3.5 rounded-xl border border-border-base bg-card-bg hover:border-emerald-500 hover:shadow-xs transition-all text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer flex flex-col items-center justify-center gap-1"
-              id="shortlink_about_us"
-            >
-              <span>About Us</span>
-              <span className="text-[9px] font-normal text-slate-400">Our mission</span>
-            </button>
-
-            {/* 2. FAQ */}
-            <button
-              onClick={() => onOpenDoc('FAQ')}
-              className="p-3.5 rounded-xl border border-border-base bg-card-bg hover:border-emerald-500 hover:shadow-xs transition-all text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer flex flex-col items-center justify-center gap-1"
-              id="shortlink_faq"
-            >
-              <span>FAQ</span>
-              <span className="text-[9px] font-normal text-slate-400">Questions answered</span>
-            </button>
-
-            {/* 3. How It Works */}
-            <button
-              onClick={() => onOpenDoc('How It Works')}
-              className="p-3.5 rounded-xl border border-border-base bg-card-bg hover:border-emerald-500 hover:shadow-xs transition-all text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer flex flex-col items-center justify-center gap-1"
-              id="shortlink_how_it_works"
-            >
-              <span>How It Works</span>
-              <span className="text-[9px] font-normal text-slate-400">Step-by-step</span>
-            </button>
-
-            {/* 4. Terms and Conditions */}
-            <button
-              onClick={() => onOpenDoc('Terms and Conditions')}
-              className="p-3.5 rounded-xl border border-border-base bg-card-bg hover:border-emerald-500 hover:shadow-xs transition-all text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer flex flex-col items-center justify-center gap-1"
-              id="shortlink_terms_conditions"
-            >
-              <span>Terms & Conditions</span>
-              <span className="text-[9px] font-normal text-slate-400">Legal agreement</span>
-            </button>
-
-            {/* 5. Privacy Policy */}
-            <button
-              onClick={() => onOpenDoc('Privacy Notice')}
-              className="p-3.5 rounded-xl border border-border-base bg-card-bg hover:border-emerald-500 hover:shadow-xs transition-all text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer flex flex-col items-center justify-center gap-1"
-              id="shortlink_privacy_policy"
-            >
-              <span>Privacy Policy</span>
-              <span className="text-[9px] font-normal text-slate-400">Data protection</span>
-            </button>
-
-            {/* 6. Cookies and Tracking Policy */}
-            <button
-              onClick={() => onOpenDoc('Cookies Notice')}
-              className="p-3.5 rounded-xl border border-border-base bg-card-bg hover:border-emerald-500 hover:shadow-xs transition-all text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer flex flex-col items-center justify-center gap-1"
-              id="shortlink_cookies_policy"
-            >
-              <span>Cookies & Tracking</span>
-              <span className="text-[9px] font-normal text-slate-400">Cookie notice</span>
-            </button>
+          <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800/80 text-center text-[11px] text-slate-400 dark:text-slate-500">
+            © 2026 ShambaLoop. Kenya's Agricultural Asset-Sharing Marketplace · Cap 490 & ODPC Compliant
           </div>
         </div>
-      </section>
-
-      {/* Policy links remain above; the landing footer is intentionally logo-only. */}
-      <footer className={`mt-auto border-t py-6 transition-colors ${isDarkMode ? 'border-slate-800 bg-slate-950' : 'border-slate-200 bg-white'}`} id="landing_footer">
-        <div className="mx-auto flex max-w-7xl justify-center px-4 sm:px-6 lg:px-8">
-          <Logo size={36} variant="symbol" isDarkMode={isDarkMode} />
-        </div>
-        {false && <>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
-            {/* Col 1: Brand */}
-            <div className="space-y-3">
-              <Logo size={42} variant="full" isDarkMode={isDarkMode} />
-              <p className={`text-xs leading-relaxed font-sans mt-2 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-                Connecting people, land, and opportunity across Kenya. Milimani Estate, Kisumu & Lakeside Basin hubs.
-              </p>
-              <div className="flex items-center gap-2 pt-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span>4-Way Cooperative Ecosystem Live</span>
-              </div>
-            </div>
-
-            {/* Col 2: About ShambaLoop */}
-            <div className="space-y-3">
-              <h4 className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>About ShambaLoop</h4>
-              <ul className={`space-y-2 text-xs font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-                <li>
-                  <button
-                    onClick={() => onOpenDoc('About Us')}
-                    className="hover:text-emerald-600 dark:hover:text-emerald-400 transition cursor-pointer text-left"
-                  >
-                    About Us & Our Mission
-                  </button>
-                </li>
-                <li>
-                  <button
-                    onClick={() => onOpenDoc('How It Works')}
-                    className="hover:text-emerald-600 dark:hover:text-emerald-400 transition cursor-pointer text-left"
-                  >
-                    How It Works
-                  </button>
-                </li>
-                <li>
-                  <button
-                    onClick={() => onOpenDoc('FAQ')}
-                    className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline transition cursor-pointer text-left"
-                  >
-                    Frequently Asked Questions (FAQ)
-                  </button>
-                </li>
-              </ul>
-            </div>
-
-            {/* Col 3: Need Help */}
-            <div className="space-y-3">
-              <h4 className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Support & Contact</h4>
-              <ul className={`space-y-2 text-xs font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-                <li>
-                  <button
-                    onClick={() => onOpenDoc('Chat with us')}
-                    className="hover:text-emerald-600 dark:hover:text-emerald-400 transition cursor-pointer text-left"
-                  >
-                    Chat with Us
-                  </button>
-                </li>
-                <li>
-                  <button
-                    onClick={() => onOpenDoc('Help Center')}
-                    className="hover:text-emerald-600 dark:hover:text-emerald-400 transition cursor-pointer text-left"
-                  >
-                    Help Center & Disputes
-                  </button>
-                </li>
-                <li className="pt-1">
-                  <span className={`text-[10px] uppercase font-bold block ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Direct Hotline</span>
-                  <a href="tel:+254728606684" className="font-mono text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline transition">
-                    +254728606684
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            {/* Col 4: Quick Login Roles */}
-            <div className={`space-y-3 p-4 rounded-2xl border ${isDarkMode ? 'bg-slate-900/80 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-              <h4 className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
-                Member Dashboards
-              </h4>
-              <p className={`text-[11px] leading-relaxed ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                Access your dedicated agricultural workspace:
-              </p>
-              <div className="flex flex-col gap-1.5 pt-1">
-                <button
-                  onClick={() => onLoginClick(UserRole.ADMIN)}
-                  className="py-1.5 px-3 rounded-lg bg-slate-900 hover:bg-slate-800 text-amber-400 border border-slate-700 text-[11px] font-extrabold uppercase tracking-wider transition cursor-pointer text-left flex justify-between items-center"
-                >
-                  <span>1. Admin & KYC</span>
-                  <span className="text-[9px] bg-amber-400/20 text-amber-300 px-1.5 py-0.5 rounded">Supervisor</span>
-                </button>
-                <button
-                  onClick={() => onLoginClick(UserRole.FARMER)}
-                  className="py-1.5 px-3 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-white text-[11px] font-extrabold uppercase tracking-wider transition cursor-pointer text-left flex justify-between items-center"
-                >
-                  <span>2. Farmer Dashboard</span>
-                  <span className="text-[9px] bg-emerald-800 text-white px-1.5 py-0.5 rounded">FMS</span>
-                </button>
-                <button
-                  onClick={() => onLoginClick(UserRole.INVESTOR)}
-                  className="py-1.5 px-3 rounded-lg bg-purple-700 hover:bg-purple-600 text-white text-[11px] font-extrabold uppercase tracking-wider transition cursor-pointer text-left flex justify-between items-center"
-                >
-                  <span>3. Investor Dashboard</span>
-                  <span className="text-[9px] bg-purple-800 text-white px-1.5 py-0.5 rounded">Capital</span>
-                </button>
-                <button
-                  onClick={() => onLoginClick(UserRole.VETERINARIAN)}
-                  className="py-1.5 px-3 rounded-lg bg-teal-700 hover:bg-teal-600 text-white text-[11px] font-extrabold uppercase tracking-wider transition cursor-pointer text-left flex justify-between items-center"
-                >
-                  <span>4. Veterinarian Dashboard</span>
-                  <span className="text-[9px] bg-teal-800 text-white px-1.5 py-0.5 rounded">Clinical</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className={`pt-6 border-t flex flex-col sm:flex-row items-center justify-between text-[11px] gap-3 ${isDarkMode ? 'border-slate-800 text-slate-400' : 'border-slate-200 text-slate-500'}`}>
-            <p>© 2026 ShambaLoop. All Rights Reserved. Kenya's Premier Agritech Trust Ecosystem.</p>
-            <p className="font-bold uppercase tracking-wider">
-              Connecting People, Land, Livestock, and Opportunity
-            </p>
-          </div>
-        </div>
-        </>}
       </footer>
     </div>
   );

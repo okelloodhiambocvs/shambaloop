@@ -22,6 +22,11 @@ import { ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, Tool
 import { validateSchema, registrationSchema, listingSchema, leaseSchema, validatePasswordStrength } from './utils/validation';
 import { safeFetch, showToast } from './utils/apiHandler';
 import { useAuditLogger } from './hooks/useAuditLogger';
+import { HowItWorksModalContent } from './content/howItWorksContent';
+import { FAQModalContent } from './content/faqContent';
+import { TermsModalContent } from './content/termsContent';
+import { PrivacyModalContent } from './content/privacyContent';
+import { CookieModalContent } from './content/cookieContent';
 
 const CustomProductionTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
@@ -246,20 +251,7 @@ export default function App() {
         return [];
       }
     }
-    return [{
-      id: 'vet_report_1',
-      partnershipId: 'part_xyz',
-      animalTagId: 'SL-KE-FR-901',
-      veterinarianId: 'user_vet',
-      veterinarianName: 'Dr. Akinyi Otieno',
-      farmerId: 'user_2',
-      investorId: 'user_3',
-      visitType: 'Vaccination',
-      findings: 'Routine vaccination completed. Animal is active with normal rumen activity.',
-      recommendations: 'Continue current feed plan and schedule the next review in 30 days.',
-      status: 'FIT_FOR_PRODUCTION',
-      createdAt: '2026-06-12T00:00:00.000Z'
-    }];
+    return [];
   });
 
   // Login Modal state for landing page & header
@@ -451,6 +443,7 @@ export default function App() {
     role: UserRole;
     county: string;
     password: string;
+    documents?: Record<string, string>;
   }): Promise<{ success: boolean; error?: string }> => {
     try {
       const { data, error } = await safeFetch<any>('/api/auth/register', {
@@ -494,146 +487,13 @@ export default function App() {
   const [investorFarmers, setInvestorFarmers] = useState<InvestorFarmerProfile[]>([]);
   const [investorCriteria, setInvestorCriteria] = useState<InvestorCriteria | null>(null);
 
-  // Ecosystem state for 4-role dashboards
-  const [proposals, setProposals] = useState<FarmerProposal[]>([
-    {
-      id: 'prop_1',
-      farmerId: 'user_farmer_1',
-      farmerName: 'John Kamau',
-      farmerPhone: '+254712345678',
-      investorId: 'user_investor_1',
-      investorName: 'Samuel Kibet',
-      title: 'Pedigree Friesian Dairy Expansion (5 In-Calf Heifers)',
-      sector: 'Dairy',
-      farmDescription: '8 acres with permanent borehole solar pumping and 3 acres established Brachiaria & Napier fodder.',
-      capitalRequestedKES: 350000,
-      farmerContribution: '8 acres land, borehole water supply, 2 full-time herdsmen, zero-grazing unit',
-      investorSharePercent: 40,
-      farmerSharePercent: 60,
-      status: 'SUBMITTED',
-      createdAt: '2026-06-10'
-    },
-    {
-      id: 'prop_2',
-      farmerId: 'user_farmer_2',
-      farmerName: 'Wanjiku Mwangi',
-      farmerPhone: '+254723456789',
-      title: 'Commercial Greenhouse Drip Horticulture (Capsicum & Tomatoes)',
-      sector: 'Horticulture',
-      farmDescription: 'Experienced agronomist with 12 years in greenhouse production seeking capital to install 2 metallic tunnels.',
-      capitalRequestedKES: 480000,
-      farmerContribution: '4 acres fertile loam soil, water reservoir, supermarket off-take contract',
-      investorSharePercent: 45,
-      farmerSharePercent: 55,
-      status: 'UNDER_REVIEW',
-      createdAt: '2026-06-11'
-    }
-  ]);
-
-  const [farmEvents, setFarmEvents] = useState<FarmEvent[]>([
-    {
-      id: 'evt_1',
-      farmId: 'farm_kiambu_01',
-      farmerName: 'John Kamau',
-      eventType: 'CALVING_DUE',
-      title: 'Heifer SL-KE-FR-901 in Final 10-Day Gestation Window',
-      description: 'Pedigree Friesian heifer confirmed pregnant via veterinary ultrasound. Transition diet introduced.',
-      severity: 'MEDIUM',
-      actionTaken: 'Daily pelvic ligament and udder checks; Dr. Akinyi on emergency standby',
-      impactOnProduce: 'Projected +26 Liters/day milk surge upon calving',
-      date: '2026-06-12',
-      reportedBy: 'John Kamau (Farm Manager)'
-    },
-    {
-      id: 'evt_2',
-      farmId: 'farm_nyandarua_02',
-      farmerName: 'Josphat Kiprop',
-      eventType: 'DROUGHT_ALERT',
-      title: 'Delayed Short Rains Advisory in Nyandarua Plateau',
-      description: 'Sub-county meteorological department issued dry spell alert. Fodder conservation activated.',
-      severity: 'HIGH',
-      actionTaken: 'Purchased 40 bales of Rhodes grass hay and opened secondary silage bunker',
-      impactOnProduce: 'Yield maintained steady at 22L/day through preserved silage',
-      date: '2026-06-11',
-      reportedBy: 'Josphat Kiprop (Farm Manager)'
-    }
-  ]);
-
-  const [vetJobs, setVetJobs] = useState<VeterinaryJob[]>([
-    {
-      id: 'job_1',
-      farmId: 'part_xyz',
-      farmerName: 'John Kamau',
-      farmerPhone: '+254712345678',
-      location: 'Kiambu Zero-Grazing Unit, Muguga Ward',
-      animalOrCropType: 'Pedigree Friesian Heifers (SL-901 & SL-902)',
-      serviceType: 'PREGNANCY_SCAN',
-      urgency: 'NORMAL',
-      status: 'ASSIGNED',
-      assignedVetId: 'user_vet_1',
-      assignedVetName: 'Dr. Akinyi Otieno',
-      requestedDate: '2026-06-12',
-      notes: 'Day 60 post-insemination ultrasound scan and body condition score audit'
-    },
-    {
-      id: 'job_2',
-      farmId: 'farm_kisumu_03',
-      farmerName: 'Otieno Odhiambo',
-      farmerPhone: '+254734567890',
-      location: 'Riat Hills Farm, Kisumu County',
-      animalOrCropType: 'Dairy Crosses (12 Head)',
-      serviceType: 'VACCINATION',
-      urgency: 'URGENT',
-      status: 'OPEN',
-      requestedDate: '2026-06-13',
-      notes: 'County Foot and Mouth Disease (FMD) booster vaccination drive'
-    }
-  ]);
-
-  const [investorCriteriaList, setInvestorCriteriaList] = useState<InvestorCriteria[]>([
-    {
-      id: 'crit_1',
-      investorId: 'user_investor_1',
-      investorName: 'Samuel Kibet',
-      lookingFor: 'FARMER_WITH_LAND_NEEDING_CAPITAL',
-      budgetKES: 1200000,
-      preferredSectors: ['Dairy', 'Horticulture'],
-      targetCounties: ['Kiambu', 'Nyandarua', 'Nakuru'],
-      notes: 'Seeking experienced dairy farmer with verified land and reliable water source.',
-      status: 'ACTIVE',
-      createdAt: '2026-06-08'
-    }
-  ]);
-
-  const [tripartiteMatches, setTripartiteMatches] = useState<TripartiteMatch[]>([
-    {
-      id: 'match_1',
-      investorId: 'user_investor_1',
-      investorName: 'Samuel Kibet',
-      farmerId: 'user_farmer_1',
-      farmerName: 'John Kamau',
-      veterinarianId: 'user_vet_1',
-      veterinarianName: 'Dr. Akinyi Otieno',
-      sector: 'Dairy',
-      allocatedCapitalKES: 450000,
-      agreedTerms: '60% Farmer / 40% Investor split with monthly veterinary certification',
-      status: 'ACTIVE',
-      createdAt: '2026-06-09'
-    }
-  ]);
-
-  const [disputesList, setDisputesList] = useState<Dispute[]>([
-    {
-      id: 'disp_101',
-      leaseId: 'lease_abc',
-      creatorId: 'user_farmer_1',
-      creatorName: 'John Kamau',
-      reason: 'Boundary beacon adjustment dispute with neighboring parcel owner; requesting registry confirmation before second tranche disbursement.',
-      status: 'OPEN',
-      createdAt: '2026-06-10T09:30:00Z',
-      updatedAt: '2026-06-10T09:30:00Z'
-    }
-  ]);
+  // Ecosystem state for 4-role dashboards (clean functional product without pre-populated figures)
+  const [proposals, setProposals] = useState<FarmerProposal[]>([]);
+  const [farmEvents, setFarmEvents] = useState<FarmEvent[]>([]);
+  const [vetJobs, setVetJobs] = useState<VeterinaryJob[]>([]);
+  const [investorCriteriaList, setInvestorCriteriaList] = useState<InvestorCriteria[]>([]);
+  const [tripartiteMatches, setTripartiteMatches] = useState<TripartiteMatch[]>([]);
+  const [disputesList, setDisputesList] = useState<Dispute[]>([]);
 
   const handleCreateProposal = async (proposalData: { investorId?: string; title: string; sector: FarmerProposal['sector']; farmDescription: string; capitalRequestedKES: number; farmerContribution: string; investorSharePercent: number }) => {
     const { data, error } = await farmerFetch<FarmerProposal>('/api/farmer/proposals', { method: 'POST', body: JSON.stringify(proposalData) });
@@ -841,47 +701,15 @@ export default function App() {
   const openFooterDoc = (title: string) => {
     setFooterDocLoading(true);
     let content: React.ReactNode = null;
-    switch (title.toLowerCase()) {
+    switch (title.toLowerCase().trim()) {
+      case 'how it works':
+      case 'how shambaloop works':
+        content = <HowItWorksModalContent />;
+        break;
       case 'faq':
-        content = (
-          <div className="space-y-4 text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-sans">
-            <h4 className="font-extrabold text-emerald-600 dark:text-emerald-400 text-sm uppercase tracking-wider pb-1 border-b">
-              Frequently Asked Questions (FAQ) — ShambaLoop Cooperative
-            </h4>
-            <div className="space-y-3.5">
-              <div>
-                <p className="font-bold text-slate-800 dark:text-white">Q1: What exactly is ShambaLoop Kenya?</p>
-                <p className="mt-1 text-slate-600 dark:text-slate-400 font-normal">
-                  ShambaLoop is a state-of-the-art digital agricultural cooperative program based in Kisumu and the Lakeside Basin. Our mission is to eliminate structural friction for Kenyan smallholders by enabling landowners to subdivide and lease idle land plots, while allowing urban investors to fund high-pedigree dairy herds in collaboration with local farmers.
-                </p>
-              </div>
-              <div>
-                <p className="font-bold text-slate-800 dark:text-white">Q2: How does the M-Pesa Escrow process keep my funds safe?</p>
-                <p className="mt-1 text-slate-600 dark:text-slate-400 font-normal">
-                  When you initiate a lease or cattle purchase, the financial stake is locked securely inside the ShambaLoop digital trust ledger. The funds are only disbursed to the landowner or livestock provider when our official regional registry verifies original land ownership (via land registrar index check) or the cow is veterinary-logged. If verification fails, your money is immediately refunded back to your M-Pesa wallet.
-                </p>
-              </div>
-              <div>
-                <p className="font-bold text-slate-800 dark:text-white">Q3: How are daily milk yields and revenues calculated and split?</p>
-                <p className="mt-1 text-slate-600 dark:text-slate-400 font-normal">
-                  Our farmers log daily yields (such as liters of milk or egg counts) on the platform, which are integrated with national dairy benchmark pricing (e.g. 58 KES per Liter of chilled dairy yield). Payout balances are automatically recalculated according to specified partnership split percentages (for example, 60% to the farmer and 40% to the financier).
-                </p>
-              </div>
-              <div>
-                <p className="font-bold text-slate-800 dark:text-white">Q4: Who does the physical work on leased farm divisions?</p>
-                <p className="mt-1 text-slate-600 dark:text-slate-400 font-normal">
-                  Our active land leases are taken up by vetted local smallholders and farming companies. ShambaLoop's field officers supervise on-ground soil prep, water routing, and harvest execution.
-                </p>
-              </div>
-              <div>
-                <p className="font-bold text-slate-800 dark:text-white">Q5: Can I visit the physical ShambaLoop offices and hubs?</p>
-                <p className="mt-1 text-slate-600 dark:text-slate-400 font-normal">
-                  Yes, you are welcome! We are located at Milimani Estate, Riat Hills, Kisumu, Kenya. We have physical check stations across Yacht Club and Tom Mboya area.
-                </p>
-              </div>
-            </div>
-          </div>
-        );
+      case 'frequently asked questions':
+      case 'frequently asked questions (faq)':
+        content = <FAQModalContent />;
         break;
       case 'chat with us':
         content = (
@@ -1166,9 +994,9 @@ export default function App() {
                 </div>
 
                 {/* Investor */}
-                <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-850 space-y-1.5">
+                <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-855 space-y-1.5">
                   <div className="flex items-center gap-2">
-                    <span className="p-1 rounded bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 font-mono text-[10px] font-bold">ROLE 03</span>
+                    <span className="p-1 rounded bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 font-mono text-[10px] font-bold">ROLE 03</span>
                     <strong className="text-slate-900 dark:text-white text-xs font-bold font-display">3. Capital Investor & Financier</strong>
                   </div>
                   <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
@@ -1281,150 +1109,18 @@ export default function App() {
         );
         break;
       case 'terms and conditions':
+      case 'terms & conditions':
       case 'store credit terms and conditions':
-        content = (
-          <div className="space-y-3 text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-sans">
-            <h4 className="font-extrabold text-emerald-600 dark:text-emerald-400 text-sm uppercase tracking-wider pb-1 border-b">
-              Legal Terms & Cooperative Conditions
-            </h4>
-            <p>By accessing the ShambaLoop cooperative dashboard, registering land divisions, or funding agreements, you agree to comply with the Cooperative Societies Act, Cap 490 of Kenya.</p>
-            <p>Land claims must be backed by official title deeds or letter of allotment. Submissions with fraudulent numbers will be permanently banned and reported to the authorities.</p>
-          </div>
-        );
+        content = <TermsModalContent />;
         break;
       case 'privacy notice':
+      case 'privacy policy':
+        content = <PrivacyModalContent />;
+        break;
       case 'cookies notice':
-        content = (
-          <div className="space-y-5 text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-sans max-h-[65vh] pr-1">
-            <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
-              <span className="bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 px-2 py-0.5 rounded text-[9px] font-bold tracking-wider uppercase font-mono">
-                ODPC Registered • Act of 2019 Compliant
-              </span>
-              <h4 className="font-sans font-black text-slate-800 dark:text-white text-base mt-2 tracking-tight">
-                ShambaLoop Kenya Data Privacy & Protection Policy
-              </h4>
-              <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 font-mono">
-                Document Ref: SL-DPP-2026-V3 | Last Reviewed: June 15, 2026
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              <section className="space-y-1.5">
-                <h5 className="font-extrabold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider text-xs flex items-center gap-1">
-                  1. Introduction & Binding Scope
-                </h5>
-                <p>
-                  This Privacy Policy outlines how the ShambaLoop Cooperative (referred to here as "ShambaLoop", "we", or "our") handles personal, geospatial, and economic data within our trust-matching ecosystem. By accessing our platform, coordinates mapping, or cooperative ledger tools, you explicitly consent to the collection and processing of your details as detailed herein.
-                </p>
-                <p>
-                  We operate in complete, audited compliance with the <strong>Kenya Data Protection Act of 2019</strong> and the subsequent Data Protection (General) Regulations.
-                </p>
-              </section>
-
-              <section className="space-y-1.5">
-                <h5 className="font-extrabold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider text-xs flex items-center gap-1">
-                  2. Categories of Information Collected
-                </h5>
-                <p>
-                  To enable peer-to-peer trust-matching without structural friction, we store and categorize several telemetry scopes:
-                </p>
-                <ul className="list-disc pl-5 space-y-1.5 text-slate-500 dark:text-slate-400 bg-slate-50/50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800/50">
-                  <li>
-                    <strong>Identity & Credentials:</strong> Full human name, identity serial numbers, email correspondence addresses, and active Kenyan mobile phone logs used primarily for security OTP verification and virtual M-Pesa billing.
-                  </li>
-                  <li>
-                    <strong>Agronomic & Geospatial Data:</strong> Precision GPS coordinate tags of farm divisions, sub-county parcel identifiers, land registry title indicators, soil pH metrics, water accessibility indexes, and historical weather-yield records.
-                  </li>
-                  <li>
-                    <strong>Livestock Health Records:</strong> RFID ear-tag serial codes, breed types, immunization/vaccination logs, dairy yield metrics (in Liters), and supervisor health stamps.
-                  </li>
-                  <li>
-                    <strong>Financial Ledgers:</strong> Wallet transactional records, M-Pesa escrow balances, SACCO wire information, and cooperative revenue split percentages.
-                  </li>
-                </ul>
-              </section>
-
-              <section className="space-y-1.5">
-                <h5 className="font-extrabold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider text-xs flex items-center gap-1">
-                  3. Purpose & Legal Bases for Processing
-                </h5>
-                <p>
-                  We process data under the legal criteria of section 30 of the Kenya Data Protection Act:
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
-                  <div className="p-3 bg-emerald-50/30 dark:bg-emerald-950/20 rounded-xl border border-emerald-100/30">
-                    <span className="font-bold text-slate-800 dark:text-slate-200 block text-[10px] uppercase">Contractual Execution</span>
-                    <p className="mt-0.5 text-slate-500 dark:text-slate-400">Processing contact details and ledger status to enable electronic escrow lockups and land lease coordination between landowners and farmers.</p>
-                  </div>
-                  <div className="p-3 bg-emerald-50/30 dark:bg-emerald-950/20 rounded-xl border border-emerald-100/30">
-                    <span className="font-bold text-slate-800 dark:text-slate-200 block text-[10px] uppercase">Legitimate Public Interest</span>
-                    <p className="mt-0.5 text-slate-500 dark:text-slate-400">Verifying title details against official county registers to prevent boundary fraud and protect cooperative investments.</p>
-                  </div>
-                </div>
-              </section>
-
-              <section className="space-y-1.5">
-                <h5 className="font-extrabold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider text-xs flex items-center gap-1">
-                  4. Third-Party Access, Sharing & Marketing
-                </h5>
-                <p className="text-slate-800 dark:text-slate-200 font-bold">
-                  We maintain a strict NO-SHARE policy with external marketing agencies or credit scoring bureaus.
-                </p>
-                <p>
-                  Agronomic and coordinate details are exclusively shared with approved local GIS verification surveyors and visiting veterinary supervisors to confirm state conditions before escrow releases. All partner coops are bound by reciprocal NDAs.
-                </p>
-              </section>
-
-              <section className="space-y-1.5">
-                <h5 className="font-extrabold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider text-xs flex items-center gap-1">
-                  5. Cookie and Session Management Policy
-                </h5>
-                <p>
-                  We utilize standard browser local storage and tracking cookies strictly for functional purposes:
-                </p>
-                <ul className="list-decimal pl-5 space-y-1 text-slate-500 dark:text-slate-400">
-                  <li><strong>Device Profile:</strong> To preserve dark/light theme options and custom dashboard layouts.</li>
-                  <li><strong>Active Login State:</strong> Keeping your member profile active so you do not need to enter credentials repeatedly.</li>
-                  <li><strong>Network Telemetry:</strong> To cache map tiles locally and quicken rendering for low-bandwidth zones.</li>
-                </ul>
-                <p>No behavioral or targeted cross-site ad beacons are implemented inside ShambaLoop systems.</p>
-              </section>
-
-              <section className="space-y-1.5">
-                <h5 className="font-extrabold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider text-xs flex items-center gap-1">
-                  6. User Data Rights & Portability
-                </h5>
-                <p>
-                  Under the Kenyan Data Privacy framework, you hold explicit rights to:
-                </p>
-                <ul className="list-disc pl-5 space-y-1 text-slate-500 dark:text-slate-400">
-                  <li>Request a full digital export of all registered properties and financial ledgers.</li>
-                  <li>Rectify or correct inaccurate land titles or immunization dates.</li>
-                  <li>Request the complete deletion or decommissioning of your tracking coordinates (Right to Erasure).</li>
-                </ul>
-              </section>
-
-              <section className="space-y-1.5">
-                <h5 className="font-extrabold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider text-xs flex items-center gap-1">
-                  7. Infrastructure Security & Contact Info
-                </h5>
-                <p>
-                  All data is encrypted in transit and back-ends are sandboxed inside isolated containers in Frankfurt and Nairobi data zones under supervisor guidance. Physical ledger backups are processed every 24 hours at our main hub.
-                </p>
-                <p className="pt-2">
-                  For any query, right of erasure application, or to coordinate with our designated compliance supervisor:
-                </p>
-                <div className="mt-2 bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-100 dark:border-slate-800/50">
-                  <p className="font-bold text-slate-800 dark:text-white">George Odhiambo (Data Governance Supervisor)</p>
-                  <p className="text-slate-500 dark:text-slate-400">ShambaLoop Hub Contact Desk, Milimani Estate, Kisumu County, Kenya</p>
-                  <p className="text-emerald-600 dark:text-emerald-400 font-mono font-semibold mt-1">
-                    Email: privacy-compliance@shambaloop.com • Tel: +254728606684
-                  </p>
-                </div>
-              </section>
-            </div>
-          </div>
-        );
+      case 'cookie policy':
+      case 'cookies policy':
+        content = <CookieModalContent />;
         break;
       case 'flash sales':
         content = (
@@ -2483,15 +2179,37 @@ export default function App() {
             <Logo size={42} variant="full" isDarkMode={isDarkMode} />
           </button>
 
-          {/* Greeting first: "Hello, [Client Name]" then writings */}
-          <div className="flex-1 flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2.5 min-w-0 mx-2 sm:mx-4">
-            <span className="text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate">
-              Hello, <span className="text-emerald-600 dark:text-emerald-400 font-extrabold">{currentUser.name}</span>
-            </span>
-            <span className="text-xs text-slate-500 dark:text-slate-400 truncate">
-              County: <span className="font-mono text-slate-700 dark:text-slate-300 font-semibold">{currentUser.county}</span> · Role: <span className="font-semibold text-emerald-600 dark:text-emerald-400 uppercase">{currentUser.role}</span>
-            </span>
-          </div>
+          {/* Shared Dashboard and Listings navigation controls */}
+          <nav id="dashboard_view_navigation" aria-label="Dashboard and Listings navigation" className="hidden sm:flex items-center gap-1.5 mx-2">
+            <button
+              type="button"
+              onClick={() => setDashboardView('overview')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                dashboardView === 'overview'
+                  ? 'bg-emerald-700 text-white shadow-xs'
+                  : isDarkMode ? 'text-slate-300 hover:text-white hover:bg-slate-800' : 'text-slate-700 hover:text-slate-950 hover:bg-slate-100'
+              }`}
+              id="nav_btn_dashboard_overview"
+            >
+              Dashboard
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const feed = document.getElementById('listings_section') || document.getElementById('market_listings_heading');
+                if (feed) feed.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                isDarkMode ? 'text-slate-300 hover:text-white hover:bg-slate-800' : 'text-slate-700 hover:text-slate-950 hover:bg-slate-100'
+              }`}
+              id="nav_btn_market_listings"
+            >
+              Listings
+            </button>
+          </nav>
+
+          {/* Center spacer */}
+          <div className="flex-1 min-w-0 mx-2" />
 
           {/* User Controls Panel */}
           <div className="flex items-center gap-3">
@@ -2542,23 +2260,6 @@ export default function App() {
 
       {/* Main Container Area */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 lg:mt-8 space-y-8 flex-1">
-        <nav className="flex flex-col gap-3 rounded-2xl border border-border-base bg-card-bg p-3 sm:flex-row sm:items-center sm:justify-between" aria-label="Workspace views" id="dashboard_view_navigation">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">My Farm workspace</p>
-            <p className="text-xs font-semibold text-text-base">Your authenticated dashboard workspace.</p>
-          </div>
-          <div className="flex w-full items-center gap-2 sm:w-auto">
-            <button
-              type="button"
-              onClick={() => setDashboardView('overview')}
-              aria-current={dashboardView === 'overview' ? 'page' : undefined}
-              className={`flex-1 rounded-lg px-4 py-2 text-xs font-bold transition-colors sm:flex-none ${dashboardView === 'overview' ? 'bg-emerald-700 text-white' : 'bg-card-bg text-text-base border border-border-base hover:bg-slate-100 dark:hover:bg-slate-800'}`}
-            >
-              Dashboard
-            </button>
-          </div>
-        </nav>
-        
         {/* ROLE SPECIFIC DASHBOARDS WITH STANDARDIZED PERFORMANT FADE-IN */}
         {currentUser && (
           <section key={currentUser.role} className="space-y-4 animate-fade-in">
@@ -2695,7 +2396,7 @@ export default function App() {
                         <div className="space-y-2">
                           <div className="flex justify-between items-start">
                             <span className={`text-[9px] px-1.5 py-0.5 rounded uppercase font-extrabold tracking-wider ${
-                              tenant.role === UserRole.INVESTOR ? 'bg-purple-100 text-purple-800 dark:bg-purple-950/40 dark:text-purple-300' : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300'
+                              tenant.role === UserRole.INVESTOR ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300' : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300'
                             }`}>
                               {tenant.role}
                             </span>
@@ -3834,14 +3535,14 @@ export default function App() {
                                   <div className="grid grid-cols-2 gap-2 text-center pt-2 border-t border-slate-800/50">
                                     <div className="bg-slate-900/30 p-1.5 rounded border border-slate-800/60">
                                       <p className="text-[8px] text-slate-400 uppercase font-semibold">Yield Stability (SD)</p>
-                                      <p className="text-[11.5px] font-black font-mono text-violet-400">± {primarySummary.stdDev} L</p>
+                                      <p className="text-[11.5px] font-black font-mono text-emerald-400">± {primarySummary.stdDev} L</p>
                                       <span className="block text-[7.5px] text-slate-500 font-sans tracking-wide">
                                         {primarySummary.stdDev < 1.5 ? 'Highly Stable' : primarySummary.stdDev < 3.5 ? 'Moderate' : 'Volatile'}
                                       </span>
                                     </div>
                                     <div className="bg-slate-900/30 p-1.5 rounded border border-slate-800/60">
                                       <p className="text-[8px] text-slate-400 uppercase font-semibold">Variance (σ²)</p>
-                                      <p className="text-[11.5px] font-black font-mono text-fuchsia-400">{primarySummary.variance} L²</p>
+                                      <p className="text-[11.5px] font-black font-mono text-amber-400">{primarySummary.variance} L²</p>
                                       <span className="block text-[7.5px] text-slate-500 font-sans tracking-wide">Yield dispersion</span>
                                     </div>
                                   </div>
@@ -3874,14 +3575,14 @@ export default function App() {
                                   <div className="grid grid-cols-2 gap-2 text-center pt-2 border-t border-slate-800/50">
                                     <div className="bg-slate-900/30 p-1.5 rounded border border-slate-800/60">
                                       <p className="text-[8px] text-slate-400 uppercase font-semibold">Yield Stability (SD)</p>
-                                      <p className="text-[11.5px] font-black font-mono text-violet-400">± {comparisonSummary.stdDev} L</p>
+                                      <p className="text-[11.5px] font-black font-mono text-emerald-400">± {comparisonSummary.stdDev} L</p>
                                       <span className="block text-[7.5px] text-slate-500 font-sans tracking-wide">
                                         {comparisonSummary.stdDev < 1.5 ? 'Highly Stable' : comparisonSummary.stdDev < 3.5 ? 'Moderate' : 'Volatile'}
                                       </span>
                                     </div>
                                     <div className="bg-slate-900/30 p-1.5 rounded border border-slate-800/60">
                                       <p className="text-[8px] text-slate-400 uppercase font-semibold">Variance (σ²)</p>
-                                      <p className="text-[11.5px] font-black font-mono text-fuchsia-400">{comparisonSummary.variance} L²</p>
+                                      <p className="text-[11.5px] font-black font-mono text-amber-400">{comparisonSummary.variance} L²</p>
                                       <span className="block text-[7.5px] text-slate-500 font-sans tracking-wide">Yield dispersion</span>
                                     </div>
                                   </div>

@@ -8,7 +8,12 @@ import { writeAuditLog } from './audit.js';
 
 const UPLOAD_DIR = path.join(process.cwd(), 'data', 'uploads');
 const ALLOWED_MIME_TYPES: Record<string, string> = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp', 'application/pdf': '.pdf' };
-const DOCUMENT_TYPES = new Set(['VACCINATION_REPORT', 'FARM_PHOTO', 'FEED_RECEIPT', 'PAYMENT_RECEIPT', 'EVENT_DOCUMENT', 'VETERINARY_REPORT', 'INVESTMENT_VERIFICATION', 'OTHER']);
+const DOCUMENT_TYPES = new Set([
+  'VACCINATION_REPORT', 'FARM_PHOTO', 'FEED_RECEIPT', 'PAYMENT_RECEIPT', 
+  'EVENT_DOCUMENT', 'VETERINARY_REPORT', 'INVESTMENT_VERIFICATION', 'OTHER',
+  'KYC_DOCUMENT', 'CHIEF_LETTER', 'ID_FRONT', 'ID_BACK', 'PASSPORT_PHOTO', 
+  'KVB_LICENSE', 'DEGREE_CERTIFICATE', 'FARM_TITLE_DEED', 'AGRICULTURAL_CERTIFICATE'
+]);
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
@@ -54,6 +59,12 @@ export function registerUploadRoutes(app: express.Express, authMiddleware: expre
     db.uploadedFiles.push(file); saveDb();
     writeAuditLog(user.id, 'file_uploaded', `upload:${id}`, null, { farmId: file.farmId, documentType, mimeType, sizeBytes: file.sizeBytes }, req.ip || '127.0.0.1');
     res.status(201).json({ success: true, file });
+  });
+
+  app.get('/api/uploads/my', authMiddleware, (req: AuthenticatedRequest, res) => {
+    const db = getDb(), user = req.user!;
+    const myFiles = (db.uploadedFiles || []).filter((file: UploadedFile) => file.uploaderId === user.id);
+    res.json(myFiles);
   });
 
   app.get('/api/farms/:farmId/documents', authMiddleware, (req: AuthenticatedRequest, res) => {
