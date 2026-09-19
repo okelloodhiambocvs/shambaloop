@@ -1,123 +1,24 @@
 import React from 'react';
-import { Scale, FileText, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, Scale, ShieldCheck } from 'lucide-react';
 
-export const TermsModalContent: React.FC = () => {
-  return (
-    <div className="space-y-6 text-xs text-slate-700 dark:text-slate-200 leading-relaxed font-sans max-h-[75vh] overflow-y-auto pr-2" id="terms_modal_content">
-      {/* Header */}
-      <div className="border-b border-slate-200 dark:border-slate-800 pb-3">
-        <span className="bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase font-mono">
-          Statutory Framework • Cap 490 & Land Act Compliant
-        </span>
-        <h4 className="font-extrabold text-slate-900 dark:text-white text-lg mt-2 font-display">
-          Terms & Conditions of Service (ShambaLoop Kenya)
-        </h4>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          Effective Date: January 1, 2026 | Last Amended: September 2026 | Document Ref: SL-TOC-KEN-V4
-        </p>
-      </div>
+const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
+  <section className="space-y-1.5"><h5 className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider">{title}</h5><div className="space-y-1.5 text-slate-600 dark:text-slate-300 text-[11px]">{children}</div></section>
+);
 
-      {/* Preamble */}
-      <div className="p-3.5 bg-slate-50 dark:bg-slate-850 rounded-xl border border-slate-200 dark:border-slate-800 text-[11.5px] space-y-2">
-        <p className="font-semibold text-slate-900 dark:text-white">
-          PREAMBLE & BINDING JURISDICTION
-        </p>
-        <p className="text-slate-600 dark:text-slate-300">
-          These Terms and Conditions constitute a legally binding tripartite agreement between ShambaLoop Agricultural Cooperative ("ShambaLoop", "Platform", "we"), registered under the <strong>Cooperative Societies Act (Cap 490, Laws of Kenya)</strong>, and registered platform participants, including smallholder farmers ("Operators"), capital investors ("Financiers"), licensed veterinarians ("Auditors"), and land titleholders ("Landowners"). By creating an account or executing any digital transaction, you consent to and agree to be governed by these terms under the Laws of the Republic of Kenya.
-        </p>
-      </div>
-
-      {/* Section 1 */}
-      <div className="space-y-2">
-        <h5 className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider flex items-center gap-2">
-          <Scale className="w-3.5 h-3.5 text-emerald-600" />
-          1. Land Tenancy, Title Deeds & Section 12 Land Act Compliance
-        </h5>
-        <div className="space-y-1.5 text-slate-600 dark:text-slate-300 text-[11px] pl-2">
-          <p>
-            1.1. <strong>Verification of Title:</strong> All agricultural parcels submitted for leasehold or partnership must be accompanied by valid Title Deeds, Certificates of Lease, or formal Letters of Allotment issued by the Ministry of Lands and Physical Planning. ShambaLoop conducts independent checks against the national land information registry.
-          </p>
-          <p>
-            1.2. <strong>Protection from Adverse Possession:</strong> Pursuant to Section 12 of the Kenya Land Act (No. 6 of 2012), land made available through ShambaLoop is subject to explicit, time-delimited contractual tenancy. Neither the tenant farmer nor the capital partner shall acquire any proprietary right, equity interest, or prescriptive adverse possession claim over the underlying freehold or leasehold land parcel.
-          </p>
-          <p>
-            1.3. <strong>Prohibition of Subletting:</strong> Farmers are strictly prohibited from assigning, subletting, or mortgaging leased parcels to unauthorized third parties without prior written approval from the Landowner and ShambaLoop Registry Administrators.
-          </p>
-        </div>
-      </div>
-
-      {/* Section 2 */}
-      <div className="space-y-2">
-        <h5 className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider flex items-center gap-2">
-          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-          2. Capital Escrow Custody, Funding Milestones & M-Pesa Rails
-        </h5>
-        <div className="space-y-1.5 text-slate-600 dark:text-slate-300 text-[11px] pl-2">
-          <p>
-            2.1. <strong>Escrow Isolation:</strong> In accordance with Central Bank of Kenya guidelines and the National Payment System Act, all investor funds deposited for livestock, seed capital, or operational infrastructure are held in dedicated, insolvency-remote escrow custody accounts powered by Safaricom Daraja M-Pesa.
-          </p>
-          <p>
-            2.2. <strong>Phased Milestone Disbursements:</strong> Escrow capital is never released in a lump sum. Release occurs strictly in verified tranches: (a) Initial land preparation and soil treatment; (b) Procurement of ear-tagged, vaccinated heifers or certified seeds; (c) Ongoing maintenance upon positive clinical verification.
-          </p>
-          <p>
-            2.3. <strong>Refund Guarantees:</strong> In the event that a land title check reveals an active encumbrance, court caveat, or boundary dispute, or if purchased dairy livestock fails veterinary inspection within 7 days, 100% of escrowed capital is automatically refunded to the investor's registered M-Pesa account.
-          </p>
-        </div>
-      </div>
-
-      {/* Section 3 */}
-      <div className="space-y-2">
-        <h5 className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider flex items-center gap-2">
-          <FileText className="w-3.5 h-3.5 text-emerald-600" />
-          3. Farm Management Telemetry, Revenue Splits & Distributions
-        </h5>
-        <div className="space-y-1.5 text-slate-600 dark:text-slate-300 text-[11px] pl-2">
-          <p>
-            3.1. <strong>Truth in Telemetry:</strong> Farmers agree to log honest, accurate daily milk yields (in Liters) and crop harvest metrics into the Farm Management System (FMS). Falsification or willful misrepresentation of production numbers constitutes a breach of contract and grounds for immediate termination of tenancy.
-          </p>
-          <p>
-            3.2. <strong>Benchmark Milk Pricing:</strong> Dairy outputs are valued according to official Kenya Dairy Board (KDB) regional cooperative collection benchmarks (standard baseline of KES 55–62/L).
-          </p>
-          <p>
-            3.3. <strong>Automated Ledger Settlement:</strong> Production revenues are automatically distributed according to agreed contract terms (standard default: 60% to operating Farmer, 40% to capital Financier, less cooperative maintenance fee of 2.5%). Distributions settle electronically to user wallets and M-Pesa.
-          </p>
-        </div>
-      </div>
-
-      {/* Section 4 */}
-      <div className="space-y-2">
-        <h5 className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider flex items-center gap-2">
-          <AlertTriangle className="w-3.5 h-3.5 text-emerald-600" />
-          4. Veterinary Audits, Animal Welfare & Biosecurity Standards
-        </h5>
-        <div className="space-y-1.5 text-slate-600 dark:text-slate-300 text-[11px] pl-2">
-          <p>
-            4.1. <strong>KVB Mandate:</strong> Only surgeons and paravets registered with the Kenya Veterinary Board (KVB) under the Veterinary Surgeons and Veterinary Para-Professionals Act (Cap 366) are licensed to submit clinical diagnoses on ShambaLoop.
-          </p>
-          <p>
-            4.2. <strong>Mandatory 14-Day Audits:</strong> All funded dairy cattle must undergo physical inspection every 14 days. Failure by the custodian farmer to grant access to designated veterinarians shall result in an immediate operational warning and potential escrow freeze.
-          </p>
-          <p>
-            4.3. <strong>Humane Husbandry:</strong> Farmers must adhere to the Prevention of Cruelty to Animals Act (Cap 71). Animals must have access to potable water, balanced roughage/dairy meal rations, tick control dipping/spraying, and disease isolation units.
-          </p>
-        </div>
-      </div>
-
-      {/* Section 5 */}
-      <div className="space-y-2">
-        <h5 className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider flex items-center gap-2">
-          <Scale className="w-3.5 h-3.5 text-emerald-600" />
-          5. Dispute Resolution & Arbitration
-        </h5>
-        <div className="space-y-1.5 text-slate-600 dark:text-slate-300 text-[11px] pl-2">
-          <p>
-            5.1. <strong>Internal Dispute Room:</strong> Any operational or financial discrepancy must first be submitted to the ShambaLoop Dispute Arbitration Room. Payouts for the disputed contract are frozen during inquiry.
-          </p>
-          <p>
-            5.2. <strong>Binding Arbitration:</strong> Unresolved disputes shall be referred to arbitration in Kisumu or Nairobi under the Arbitration Act (No. 4 of 1995) or the Nairobi Centre for International Arbitration (NCIA), conducted by a single arbitrator appointed by the Cooperative Tribunal of Kenya.
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-};
+export const TermsModalContent: React.FC = () => (
+  <div className="space-y-6 text-xs text-slate-700 dark:text-slate-200 leading-relaxed font-sans max-h-[75vh] overflow-y-auto pr-2" id="terms_modal_content">
+    <header className="border-b border-slate-200 dark:border-slate-800 pb-3"><span className="bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase font-mono">Platform terms</span><h4 className="font-extrabold text-slate-900 dark:text-white text-lg mt-2 font-display">Terms &amp; Conditions of Service</h4><p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Effective: 19 September 2026 · Version SL-TERMS-1.0</p></header>
+    <div className="p-3.5 bg-slate-50 dark:bg-slate-850 rounded-xl border border-slate-200 dark:border-slate-800 text-[11.5px] space-y-2"><p className="font-semibold text-slate-900 dark:text-white">IMPORTANT PLATFORM NOTICE</p><p className="text-slate-600 dark:text-slate-300">These terms govern access to ShambaLoop’s digital marketplace and workspaces. They do not themselves create a lease, investment, veterinary engagement, payment-service licence, or ownership interest. Each funded opportunity must have its own approved agreement and meet applicable legal, tax, payment-provider, land, veterinary, and cooperative requirements. Obtain independent professional advice where appropriate.</p></div>
+    <Section title="1. Acceptance, eligibility, and account use"><p>By creating an account, browsing authenticated areas, submitting a listing, or using a workspace, you confirm that you can enter a binding agreement, that the information you provide is accurate and current, and that you will comply with these terms and applicable law.</p><p>You may use only your own account. Keep credentials and recovery codes confidential, promptly notify us of suspected unauthorised access, and do not share a session, impersonate another person, or circumvent role permissions. We may require identity, contact, professional, or authority-to-act evidence before enabling particular features.</p></Section>
+    <Section title="2. ShambaLoop’s role and no guaranteed outcomes"><p>ShambaLoop provides workflow, recordkeeping, communication, and marketplace tools. Unless a written agreement expressly says otherwise, ShambaLoop is not the landowner, farmer, investor, veterinary provider, bank, payment-system operator, insurer, broker, trustee, or guarantor of a participant’s performance.</p><p>Where a cooperative relationship is created, its participants must comply with the Cooperative Societies Act (Cap 490, Laws of Kenya) and all applicable governing documents. Listings, yield figures, photographs, forecasts, health records, and financial projections are supplied by participants or generated from recorded activity. They are not a promise of return, production, payment, animal health, title validity, or regulatory approval.</p></Section>
+    <Section title="3. Listings, land, livestock, and supporting evidence"><p>Anyone submitting a listing or evidence must have the authority to do so and must provide complete, lawful, non-misleading information. This includes ownership or use rights, location, herd identification, pricing, proposed revenue split, conditions, and restrictions that could materially affect another participant.</p><p>Document review, status labels, and platform checks are administrative controls only. They do not replace an official land search, survey, title review, animal-health examination, professional valuation, insurance review, or legal due diligence. Where a land arrangement proceeds, the parties must document the exact term, permitted use, possession, access, improvements, termination, and revenue arrangement. Nothing on the platform transfers land ownership or changes rights under Section 12 of the Kenya Land Act without the required formalities.</p></Section>
+    <Section title="4. Funding, payments, and Escrow Isolation"><p>Payment requests and status are processed through the configured workflow and, where applicable, the relevant provider’s terms. A display of “pending,” “funded,” “released,” or “paid” is a workflow status, not a substitute for payment-provider confirmation or a bank statement.</p><p>Before money is committed or released, participants must agree in writing to the purpose, amount, recipient, milestones, evidence standard, fees, refunds, allocation, and dispute treatment. No participant may represent that a payment is held in statutory or regulated escrow unless the actual arrangement, provider, and approvals support that representation.</p><p>We may pause a workflow where evidence is incomplete, a payment is reversed, a dispute is open, fraud or safety concerns arise, or a provider requires review. Charges, taxes, exchange costs, and mobile-money fees remain the responsibility stated in the relevant agreement or provider terms.</p></Section>
+    <Section title="5. Veterinary, welfare, and farm-operation records"><p>Veterinary users must hold and maintain all licences, registrations, insurance, and authority required for the services they offer. Farmers and owners remain responsible for animal welfare, biosecurity, movement controls, food safety, records, and urgent care. A dashboard alert is not emergency veterinary advice.</p><p>Production and clinical records must be timely, accurate, and attributable to the relevant farm, animal, event, or agreement. Do not alter, fabricate, or backdate entries, photographs, reports, invoices, or identities. We may preserve audit records, flag inconsistent entries, limit a feature, or refer suspected unlawful conduct to the relevant party or authority where required.</p></Section>
+    <Section title="6. Participant conduct and prohibited activity"><p>You must not use the service for fraud, money laundering, deception, harassment, discrimination, unlawful surveillance, infringement of intellectual-property rights, unauthorised access, malware, scraping, or any activity that harms people, animals, systems, or the marketplace.</p><p>You must not upload confidential third-party material without authority, use another participant’s data outside the purpose for which it was shared, manipulate ratings or records, solicit payments outside an agreed workflow to avoid fees or controls, or make investment, medical, legal, or title claims that you cannot substantiate.</p></Section>
+    <Section title="7. Content, data, and intellectual property"><p>You retain ownership of material you lawfully submit. You grant ShambaLoop a limited, non-exclusive licence to host, copy, process, display to authorised users, and use that material as necessary to operate, secure, improve, and document the service and related transaction workflows.</p><p>Platform software, brand assets, layouts, and non-user content remain protected by applicable intellectual-property laws. You may not copy, reverse engineer, republish, or commercially exploit them except as permitted by law or written permission. Personal-data handling is described in the Privacy Policy.</p></Section>
+    <Section title="8. Suspension, termination, and record retention"><p>You may stop using the service at any time, subject to any live agreement or legal obligation. We may restrict, suspend, or close an account where reasonably necessary to protect participants, investigate a breach, comply with law or a provider requirement, address security risk, or preserve evidence.</p><p>Closure does not remove obligations already incurred. We may retain records needed for security, dispute handling, legal obligations, accounting, audit, or legitimate operational purposes, then delete or anonymise them in line with our retention practices and applicable law.</p></Section>
+    <Section title="9. Disputes, liability, and governing law"><p>Participants should first use the platform’s dispute workflow and provide clear supporting evidence. Unless an applicable agreement says otherwise, the parties should seek good-faith resolution before formal proceedings. Urgent safety, fraud, payment-provider, or legal reporting actions are not prevented by this process.</p><p>To the extent permitted by law, ShambaLoop is not liable for indirect, consequential, special, or lost-profit losses arising from marketplace activity, third-party content, connectivity, payment providers, livestock or crop outcomes, or decisions made by participants. Nothing excludes liability that cannot lawfully be excluded. These terms are governed by the laws of Kenya.</p></Section>
+    <Section title="10. Changes and contact"><p>We may update these terms to reflect changes to the service, law, security, or operational practice. Material changes will be presented through the service or another reasonable notice channel. Continued use after the stated effective date means you accept the updated terms to the extent permitted by law.</p><p>Questions can be sent to <span className="font-semibold text-emerald-600 dark:text-emerald-400">legal@shambaloop.com</span>. Do not send passwords, payment PINs, or unredacted identity documents by ordinary email.</p></Section>
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[10.5px]"><div className="p-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40"><Scale className="w-4 h-4 text-emerald-600 mb-1" /><strong>Written agreements matter</strong><p>Opportunity-specific terms control the transaction.</p></div><div className="p-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40"><ShieldCheck className="w-4 h-4 text-emerald-600 mb-1" /><strong>Verify before acting</strong><p>Platform review does not replace professional due diligence.</p></div><div className="p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/40"><AlertTriangle className="w-4 h-4 text-amber-600 mb-1" /><strong>Report concerns</strong><p>Raise fraud, safety, or record-integrity concerns promptly.</p></div></div>
+  </div>
+);
