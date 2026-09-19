@@ -13,7 +13,8 @@
     "test:watch": "vitest",
     "admin:create": "tsx scripts/create-admin.ts",
     "check": "npm run lint && npm test && npm run build && npm audit",
-    "test:smoke": "node scripts/smoke.mjs"
+    "test:smoke": "node scripts/smoke.mjs",
+    "backup:data": "node scripts/backup-data.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
