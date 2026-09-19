@@ -9,7 +9,7 @@ export function availableWalletBalance(userId: string, role: UserRole, transacti
     if (transaction.status !== 'COMPLETED') return balance;
     if (role === UserRole.INVESTOR) {
       if (owner && ['DEPOSIT', 'RETURN'].includes(transaction.type)) return balance + transaction.amountKES;
-      if ((owner || transaction.payerId === userId) && ['RELEASE', 'ALLOCATION'].includes(transaction.type)) return balance - transaction.amountKES;
+      if ((owner || transaction.payerId === userId || transaction.fundingSourceUserId === userId) && ['RELEASE', 'ALLOCATION'].includes(transaction.type)) return balance - transaction.amountKES;
     } else if (recipient && transaction.category === 'PERSONAL_EARNINGS' && ['DEPOSIT', 'RETURN', 'RELEASE'].includes(transaction.type)) return balance + transaction.amountKES;
     return balance;
   }, 0));

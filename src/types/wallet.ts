@@ -8,6 +8,8 @@ export interface MpesaTransaction {
   purpose: string;
   status: 'SUCCESS' | 'FAILED' | 'PENDING';
   timestamp: string;
+  idempotencyKey?: string;
+  stateHistory?: Array<{ from: 'SUCCESS' | 'FAILED' | 'PENDING' | null; to: 'SUCCESS' | 'FAILED' | 'PENDING'; at: string; source: 'CLIENT' | 'PROVIDER_QUERY' | 'PROVIDER_CALLBACK' }>;
 }
 
 export interface LedgerTransaction {
@@ -25,11 +27,14 @@ export interface LedgerTransaction {
   purpose?: string;
   payerId?: string;
   payerName?: string;
+  /** Investor whose escrow capital funds a treasury-controlled release. */
+  fundingSourceUserId?: string;
   payeeId?: string;
   payeeName?: string;
   paymentProviderRef?: string;
   idempotencyKey?: string;
   timestamp: string;
+  stateHistory?: Array<{ from: LedgerTransaction['status'] | null; to: LedgerTransaction['status']; at: string; source: 'CLIENT' | 'PROVIDER_QUERY' | 'PROVIDER_CALLBACK' | 'SYSTEM' }>;
 }
 
 export interface WalletSummary {

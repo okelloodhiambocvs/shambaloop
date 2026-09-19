@@ -6,6 +6,43 @@ import { UserRole, LedgerTransaction, WalletSummary, MpesaAccountLink } from '..
 import { AuthenticatedRequest } from './types.js';
 import { writeAuditLog } from './audit.js';
 
+const TREASURY_ID = 'SHAMBALOOP_TREASURY';
+const completed = (transaction: LedgerTransaction) => transaction.status === 'COMPLETED';
+
+function buildTreasurySnapshot(db: any) {
+  const transactions: LedgerTransaction[] = db.ledgerTransactions || [];
+  const treasuryBalanceKES = transactions.reduce((balance, transaction) => {
+    if (!completed(transaction)) return balance;
+    if (transaction.type === 'DEPOSIT') return balance + transaction.amountKES;
+    if (['RELEASE', 'RETURN', 'PAYOUT', 'EXPENSE'].includes(transaction.type)) return balance - transaction.amountKES;
+    return balance;
+  }, 0);
+  const participants = (db.users || [])
+    .filter((user: any) => [UserRole.INVESTOR, UserRole.FARMER, UserRole.VETERINARIAN].includes(user.role))
+    .map((user: any) => {
+      const completedTransactions = transactions.filter((transaction) => completed(transaction));
+      const incomingKES = completedTransactions.filter((transaction) => (transaction.payeeId === user.id && ['RELEASE', 'RETURN'].includes(transaction.type)) || (transaction.userId === user.id && transaction.type === 'RETURN')).reduce((sum, transaction) => sum + transaction.amountKES, 0);
+      const outgoingKES = completedTransactions.filter((transaction) => (transaction.userId === user.id && ['DEPOSIT', 'PAYOUT'].includes(transaction.type)) || transaction.payerId === user.id || transaction.fundingSourceUserId === user.id).reduce((sum, transaction) => sum + transaction.amountKES, 0);
+      return {
+        userId: user.id,
+        name: user.name,
+        role: user.role,
+        availableBalanceKES: availableWalletBalance(user.id, user.role, transactions),
+        incomingKES,
+        outgoingKES,
+        transactionCount: transactions.filter((transaction) => transaction.userId === user.id || transaction.payeeId === user.id || transaction.payerId === user.id || transaction.fundingSourceUserId === user.id).length
+      };
+    });
+  const pendingPayouts = transactions.filter((transaction) => transaction.type === 'PAYOUT' && ['PENDING', 'PROCESSING'].includes(transaction.status));
+  return {
+    treasuryBalanceKES: Math.max(0, treasuryBalanceKES),
+    pendingPayoutKES: pendingPayouts.reduce((sum, transaction) => sum + transaction.amountKES, 0),
+    participants,
+    pendingPayouts: pendingPayouts.sort((a, b) => b.timestamp.localeCompare(a.timestamp)).slice(0, 100),
+    recentTransactions: transactions.slice().sort((a, b) => b.timestamp.localeCompare(a.timestamp)).slice(0, 100)
+  };
+}
+
 export function registerWalletRoutes(
   app: express.Express,
   authMiddleware: express.RequestHandler,
@@ -78,7 +115,7 @@ export function registerWalletRoutes(
             } else if (t.type === 'ALLOCATION') {
               committedFundsKES += t.amountKES;
               availableBalanceKES -= t.amountKES;
-            } else if (t.type === 'RELEASE') {
+            } else if (t.type === 'RELEASE' && (t.payerId === user.id || t.fundingSourceUserId === user.id)) {
               releasedFundsKES += t.amountKES;
               farmExpensesKES += t.amountKES;
             } else if (t.type === 'RETURN') {
@@ -141,7 +178,8 @@ export function registerWalletRoutes(
     if (existing) return res.json({ success: true, transaction: existing });
     try {
       const result = await initiateStk(phone, amount, 'ShambaLoop');
-      const transaction = { id: crypto.randomUUID(), reference: result.CheckoutRequestID, userId: user.id, amountKES: amount, currency: 'KES', type: 'DEPOSIT', category: user.role === UserRole.INVESTOR ? 'INVESTMENT_CAPITAL' : 'PERSONAL_EARNINGS', status: 'PENDING', description: 'Awaiting M-Pesa confirmation', phoneNumber: phone, payerId: user.id, paymentProviderRef: result.CheckoutRequestID, idempotencyKey: key, timestamp: new Date().toISOString(), purpose: String(req.body.purpose || 'WALLET_DEPOSIT').slice(0, 100) };
+      const timestamp = new Date().toISOString();
+      const transaction = { id: crypto.randomUUID(), reference: result.CheckoutRequestID, userId: user.id, amountKES: amount, currency: 'KES', type: 'DEPOSIT', category: user.role === UserRole.INVESTOR ? 'INVESTMENT_CAPITAL' : 'PERSONAL_EARNINGS', status: 'PENDING', description: 'Awaiting M-Pesa confirmation into ShambaLoop treasury', phoneNumber: phone, payerId: user.id, payeeId: TREASURY_ID, payeeName: 'ShambaLoop Treasury', paymentProviderRef: result.CheckoutRequestID, idempotencyKey: key, stateHistory: [{ from: null, to: 'PENDING', at: timestamp, source: 'CLIENT' }], timestamp, purpose: String(req.body.purpose || 'WALLET_DEPOSIT').slice(0, 100) };
       db.ledgerTransactions.push(transaction); saveDb();
       return res.status(201).json({ success: true, transaction, message: 'Approve the payment on your phone, then refresh its status.' });
     } catch (error) { return res.status(503).json({ error: (error as Error).message }); }
@@ -153,8 +191,12 @@ export function registerWalletRoutes(
     if (transaction.status !== 'PENDING') return res.json({ transaction });
     try {
       const result = await queryStk(transaction.paymentProviderRef);
-      if (String(result.ResultCode) === '0') transaction.status = 'COMPLETED';
-      else if (result.ResultCode !== undefined) transaction.status = 'FAILED';
+      const nextState = String(result.ResultCode) === '0' ? 'COMPLETED' : result.ResultCode !== undefined ? 'FAILED' : transaction.status;
+      if (nextState !== transaction.status) {
+        const previous = transaction.status;
+        transaction.status = nextState;
+        transaction.stateHistory = [...(transaction.stateHistory || []), { from: previous, to: nextState, at: new Date().toISOString(), source: 'PROVIDER_QUERY' }];
+      }
       if (transaction.status === 'COMPLETED') { const user = db.users.find((u: any) => u.id === req.user!.id); if (user?.mpesaLink && normalizeMpesaPhone(user.mpesaLink.phoneNumber) === transaction.phoneNumber) { user.mpesaLink.status = 'CONNECTED'; user.mpesaLink.verified = true; user.mpesaLink.darajaStatus = 'Payment confirmed by Daraja'; } }
       saveDb(); res.json({ transaction });
     } catch (error) { res.status(503).json({ error: (error as Error).message }); }
@@ -172,9 +214,8 @@ export function registerWalletRoutes(
       return res.status(400).json({ error: 'Valid farmerId and amountKES are required.' });
     }
 
-    // Only investor or admin can authorize milestone fund release
-    if (user.role !== UserRole.INVESTOR && user.role !== UserRole.ADMIN) {
-      return res.status(403).json({ error: 'Only authorized investors or administrators can authorize milestone fund release.' });
+    if (user.role !== UserRole.INVESTOR) {
+      return res.status(403).json({ error: 'Investor releases must be funded from the investor’s confirmed treasury balance.' });
     }
 
     const db = getDb();
@@ -200,9 +241,7 @@ export function registerWalletRoutes(
     if (user.role === UserRole.INVESTOR && !db.partnerships?.some((p: any) => p.investorId === user.id && p.farmerId === farmerId && (!farmId || p.id === farmId || `farm_${p.farmerId}` === farmId))) {
       return res.status(403).json({ error: 'You may only release funds to a farmer in your own active collaboration.' });
     }
-    const confirmedCapital = db.ledgerTransactions.filter((t: LedgerTransaction) => t.userId === user.id && t.status === 'COMPLETED' && (t.type === 'DEPOSIT' || t.type === 'RETURN')).reduce((sum: number, t: LedgerTransaction) => sum + t.amountKES, 0);
-    const previouslyReleased = db.ledgerTransactions.filter((t: LedgerTransaction) => t.payerId === user.id && t.status === 'COMPLETED' && t.type === 'RELEASE').reduce((sum: number, t: LedgerTransaction) => sum + t.amountKES, 0);
-    if (user.role === UserRole.INVESTOR && amount > availableWalletBalance(user.id, user.role, db.ledgerTransactions)) return res.status(409).json({ error: 'Insufficient confirmed wallet funds for this release.' });
+    if (amount > availableWalletBalance(user.id, user.role, db.ledgerTransactions)) return res.status(409).json({ error: 'Insufficient confirmed wallet funds for this release.' });
 
     const ref = `REL_${Date.now()}_${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
     const txn: LedgerTransaction = {
@@ -217,8 +256,9 @@ export function registerWalletRoutes(
       relatedEntityId: milestoneId,
       relatedEntityType: 'MILESTONE',
       description: note || `Controlled milestone release for ${milestoneId || 'Farm Activity'}`,
-      payerId: user.id,
-      payerName: user.name,
+      payerId: TREASURY_ID,
+      payerName: 'ShambaLoop Treasury',
+      fundingSourceUserId: user.id,
       payeeId: targetFarmer.id,
       payeeName: targetFarmer.name,
       idempotencyKey: idempotencyKey || ref,
@@ -280,8 +320,8 @@ export function registerWalletRoutes(
       category: 'PERSONAL_EARNINGS',
       status: isCompleted ? 'COMPLETED' : 'PENDING',
       description: `M-Pesa B2C Withdrawal (${mpesaReceipt}) to ${phoneNumber || user.phone}`,
-      payerId: 'SHAMBALOOP_LEDGER',
-      payerName: 'ShambaLoop Escrow & Ledger',
+      payerId: TREASURY_ID,
+      payerName: 'ShambaLoop Treasury',
       payeeId: user.id,
       payeeName: user.name,
       paymentProviderRef: mpesaReceipt,
@@ -322,6 +362,78 @@ export function registerWalletRoutes(
       transaction: txn,
       mpesaReceipt
     });
+  });
+
+  /** Admin-only read model: the treasury is derived from the immutable participant ledger. */
+  app.get('/api/admin/treasury', authMiddleware, (req: AuthenticatedRequest, res) => {
+    if (req.user?.role !== UserRole.ADMIN) return res.status(403).json({ error: 'Only administrators may view the cooperative treasury.' });
+    const db = getDb();
+    db.ledgerTransactions ||= [];
+    res.json(buildTreasurySnapshot(db));
+  });
+
+  /** Releases confirmed investor capital from the cooperative treasury to an eligible farmer or veterinarian. */
+  app.post('/api/admin/treasury/releases', authMiddleware, (req: AuthenticatedRequest, res) => {
+    const admin = req.user;
+    if (!admin || admin.role !== UserRole.ADMIN) return res.status(403).json({ error: 'Only administrators may authorize treasury releases.' });
+    const { fundingSourceUserId, recipientId, amountKES, relatedEntityId, note, idempotencyKey } = req.body;
+    const amount = Number(amountKES);
+    if (typeof fundingSourceUserId !== 'string' || typeof recipientId !== 'string' || !Number.isSafeInteger(amount) || amount <= 0) {
+      return res.status(400).json({ error: 'An investor funding source, eligible recipient, and whole positive KES amount are required.' });
+    }
+    const db = getDb();
+    db.ledgerTransactions ||= [];
+    const investor = db.users?.find((item: any) => item.id === fundingSourceUserId && item.role === UserRole.INVESTOR);
+    const recipient = db.users?.find((item: any) => item.id === recipientId && [UserRole.FARMER, UserRole.VETERINARIAN].includes(item.role));
+    if (!investor || !recipient) return res.status(404).json({ error: 'Select a valid investor and a farmer or veterinarian recipient.' });
+    const linkedPartnership = (db.partnerships || []).find((partnership: any) => partnership.investorId === investor.id && (recipient.role === UserRole.FARMER ? partnership.farmerId === recipient.id : true));
+    const linkedVetJob = recipient.role === UserRole.VETERINARIAN && (db.veterinaryJobs || []).some((job: any) => job.assignedVetId === recipient.id && (linkedPartnership ? [linkedPartnership.id, `farm_${linkedPartnership.farmerId}`].includes(job.farmId) : true));
+    if (!linkedPartnership || (recipient.role === UserRole.VETERINARIAN && !linkedVetJob)) return res.status(403).json({ error: 'Treasury releases require an active investor-funded partnership and, for veterinary payments, an assigned related job.' });
+    if (amount > availableWalletBalance(investor.id, investor.role, db.ledgerTransactions)) return res.status(409).json({ error: 'The selected investor does not have enough confirmed capital held in treasury.' });
+    const key = typeof idempotencyKey === 'string' && idempotencyKey.length ? idempotencyKey.slice(0, 128) : `admin_release_${crypto.randomUUID()}`;
+    const existing = db.ledgerTransactions.find((transaction: LedgerTransaction) => transaction.idempotencyKey === key);
+    if (existing) return res.json({ success: true, transaction: existing });
+    const timestamp = new Date().toISOString();
+    const transaction: LedgerTransaction = {
+      id: `txn_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`,
+      reference: `TREL_${Date.now()}_${crypto.randomBytes(4).toString('hex').toUpperCase()}`,
+      userId: recipient.id,
+      amountKES: amount,
+      currency: 'KES',
+      type: 'RELEASE',
+      category: recipient.role === UserRole.FARMER ? 'OPERATIONAL' : 'PERSONAL_EARNINGS',
+      status: 'COMPLETED',
+      relatedEntityId: typeof relatedEntityId === 'string' ? relatedEntityId.slice(0, 128) : linkedPartnership.id,
+      relatedEntityType: 'COLLABORATION',
+      description: typeof note === 'string' && note.trim() ? note.trim().slice(0, 500) : `Treasury-controlled release to ${recipient.name}`,
+      payerId: TREASURY_ID,
+      payerName: 'ShambaLoop Treasury',
+      fundingSourceUserId: investor.id,
+      payeeId: recipient.id,
+      payeeName: recipient.name,
+      idempotencyKey: key,
+      timestamp,
+      stateHistory: [{ from: null, to: 'COMPLETED', at: timestamp, source: 'SYSTEM' }]
+    };
+    db.ledgerTransactions.push(transaction);
+    saveDb();
+    writeAuditLog(admin.id, 'treasury_release_authorized', `transaction:${transaction.id}`, null, { fundingSourceUserId: investor.id, recipientId: recipient.id, amountKES: amount }, req.ip || '127.0.0.1');
+    res.status(201).json({ success: true, transaction, message: 'Treasury release recorded against the selected investor’s confirmed capital.' });
+  });
+
+  /** A queued payout requires admin approval before the payment provider may settle it. */
+  app.post('/api/admin/treasury/payouts/:id/approve', authMiddleware, (req: AuthenticatedRequest, res) => {
+    const admin = req.user;
+    if (!admin || admin.role !== UserRole.ADMIN) return res.status(403).json({ error: 'Only administrators may approve payout requests.' });
+    const db = getDb();
+    const transaction = (db.ledgerTransactions || []).find((item: LedgerTransaction) => item.id === req.params.id && item.type === 'PAYOUT');
+    if (!transaction) return res.status(404).json({ error: 'Payout request not found.' });
+    if (transaction.status !== 'PENDING') return res.status(409).json({ error: 'Only pending payout requests can be approved.' });
+    transaction.status = 'PROCESSING';
+    transaction.stateHistory = [...(transaction.stateHistory || []), { from: 'PENDING', to: 'PROCESSING', at: new Date().toISOString(), source: 'SYSTEM' }];
+    saveDb();
+    writeAuditLog(admin.id, 'treasury_payout_approved', `transaction:${transaction.id}`, null, { amountKES: transaction.amountKES, payeeId: transaction.payeeId }, req.ip || '127.0.0.1');
+    res.json({ success: true, transaction, message: 'Payout approved and queued for payment-provider settlement.' });
   });
 
   // SAFARICOM DARAJA M-PESA ACCOUNT LINKING
