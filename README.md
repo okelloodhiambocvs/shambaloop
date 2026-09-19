@@ -57,7 +57,7 @@ An enterprise agricultural trust, cooperative asset-sharing, and fintech digitiz
 │   │   │   ├── AboutApproach.tsx          # Section 12 & KVB statutory approach
 │   │   │   ├── AboutSolution.tsx          # 3 numbered solution pillars
 │   │   │   ├── AboutNavbar.tsx            # Header navigation & portal triggers
-│   │   │   ├── AboutFooter.tsx            # Regional agricultural hubs & contact desk
+│   │   │   ├── AboutFooter.tsx            # Shared contact desk and policy links
 │   │   │   └── types.ts                   # Component interface contracts
 │   │   ├── howItWorks/                    # Step-by-step pathway guides
 │   │   │   ├── HowItWorksPage.tsx         # Unified container with navbar and footer
@@ -100,6 +100,7 @@ An enterprise agricultural trust, cooperative asset-sharing, and fintech digitiz
 │   ├── audit.ts                           # Cryptographic HMAC audit log
 │   ├── authExtensionService.ts            # MFA, KYC, and document storage
 │   ├── cryptoUtils.ts                     # Password hashing & key derivation
+│   ├── developmentSeedAccounts.ts         # Development/test-only role credentials
 │   ├── daraja.ts                          # Safaricom M-Pesa gateway
 │   ├── disputesService.ts                 # Dispute room ledger
 │   ├── farmRecordsService.ts              # Daily farm telemetry
@@ -161,6 +162,29 @@ ADMIN_PHONE="254712345678" \
 ADMIN_PASSWORD="YourStrongPassword123!" \
 npm run admin:create
 ```
+
+### Development Seed Accounts
+
+`npm run dev` creates or refreshes these accounts only when the server is not
+running with `NODE_ENV=production`. They are intended for local development and
+test data; never deploy these credentials or their underlying fixture records.
+Set `ENABLE_DEV_SEED_ACCOUNTS=false` to disable them locally.
+
+| Role | Mobile number | Password |
+| --- | --- | --- |
+| Administrator | `0700000000` | `ShambaLoopAdmin#2026` |
+| Investor | `0733444555` | `ShambaLoopInvestor#2026` |
+| Farmer | `0722111222` | `ShambaLoopFarmer#2026` |
+| Veterinarian | `0744555666` | `ShambaLoopVet#2026` |
+
+### Production operations
+
+Run `npm run backup:data` on a scheduled, encrypted backup target. The command
+copies `DATA_DIR` to `BACKUP_DIR` (or `./backups`) and exits non-zero on failure.
+The GitHub Actions workflow verifies linting, tests, production builds, and the
+smoke check on both Windows and Linux. `DATABASE_URL` is reserved for the
+PostgreSQL migration; do not set it in production until the database rollout is
+complete.
 
 ---
 

@@ -11,3 +11,4 @@ data/uploads/
 data/db.json
 data/audit_log.json
 data/temporary_passwords.json
+backups/
