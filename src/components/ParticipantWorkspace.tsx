@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import type { LivestockPartnership, User, UploadedFile, Review, FarmRecord } from '../types';
+import type { LivestockPartnership, User, UploadedFile, Review, FarmRecord, VeterinaryJob } from '../types';
 import { sharedWorkspaceApi } from '../services/sharedWorkspaceService';
 import ReviewModal from './ReviewModal';
 import { FmsTab } from './workspace/FmsTab';
@@ -12,10 +12,12 @@ type Mode = 'fms' | 'wallet' | 'disputes' | 'reviews';
 export default function ParticipantWorkspace({
   user,
   partnerships,
+  veterinaryJobs,
   mode,
 }: {
   user: User;
   partnerships: LivestockPartnership[];
+  veterinaryJobs?: VeterinaryJob[];
   mode: Mode;
 }) {
   const [records, setRecords] = useState<FarmRecord[]>([]);
@@ -92,6 +94,7 @@ export default function ParticipantWorkspace({
         <DisputesTab
           user={user}
           partnerships={partnerships}
+          veterinaryJobs={veterinaryJobs}
           disputes={disputes}
           busy={busy}
           act={act}
