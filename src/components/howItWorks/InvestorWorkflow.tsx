@@ -43,10 +43,10 @@ export const InvestorWorkflow: React.FC<InvestorWorkflowProps> = ({ onLoginClick
               <div className="text-xs font-extrabold uppercase tracking-widest text-amber-700 dark:text-amber-400 mb-1">
                 For Investors & Diaspora Backers
               </div>
-              <h2 className="text-2xl sm:text-3xl font-black font-display text-slate-900 dark:text-white">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-black font-display text-slate-900 dark:text-white">
                 Back Kenyan Agriculture with Clinical Escrow Governance
               </h2>
-              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-2">
+              <p className="text-sm sm:text-base md:text-lg text-slate-600 dark:text-slate-400 mt-2 leading-relaxed">
                 Participate in verified real-economy agriculture without the risk of ghost farms or unmonitored capital leakage.
               </p>
             </div>
@@ -65,10 +65,10 @@ export const InvestorWorkflow: React.FC<InvestorWorkflowProps> = ({ onLoginClick
                       </div>
                       <span className="text-xs font-mono font-black text-slate-400">{item.step}</span>
                     </div>
-                    <div className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                    <div className="text-base sm:text-lg md:text-xl font-bold text-slate-900 dark:text-slate-100">
                       {item.title}
                     </div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                    <p className="text-sm sm:text-base md:text-lg text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
                       {item.desc}
                     </p>
                   </div>
@@ -84,7 +84,7 @@ export const InvestorWorkflow: React.FC<InvestorWorkflowProps> = ({ onLoginClick
               >
                 Start Backing Verified Farms
               </button>
-              <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+              <div className="flex items-center gap-1.5 text-sm sm:text-base md:text-lg text-slate-500 dark:text-slate-400">
                 <CheckCircle2 className="w-3.5 h-3.5 text-amber-600" />
                 <span>100% Escrow backed with live clinical audits</span>
               </div>
@@ -103,8 +103,8 @@ export const InvestorWorkflow: React.FC<InvestorWorkflowProps> = ({ onLoginClick
                 <span className="px-2.5 py-1 bg-amber-600 text-[10px] font-extrabold uppercase tracking-wider rounded-md w-fit mb-2">
                   Investor Safeguards
                 </span>
-                <h3 className="text-xl font-bold font-display">Verifiable Biological Assets</h3>
-                <p className="text-xs text-slate-200 mt-1">
+                <h3 className="text-xl sm:text-2xl font-bold font-display">Verifiable Biological Assets</h3>
+                <p className="text-sm sm:text-base md:text-lg text-slate-200 mt-1">
                   Tag-tracked Friesian & Ayrshire dairy cows inspected weekly by Kenya Veterinary Board registered officers.
                 </p>
               </div>

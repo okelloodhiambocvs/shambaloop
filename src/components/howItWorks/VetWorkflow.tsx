@@ -50,8 +50,8 @@ export const VetWorkflow: React.FC<VetWorkflowProps> = ({ onLoginClick }) => {
                 <span className="px-2.5 py-1 bg-emerald-700 text-[10px] font-extrabold uppercase tracking-wider rounded-md w-fit mb-2">
                   Clinical Oversight
                 </span>
-                <h3 className="text-xl font-bold font-display">Independent Clinical Governance</h3>
-                <p className="text-xs text-slate-200 mt-1">
+                <h3 className="text-xl sm:text-2xl font-bold font-display">Independent Clinical Governance</h3>
+                <p className="text-sm sm:text-base md:text-lg text-slate-200 mt-1">
                   Veterinarians act as independent neutral guardians of animal welfare and biological asset security.
                 </p>
               </div>
@@ -63,10 +63,10 @@ export const VetWorkflow: React.FC<VetWorkflowProps> = ({ onLoginClick }) => {
               <div className="text-xs font-extrabold uppercase tracking-widest text-emerald-700 dark:text-emerald-400 mb-1">
                 For Veterinary Officers & Field Specialists
               </div>
-              <h2 className="text-2xl sm:text-3xl font-black font-display text-slate-900 dark:text-white">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-black font-display text-slate-900 dark:text-white">
                 Monetize Clinical Expertise & Safeguard Regional Herd Health
               </h2>
-              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-2">
+              <p className="text-sm sm:text-base md:text-lg text-slate-600 dark:text-slate-400 mt-2 leading-relaxed">
                 Deliver digital health audits, prescribe certified treatments, and ensure agricultural partnerships adhere to national veterinary standards.
               </p>
             </div>
@@ -85,10 +85,10 @@ export const VetWorkflow: React.FC<VetWorkflowProps> = ({ onLoginClick }) => {
                       </div>
                       <span className="text-xs font-mono font-black text-slate-400">{item.step}</span>
                     </div>
-                    <div className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                    <div className="text-base sm:text-lg md:text-xl font-bold text-slate-900 dark:text-slate-100">
                       {item.title}
                     </div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                    <p className="text-sm sm:text-base md:text-lg text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
                       {item.desc}
                     </p>
                   </div>
@@ -104,7 +104,7 @@ export const VetWorkflow: React.FC<VetWorkflowProps> = ({ onLoginClick }) => {
               >
                 Join Certified Vet Network
               </button>
-              <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+              <div className="flex items-center gap-1.5 text-sm sm:text-base md:text-lg text-slate-500 dark:text-slate-400">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                 <span>KVB-integrated licensing and direct M-Pesa clinical disbursements</span>
               </div>

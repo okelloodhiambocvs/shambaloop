@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, ShieldCheck, Sparkles } from 'lucide-react';
+import { ArrowRight, ShieldCheck } from 'lucide-react';
 import { UserRole } from '../../types';
 
 interface HowItWorksHeroProps {
@@ -11,11 +11,6 @@ export const HowItWorksHero: React.FC<HowItWorksHeroProps> = ({ onLoginClick }) 
     <section className="relative overflow-hidden bg-gradient-to-b from-emerald-900/10 via-amber-500/5 to-transparent pt-12 pb-16 border-b border-slate-200 dark:border-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-100 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-bold uppercase tracking-wider mb-6">
-            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-            <span>Kenya’s Agricultural Collaboration Framework</span>
-          </div>
-
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-black font-display tracking-tight text-slate-900 dark:text-white leading-tight">
             How ShambaLoop Works: A Transparent Flow for Every Participant
           </h1>
