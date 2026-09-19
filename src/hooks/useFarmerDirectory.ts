@@ -13,9 +13,7 @@ export function useFarmerDirectory(investorId: string | null) {
     setState({ ownerId: investorId, farmers: [], loading: Boolean(investorId), error: '' });
     if (!investorId) return;
     try {
-      const token = localStorage.getItem('sl_token');
-      if (!token) throw new Error('Please sign in to browse farmers.');
-      const farmers = await fetchFarmerDirectory(token, controller.signal);
+      const farmers = await fetchFarmerDirectory(controller.signal);
       if (!controller.signal.aborted) setState({ ownerId: investorId, farmers, loading: false, error: '' });
     } catch (error) {
       if (!controller.signal.aborted) setState({ ownerId: investorId, farmers: [], loading: false, error: error instanceof Error ? error.message : 'Unable to load farmers.' });
