@@ -5,7 +5,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import assert from 'node:assert/strict';
 const directory = mkdtempSync(path.join(tmpdir(), 'shambaloop-smoke-'));
-const child = spawn('npm', ['start'], { env: { ...process.env, NODE_ENV: 'production', PORT: '31987', DATA_DIR: directory, JWT_SECRET: crypto.randomBytes(32).toString('hex'), REFRESH_TOKEN_SECRET: crypto.randomBytes(32).toString('hex'), DB_ENCRYPTION_KEY: crypto.randomBytes(32).toString('hex') }, stdio: ['ignore', 'pipe', 'pipe'], detached: true });
+const child = spawn(process.execPath, ['dist/server.cjs'], { env: { ...process.env, NODE_ENV: 'production', PORT: '31987', DATA_DIR: directory, JWT_SECRET: crypto.randomBytes(32).toString('hex'), REFRESH_TOKEN_SECRET: crypto.randomBytes(32).toString('hex'), DB_ENCRYPTION_KEY: crypto.randomBytes(32).toString('hex') }, stdio: ['ignore', 'pipe', 'pipe'], detached: process.platform !== 'win32' });
 let output = '';
 child.stdout.on('data', data => { output += data; }); child.stderr.on('data', data => { output += data; });
 try {
@@ -21,7 +21,7 @@ try {
   assert.equal((await fetch('http://127.0.0.1:31987/api/auth/demo-login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: 'user_admin' }) })).status, 404);
   console.log('Production npm start, health, HTML, empty marketplace, and disabled demo access passed.');
 } finally {
-  try { process.kill(-child.pid, 'SIGTERM'); } catch {}
+  try { process.platform === 'win32' ? child.kill() : process.kill(-child.pid, 'SIGTERM'); } catch {}
   await new Promise(resolve => { child.once('exit', resolve); setTimeout(resolve, 3000).unref(); });
   rmSync(directory, { recursive: true, force: true });
 }
