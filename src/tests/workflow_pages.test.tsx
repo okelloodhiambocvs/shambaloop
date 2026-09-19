@@ -22,6 +22,8 @@ describe('How It Works & FAQ Flow Pages', () => {
     expect(html).toContain('Investor Safeguards');
     expect(html).toContain('Clinical Oversight');
     expect(html).toContain('How The Three Roles Unite Under Protected Escrow');
+    expect(html).not.toContain('Kenya’s Agricultural Collaboration Framework');
+    expect(html).not.toContain('Escrow &amp; Digital Governance Architecture');
 
     // Verify workflow details
     expect(html).toContain('Register &amp; Upload Land or Farm Documentation');
@@ -53,6 +55,7 @@ describe('How It Works & FAQ Flow Pages', () => {
     // Verify FaqHero & Search
     expect(html).toContain('Frequently Asked Questions');
     expect(html).toContain('Clear answers about land lease verification');
+    expect(html).not.toContain('Knowledge Base &amp; Common Inquiries');
 
     // Verify categories
     expect(html).toContain('All Questions');
