@@ -35,7 +35,7 @@ export default function VeterinaryDashboard({
   onSaveReport,
   onUpdateJobStatus,
 }: Props) {
-  const [view, setView] = useState<'jobs' | 'report' | 'records' | 'fms' | 'wallet' | 'disputes' | 'reviews' | 'documents'>('jobs');
+  const [view, setView] = useState<'jobs' | 'report' | 'records' | 'wallet' | 'disputes' | 'reviews' | 'documents'>('jobs');
   const [partnershipId, setPartnershipId] = useState(partnerships[0]?.id || '');
   const [jobId, setJobId] = useState('');
   const [attachments, setAttachments] = useState<File[]>([]);
@@ -119,7 +119,6 @@ export default function VeterinaryDashboard({
             ['jobs', 'Jobs'],
             ['report', 'Write report'],
             ['records', 'Recent reports'],
-            ['fms', 'Farm Docs'],
             ['wallet', 'Wallet'],
             ['documents', 'Accreditation & KYC'],
             ['disputes', 'Dispute Room'],
@@ -215,8 +214,8 @@ export default function VeterinaryDashboard({
       )}
 
       {view === 'documents' && <VerificationDocumentUploader user={currentUser} roleType="veterinarian" />}
-      {(view === 'fms' || view === 'wallet' || view === 'disputes' || view === 'reviews') && (
-        <ParticipantWorkspace user={currentUser} partnerships={partnerships} mode={view} />
+      {(view === 'wallet' || view === 'disputes' || view === 'reviews') && (
+        <ParticipantWorkspace user={currentUser} partnerships={partnerships} veterinaryJobs={vetJobs} mode={view} />
       )}
       <ReviewModal isOpen={reviewModalOpen} onClose={() => setReviewModalOpen(false)} currentUser={currentUser} preselectedTarget={preselectedReviewTarget} />
     </section>
