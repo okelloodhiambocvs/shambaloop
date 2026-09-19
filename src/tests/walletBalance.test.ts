@@ -12,3 +12,9 @@ test('subtracts investor releases even when the farmer owns the ledger entry', (
     { userId: 'investor', type: 'PAYOUT', amountKES: 100, status: 'PENDING' }
   ] as any)).toBe(500);
 });
+test('subtracts treasury-controlled releases from their funding investor', () => {
+  expect(availableWalletBalance('investor', UserRole.INVESTOR, [
+    { userId: 'investor', type: 'DEPOSIT', amountKES: 1000, status: 'COMPLETED' },
+    { userId: 'farmer', payerId: 'SHAMBALOOP_TREASURY', fundingSourceUserId: 'investor', type: 'RELEASE', amountKES: 400, status: 'COMPLETED' }
+  ] as any)).toBe(600);
+});
