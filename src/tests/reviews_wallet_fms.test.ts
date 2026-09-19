@@ -11,6 +11,7 @@ describe('Reviews, Wallet Purpose, and FMS Documentation Integration Tests', () 
   const farmerToken = makeToken('user_2', UserRole.FARMER);
   const investorToken = makeToken('user_3', UserRole.INVESTOR);
   const vetToken = makeToken('user_vet', UserRole.VETERINARIAN);
+  const adminToken = makeToken('user_admin', UserRole.ADMIN);
 
   describe('Cross-Role Review Candidates (/api/reviews/candidates)', () => {
     test('Farmer discovers review candidates containing investors and veterinarians', async () => {
@@ -119,6 +120,18 @@ describe('Reviews, Wallet Purpose, and FMS Documentation Integration Tests', () 
     });
   });
 
+  describe('Dispute filing relationship authorization', () => {
+    test('veterinarian can file an assigned-job dispute against the linked farmer', async () => {
+      const res = await fetch(`${BASE_URL}/api/disputes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${vetToken}` },
+        body: JSON.stringify({ title: 'Clinical access delayed', reason: 'The assigned inspection could not proceed because herd access was not provided at the agreed time.', respondentId: 'user_2', jobId: 'vet_job_seed_001' })
+      });
+      expect(res.status).toBe(201);
+      expect((await res.json()).jobId).toBe('vet_job_seed_001');
+    });
+  });
+
   describe('Wallet Purpose Identification (/api/wallet/deposit & /api/wallet/summary)', () => {
     test('Farmer initiates deposit with purpose FEED_PURCHASE', async () => {
       const res = await fetch(`${BASE_URL}/api/wallet/deposit`, {
@@ -165,6 +178,23 @@ describe('Reviews, Wallet Purpose, and FMS Documentation Integration Tests', () 
       expect(data.recentTransactions).toBeDefined();
       expect(Array.isArray(data.recentTransactions)).toBe(true);
       expect(typeof data.availableBalanceKES).toBe('number');
+    });
+
+    test('admin tracks treasury capital and releases an investor-funded amount to a linked farmer', async () => {
+      const initial = await fetch(`${BASE_URL}/api/admin/treasury`, { headers: { Authorization: `Bearer ${adminToken}` } });
+      expect(initial.status).toBe(200);
+      expect((await initial.json()).treasuryBalanceKES).toBeGreaterThanOrEqual(100000);
+      const released = await fetch(`${BASE_URL}/api/admin/treasury/releases`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
+        body: JSON.stringify({ fundingSourceUserId: 'user_3', recipientId: 'user_2', amountKES: 2500, note: 'Approved dairy-feed milestone', idempotencyKey: `treasury_release_${Date.now()}` })
+      });
+      expect(released.status).toBe(201);
+      const transaction = (await released.json()).transaction;
+      expect(transaction.payerId).toBe('SHAMBALOOP_TREASURY');
+      expect(transaction.fundingSourceUserId).toBe('user_3');
+      const snapshot = await fetch(`${BASE_URL}/api/admin/treasury`, { headers: { Authorization: `Bearer ${adminToken}` } });
+      const data = await snapshot.json();
+      expect(data.participants.find((participant: any) => participant.userId === 'user_2').incomingKES).toBeGreaterThanOrEqual(2500);
     });
   });
 
