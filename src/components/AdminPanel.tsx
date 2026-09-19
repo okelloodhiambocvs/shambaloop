@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, Check, ChevronRight, FileSearch, Scale, Search, ShieldCheck, X } from 'lucide-react';
-import { Dispute, LeaseAgreement, Listing, LivestockPartnership, TripartiteMatch, User, UserRole, VerificationRequest } from '../types';
+import { Dispute, LeaseAgreement, LedgerTransaction, Listing, LivestockPartnership, TripartiteMatch, User, UserRole, VerificationRequest } from '../types';
 
-type View = 'overview' | 'kyc' | 'users' | 'listings' | 'matches' | 'disputes' | 'analytics' | 'audit';
+type View = 'overview' | 'kyc' | 'users' | 'listings' | 'matches' | 'disputes' | 'treasury' | 'analytics' | 'audit';
 type VerificationDecision = 'APPROVED' | 'REJECTED' | 'MORE_INFO';
 type ListingDecision = 'APPROVED' | 'REJECTED' | 'SUSPENDED';
 
@@ -61,6 +61,7 @@ export default function AdminPanel(props: AdminPanelProps) {
     { id: 'listings', label: 'Listings', count: pendingListings.length },
     { id: 'matches', label: 'Matches' },
     { id: 'disputes', label: 'Disputes', count: openDisputes.length },
+    { id: 'treasury', label: 'Treasury Wallet' },
     { id: 'analytics', label: 'Analytics' },
     { id: 'audit', label: 'Audit Log' }
   ];
@@ -108,7 +109,7 @@ export default function AdminPanel(props: AdminPanelProps) {
       </div>
 
       <main className="space-y-4">
-        {view !== 'overview' && view !== 'analytics' && view !== 'audit' && (
+        {view !== 'overview' && view !== 'treasury' && view !== 'analytics' && view !== 'audit' && (
           <div className="flex flex-wrap items-center gap-2">
             <label className="relative min-w-52 flex-1">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
@@ -235,6 +236,12 @@ export default function AdminPanel(props: AdminPanelProps) {
           </section>
         )}
 
+        {view === 'treasury' && (
+          <section className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+            <TreasuryWorkspace users={props.usersList} />
+          </section>
+        )}
+
         {view === 'analytics' && (
           <section className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
             <Analytics analytics={props.analytics} collaborations={activeCollaborations} />
@@ -254,7 +261,7 @@ export default function AdminPanel(props: AdminPanelProps) {
             {selectedKyc.documentType.replaceAll('_', ' ')} · {selectedKyc.documentNumber}. Sensitive document details are only available through the protected record API.
           </p>
           <div className="flex flex-wrap gap-2">{selectedKyc.documentIds?.map((id, index) => <button type="button" key={id} className="underline text-xs" onClick={async () => {
-            const response = await fetch(`/api/uploads/${encodeURIComponent(id)}`, { headers: { Authorization: `Bearer ${localStorage.getItem('sl_token') || ''}` } });
+            const response = await fetch(`/api/uploads/${encodeURIComponent(id)}`, { credentials: 'same-origin' });
             if (!response.ok) { window.alert('Unable to download this document.'); return; }
             const url = URL.createObjectURL(await response.blob()); const anchor = document.createElement('a'); anchor.href = url; anchor.download = response.headers.get('content-disposition')?.match(/filename="([^"]+)"/)?.[1] || `identity-document-${index + 1}`; anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
           }}>Download document {index + 1}</button>)}</div>
@@ -401,16 +408,75 @@ function MatchWorkspace({ users, matches, match, setMatch, submit, working }: { 
 function DisputeWorkspace({ disputes, leases, users, selected, select }: { disputes: Dispute[]; leases: LeaseAgreement[]; users: User[]; selected: Dispute | null; select: (dispute: Dispute) => void }) { const active = disputes.filter(isOpenDispute); const parties = selected?.leaseId ? (() => { const lease = leases.find(item => item.id === selected.leaseId); if (!lease) return `Lease ${selected.leaseId}`; const name = (id: string) => users.find(user => user.id === id)?.name || id; return `${name(lease.landownerId)} and ${name(lease.farmerId)}`; })() : selected?.partnershipId ? `Partnership ${selected.partnershipId}` : 'Not linked'; return <div className="grid gap-5 lg:grid-cols-2"><div><h3 className="mb-3 text-sm font-bold dark:text-white">Open cases</h3><QueueTable empty="No open disputes." headers={['Filed by', 'Issue', 'Status', '']} rows={active.map(item => [item.creatorName, <span key="reason" className="line-clamp-2">{item.reason}</span>, <Status key="status" value={item.status}/>, <button key="open" onClick={() => select(item)} className="link-action">Open</button>])}/></div>{selected ? <aside className="space-y-3 rounded-lg border border-slate-200 p-4 text-xs dark:border-slate-800"><div className="flex justify-between"><h4 className="font-bold dark:text-white">Case details</h4><Status value={selected.status}/></div><p><strong>Filed by:</strong> {selected.creatorName}</p><p><strong>Parties:</strong> {parties}</p><p><strong>Issue:</strong> {selected.reason}</p>{selected.evidenceText ? <p><strong>Evidence:</strong> {selected.evidenceText}</p> : <p className="text-slate-500">No evidence text supplied.</p>}<History entries={selected.history || []}/></aside> : <aside className="text-xs text-slate-500">Select an open case to view its parties, issue, evidence, and history.</aside>}</div>; }
 function Analytics({ analytics, collaborations }: { analytics: AdminPanelProps['analytics']; collaborations: number }) { return <div><h3 className="text-sm font-bold dark:text-white">Decision metrics</h3><p className="mt-1 text-xs text-slate-500">Only operational counts and escrow value are shown here.</p><dl className="mt-4 grid grid-cols-2 divide-x divide-y border border-slate-200 text-xs sm:grid-cols-3 dark:divide-slate-800 dark:border-slate-800">{[['Approved listings', analytics.activeListings], ['Registered users', analytics.registeredUsersCount], ['KYC queue', analytics.pendingVerificationsCount], ['Listing queue', analytics.pendingListingsCount || 0], ['Open disputes', analytics.openDisputesCount || 0], ['Active collaborations', analytics.activeCollaborationsCount ?? collaborations], ['Escrow reconciled', `KES ${analytics.totalEscrowKES.toLocaleString()}`]].map(([label, value]) => <div key={String(label)} className="p-3"><dt className="text-slate-500">{label}</dt><dd className="mt-1 text-sm font-bold text-slate-950 dark:text-white">{value}</dd></div>)}</dl></div>; }
 
+type TreasurySnapshot = {
+  treasuryBalanceKES: number;
+  pendingPayoutKES: number;
+  participants: Array<{ userId: string; name: string; role: UserRole; availableBalanceKES: number; incomingKES: number; outgoingKES: number; transactionCount: number }>;
+  pendingPayouts: LedgerTransaction[];
+  recentTransactions: LedgerTransaction[];
+};
+
+function TreasuryWorkspace({ users }: { users: User[] }) {
+  const [snapshot, setSnapshot] = useState<TreasurySnapshot | null>(null);
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [release, setRelease] = useState({ fundingSourceUserId: '', recipientId: '', amountKES: '', note: '' });
+  const money = (amount: number) => `KES ${Number(amount || 0).toLocaleString()}`;
+  const load = async () => {
+    setError('');
+    const response = await fetch('/api/admin/treasury', { credentials: 'same-origin' });
+    const data = await response.json();
+    if (!response.ok) { setError(data.error || 'Unable to load the cooperative treasury.'); return; }
+    setSnapshot(data);
+  };
+  useEffect(() => { void load(); }, []);
+  const createRelease = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setBusy(true); setError('');
+    try {
+      const response = await fetch('/api/admin/treasury/releases', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...release, amountKES: Number(release.amountKES), idempotencyKey: crypto.randomUUID() }) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Treasury release failed.');
+      setRelease({ fundingSourceUserId: '', recipientId: '', amountKES: '', note: '' });
+      await load();
+    } catch (requestError: any) { setError(requestError.message || 'Treasury release failed.'); }
+    finally { setBusy(false); }
+  };
+  const approvePayout = async (transactionId: string) => {
+    setBusy(true); setError('');
+    try {
+      const response = await fetch(`/api/admin/treasury/payouts/${encodeURIComponent(transactionId)}/approve`, { method: 'POST', credentials: 'same-origin' });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Payout approval failed.');
+      await load();
+    } catch (requestError: any) { setError(requestError.message || 'Payout approval failed.'); }
+    finally { setBusy(false); }
+  };
+  const investors = users.filter((user) => user.role === UserRole.INVESTOR);
+  const recipients = users.filter((user) => user.role === UserRole.FARMER || user.role === UserRole.VETERINARIAN);
+
+  return <div className="space-y-5" id="admin_treasury_wallet">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div><h2 className="text-sm font-bold text-slate-950 dark:text-white">Cooperative Treasury Wallet</h2><p className="mt-1 text-xs text-slate-500">Investor capital enters the ShambaLoop Treasury first. Every release keeps its funding source, recipient, status, and audit trail.</p></div>
+      <button type="button" onClick={() => void load()} disabled={busy} className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200">Refresh ledger</button>
+    </div>
+    {error && <p role="alert" className="rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:bg-rose-950/30 dark:text-rose-200">{error}</p>}
+    {!snapshot ? <p className="py-8 text-center text-xs text-slate-500">Loading treasury records…</p> : <>
+      <div className="grid gap-3 sm:grid-cols-2"><div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900 dark:bg-emerald-950/30"><p className="text-xs text-emerald-800 dark:text-emerald-200">Confirmed capital held in treasury</p><p className="mt-1 text-2xl font-bold text-emerald-950 dark:text-white">{money(snapshot.treasuryBalanceKES)}</p></div><div className="rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/30"><p className="text-xs text-amber-800 dark:text-amber-200">Payouts awaiting provider settlement</p><p className="mt-1 text-2xl font-bold text-amber-950 dark:text-white">{money(snapshot.pendingPayoutKES)}</p></div></div>
+      <form onSubmit={createRelease} className="grid gap-3 rounded-xl border border-slate-200 p-4 sm:grid-cols-2 dark:border-slate-800"><div className="sm:col-span-2"><h3 className="text-sm font-bold text-slate-900 dark:text-white">Release confirmed treasury funds</h3><p className="mt-1 text-xs text-slate-500">The server verifies that the selected investor has confirmed funds and a valid relationship with the recipient.</p></div><label className="text-xs font-semibold text-slate-700 dark:text-slate-200">Funding investor<select required value={release.fundingSourceUserId} onChange={(event) => setRelease(current => ({ ...current, fundingSourceUserId: event.target.value }))} className="mt-1 block w-full rounded-lg border border-slate-300 bg-white p-2 text-xs dark:border-slate-700 dark:bg-slate-950"><option value="">Select investor</option>{investors.map((user) => <option key={user.id} value={user.id}>{user.name}</option>)}</select></label><label className="text-xs font-semibold text-slate-700 dark:text-slate-200">Farmer or veterinarian recipient<select required value={release.recipientId} onChange={(event) => setRelease(current => ({ ...current, recipientId: event.target.value }))} className="mt-1 block w-full rounded-lg border border-slate-300 bg-white p-2 text-xs dark:border-slate-700 dark:bg-slate-950"><option value="">Select recipient</option>{recipients.map((user) => <option key={user.id} value={user.id}>{user.name} — {user.role}</option>)}</select></label><label className="text-xs font-semibold text-slate-700 dark:text-slate-200">Amount (KES)<input required min="1" type="number" value={release.amountKES} onChange={(event) => setRelease(current => ({ ...current, amountKES: event.target.value }))} className="mt-1 block w-full rounded-lg border border-slate-300 bg-white p-2 text-xs dark:border-slate-700 dark:bg-slate-950" /></label><label className="text-xs font-semibold text-slate-700 dark:text-slate-200">Release note<input required maxLength={500} value={release.note} onChange={(event) => setRelease(current => ({ ...current, note: event.target.value }))} placeholder="Milestone, sale distribution, or vet service" className="mt-1 block w-full rounded-lg border border-slate-300 bg-white p-2 text-xs dark:border-slate-700 dark:bg-slate-950" /></label><button disabled={busy} className="action-primary w-fit">Authorize treasury release</button></form>
+      <QueueTable empty="No participant wallet activity is recorded yet." headers={['Participant', 'Role', 'Current wallet', 'Incoming', 'Outgoing', 'Entries']} rows={snapshot.participants.map((participant) => [participant.name, participant.role, money(participant.availableBalanceKES), money(participant.incomingKES), money(participant.outgoingKES), String(participant.transactionCount)])} />
+      <div><h3 className="mb-3 text-sm font-bold text-slate-900 dark:text-white">Payout approval queue</h3><QueueTable empty="No payouts are awaiting approval." headers={['Recipient', 'Amount', 'Requested', 'Status', '']} rows={snapshot.pendingPayouts.map((transaction) => [transaction.payeeName || transaction.payeeId || 'Member', money(transaction.amountKES), new Date(transaction.timestamp).toLocaleString(), <Status key="status" value={transaction.status} />, transaction.status === 'PENDING' ? <button key="approve" type="button" disabled={busy} onClick={() => void approvePayout(transaction.id)} className="action-primary">Approve payout</button> : 'Awaiting provider settlement'])} /></div>
+    </>}
+  </div>;
+}
+
 function AuditWorkspace() {
   const [logs, setLogs] = useState<{ timestamp: string; actor: string; action: string; resource: string; ip_address?: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
 
   useEffect(() => {
-    const token = localStorage.getItem('sl_token');
-    fetch('/api/admin/audit-logs?limit=100', {
-      headers: { Authorization: `Bearer ${token}` }
-    })
+    fetch('/api/admin/audit-logs?limit=100', { credentials: 'same-origin' })
       .then(res => res.json())
       .then(data => {
         if (data && Array.isArray(data.logs)) setLogs(data.logs);
