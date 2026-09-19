@@ -9,7 +9,7 @@ import { writeAuditLog } from './audit.js';
 const UPLOAD_DIR = path.join(process.env.DATA_DIR || path.join(process.cwd(), 'data'), 'uploads');
 const ALLOWED_MIME_TYPES: Record<string, string> = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp', 'application/pdf': '.pdf' };
 const DOCUMENT_TYPES = new Set([
-  'VACCINATION_REPORT', 'FARM_PHOTO', 'FEED_RECEIPT', 'PAYMENT_RECEIPT', 
+  'VACCINATION_REPORT', 'FARM_PHOTO', 'FEED_RECEIPT', 'PAYMENT_RECEIPT', 'DISPUTE_EVIDENCE',
   'EVENT_DOCUMENT', 'VETERINARY_REPORT', 'INVESTMENT_VERIFICATION', 'OTHER',
   'KYC_DOCUMENT', 'CHIEF_LETTER', 'ID_FRONT', 'ID_BACK', 'PASSPORT_PHOTO', 
   'KVB_LICENSE', 'DEGREE_CERTIFICATE', 'FARM_TITLE_DEED', 'AGRICULTURAL_CERTIFICATE'
