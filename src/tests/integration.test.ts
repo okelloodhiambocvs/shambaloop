@@ -421,6 +421,52 @@ describe('ShambaLoop End-to-End Integration Tests', () => {
       const dangerous = await fetch(`${BASE_URL}/api/uploads`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${farmerToken}` }, body: JSON.stringify({ fileName: 'payload.pdf', mimeType: 'application/pdf', base64Data: Buffer.from('not a pdf').toString('base64'), farmId: 'farm_user_2', documentType: 'OTHER' }) });
       expect(dangerous.status).toBe(400);
     });
+
+    test('allows a farmer to lodge a partnership dispute with private evidence', async () => {
+      const [farmerLogin, investorLogin] = await Promise.all(['user_2', 'user_3'].map(userId => fetch(`${BASE_URL}/api/auth/demo-login`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId })
+      })));
+      const farmerToken = (await farmerLogin.json()).token;
+      const investorToken = (await investorLogin.json()).token;
+      const uploaded = await fetch(`${BASE_URL}/api/uploads`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${farmerToken}` },
+        body: JSON.stringify({ fileName: 'dispute-evidence.pdf', mimeType: 'application/pdf', base64Data: Buffer.from('%PDF-1.4\nevidence').toString('base64'), farmId: 'farm_user_2', documentType: 'DISPUTE_EVIDENCE' })
+      });
+      expect(uploaded.status).toBe(201);
+      const evidence = (await uploaded.json()).file;
+      const filed = await fetch(`${BASE_URL}/api/disputes`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${farmerToken}` },
+        body: JSON.stringify({ title: 'Milestone evidence review', reason: 'The submitted evidence has not been reviewed within the agreed period.', respondentId: 'user_3', partnershipId: 'part_xyz', evidenceUrls: [evidence.url] })
+      });
+      expect(filed.status).toBe(201);
+      const dispute = await filed.json();
+      expect(dispute.partnershipId).toBe('part_xyz');
+      expect(dispute.evidenceUrls).toEqual([evidence.url]);
+      const counterpartCanReadEvidence = await fetch(`${BASE_URL}${evidence.url}`, { headers: { Authorization: `Bearer ${investorToken}` } });
+      expect(counterpartCanReadEvidence.status).toBe(200);
+    });
+
+    test('allows an investor to attach a private supporting document to their investment brief', async () => {
+      const login = await fetch(`${BASE_URL}/api/auth/demo-login`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: 'user_3' })
+      });
+      const investorToken = (await login.json()).token;
+      const criteriaResponse = await fetch(`${BASE_URL}/api/investor/criteria`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${investorToken}` },
+        body: JSON.stringify({ lookingFor: 'FARMER_WITH_LAND_NEEDING_CAPITAL', budgetKES: 500000, preferredSectors: ['Dairy'], targetCounties: ['Nakuru'], notes: 'Integration test brief', resourcesProvided: 'Capital', partnerRequirements: 'Active farmer' })
+      });
+      expect(criteriaResponse.status).toBe(200);
+      const criteria = await criteriaResponse.json();
+      const uploaded = await fetch(`${BASE_URL}/api/uploads`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${investorToken}` },
+        body: JSON.stringify({ fileName: 'proof-of-funds.pdf', mimeType: 'application/pdf', base64Data: Buffer.from('%PDF-1.4\nproof').toString('base64'), relatedInvestmentBriefId: criteria.id, documentType: 'INVESTMENT_VERIFICATION', description: 'Capital confirmation' })
+      });
+      expect(uploaded.status).toBe(201);
+      const file = (await uploaded.json()).file;
+      expect(file.isPrivate).toBe(true);
+      const myFiles = await fetch(`${BASE_URL}/api/uploads/my`, { headers: { Authorization: `Bearer ${investorToken}` } });
+      expect((await myFiles.json()).some((entry: any) => entry.id === file.id && entry.relatedInvestmentBriefId === criteria.id)).toBe(true);
+    });
   });
 
   describe('Farmer workspace authorization and validation', () => {
