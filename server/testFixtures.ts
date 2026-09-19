@@ -1,47 +1,17 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import crypto from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import { ListingType } from '../src/types.js';
 import { DEMO_ACCOUNT_PROFILES } from '../src/demoAccounts.js';
+import { DEVELOPMENT_SEED_PASSWORDS } from './developmentSeedAccounts.js';
 // Seed initial default accounts and records
 export function seedTestData(db: any, DATA_DIR: string) {
   db.users = Object.values(DEMO_ACCOUNT_PROFILES).map(user => ({ ...user }));
 
-  // Generate cryptographically secure temporary complex passwords for seeded accounts
-  function generateSecureTemporaryPassword(): string {
-    const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const lowercase = 'abcdefghijklmnopqrstuvwxyz';
-    const numbers = '0123456789';
-    const specials = '!@#$%^&*()_+~`|}{[]:;?><,./-="';
-    
-    const getRandomChar = (str: string) => str.charAt(crypto.randomInt(0, str.length));
-    
-    let password = [
-      getRandomChar(uppercase),
-      getRandomChar(uppercase),
-      getRandomChar(lowercase),
-      getRandomChar(lowercase),
-      getRandomChar(numbers),
-      getRandomChar(numbers),
-      getRandomChar(specials),
-      getRandomChar(specials),
-    ];
-    
-    const allChars = uppercase + lowercase + numbers + specials;
-    for (let i = 0; i < 8; i++) {
-      password.push(getRandomChar(allChars));
-    }
-    
-    return password.sort(() => crypto.randomBytes(1)[0] - 128).join('');
-  }
-
-  const tempPasses: Record<string, string> = {};
   db.users.forEach(u => {
-    const tempPassword = generateSecureTemporaryPassword();
-    tempPasses[u.phone] = tempPassword;
-    db.passwordHashes[u.id] = bcrypt.hashSync(tempPassword, 10);
-    u.passwordResetRequired = true; // Force reset on first login
+    const password = DEVELOPMENT_SEED_PASSWORDS[u.id as keyof typeof DEVELOPMENT_SEED_PASSWORDS];
+    if (password) db.passwordHashes[u.id] = bcrypt.hashSync(password, 12);
+    u.passwordResetRequired = false;
   });
   
   db.listings = [
@@ -149,7 +119,44 @@ export function seedTestData(db: any, DATA_DIR: string) {
     }
   ];
 
+  db.veterinaryJobs = [
+    {
+      id: 'vet_job_seed_001',
+      farmId: 'part_xyz',
+      farmerId: 'user_2',
+      farmerName: 'Josphat Kiprop',
+      farmerPhone: '0722111222',
+      location: 'Uasin Gishu',
+      animalOrCropType: 'Dairy cattle',
+      serviceType: 'CLINICAL_CHECK',
+      urgency: 'NORMAL',
+      status: 'ASSIGNED',
+      assignedVetId: 'user_vet',
+      assignedVetName: 'Dr. Mercy Wanjiru',
+      requestedDate: new Date().toISOString()
+    }
+  ];
+
   db.verifications = [];
   db.transactions = [];
+  db.ledgerTransactions = [
+    {
+      id: 'seed_investor_treasury_deposit',
+      reference: 'SEED_TREASURY_001',
+      userId: 'user_3',
+      amountKES: 100000,
+      currency: 'KES',
+      type: 'DEPOSIT',
+      category: 'INVESTMENT_CAPITAL',
+      status: 'COMPLETED',
+      description: 'Confirmed investor capital held in ShambaLoop Treasury',
+      payerId: 'user_3',
+      payerName: 'David Mwangi',
+      payeeId: 'SHAMBALOOP_TREASURY',
+      payeeName: 'ShambaLoop Treasury',
+      timestamp: new Date().toISOString(),
+      stateHistory: [{ from: null, to: 'COMPLETED', at: new Date().toISOString(), source: 'SYSTEM' }]
+    }
+  ];
 }
 
