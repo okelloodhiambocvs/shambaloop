@@ -4,13 +4,14 @@ import {
   AlertCircle, CheckCircle2, Download, FileText, Filter, 
   MessageSquareQuote, Plus, ShieldCheck, Star, UploadCloud, Wallet 
 } from 'lucide-react';
-import type { FarmRecord, LivestockPartnership, User, UploadedFile, Review, LedgerTransaction } from '../types';
+import type { FarmRecord, LivestockPartnership, User, UploadedFile, Review, LedgerTransaction, VeterinaryJob } from '../types';
 import { farmerWorkspaceApi, fileAsBase64 } from '../services/farmerWorkspaceService';
 import ReviewModal from './ReviewModal';
 
 type Props = { 
   user: User; 
   partnerships: LivestockPartnership[]; 
+  veterinaryJobs?: VeterinaryJob[];
   mode: 'fms' | 'wallet' | 'disputes' | 'reviews'; 
 };
 
@@ -21,7 +22,7 @@ const formatDate = (v: string) => new Date(v).toLocaleDateString(undefined, {
   day: 'numeric'
 });
 
-export default function FarmerOperations({ user, partnerships, mode }: Props) {
+export default function FarmerOperations({ user, partnerships, veterinaryJobs, mode }: Props) {
   const [records, setRecords] = useState<FarmRecord[]>([]);
   const [documents, setDocuments] = useState<UploadedFile[]>([]);
   const [wallet, setWallet] = useState<any>();
@@ -363,82 +364,7 @@ export default function FarmerOperations({ user, partnerships, mode }: Props) {
   /* ========================================================================= */
   if (mode === 'wallet') return <ParticipantWorkspace user={user} partnerships={partnerships} mode="wallet" />;
 
-  if (mode === 'disputes') {
-    const partner = partnerships[0];
-    return (
-      <section className="space-y-4" id="farmer_disputes_view">
-        <div>
-          <h3 className="text-sm font-bold dark:text-white">Escrow & Governance Dispute Room</h3>
-          <p className="text-xs text-slate-500">Mediation and milestone arbitration room.</p>
-        </div>
-        {partner ? (
-          <form
-            className="space-y-3 rounded-xl border border-slate-200 dark:border-slate-800 p-4 text-xs bg-slate-50/50 dark:bg-slate-900/50"
-            onSubmit={e => {
-              e.preventDefault();
-              const f = new FormData(e.currentTarget);
-              void action(async () => {
-                const r = await farmerWorkspaceApi.raiseDispute({
-                  respondentId: partner.investorId,
-                  title: f.get('title'),
-                  reason: f.get('reason'),
-                  partnershipId: partner.id
-                });
-                if (r.error) throw new Error(r.error);
-                e.currentTarget.reset();
-              }, 'Dispute case opened with arbitration council.');
-            }}
-          >
-            <strong className="block text-xs font-bold dark:text-white">Open a Governance Dispute</strong>
-            <input
-              required
-              name="title"
-              placeholder="Case summary (e.g. Delayed feed disbursement milestone)"
-              className="w-full rounded-lg border border-slate-200 dark:border-slate-700 p-2 text-xs bg-white dark:bg-slate-800"
-            />
-            <textarea
-              required
-              name="reason"
-              rows={3}
-              placeholder="Factual description of the breach or issue and proposed resolution..."
-              className="w-full rounded-lg border border-slate-200 dark:border-slate-700 p-2 text-xs bg-white dark:bg-slate-800"
-            />
-            <button disabled={busy} className="action-primary">
-              {busy ? 'Registering...' : 'File Dispute'}
-            </button>
-          </form>
-        ) : (
-          <p className="text-xs text-slate-500">An active partnership is required before opening a formal arbitration case.</p>
-        )}
-
-        <div className="space-y-2">
-          <h4 className="text-xs font-bold dark:text-white">Active & Past Dispute Cases</h4>
-          {disputes.length ? (
-            <div className="divide-y divide-slate-100 dark:divide-slate-800 border rounded-xl dark:border-slate-800">
-              {disputes.map((d, i) => (
-                <div key={d.id || i} className="p-3 text-xs">
-                  <div className="flex justify-between items-start">
-                    <strong className="dark:text-white">{d.title}</strong>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800">
-                      {d.status}
-                    </span>
-                  </div>
-                  <p className="text-slate-600 dark:text-slate-300 mt-1">{d.reason}</p>
-                  {d.resolutionNotes && (
-                    <p className="text-emerald-700 dark:text-emerald-400 mt-1 text-[11px]">
-                      Resolution: {d.resolutionNotes}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-xs text-slate-500 py-3">No dispute records involving your farm.</p>
-          )}
-        </div>
-      </section>
-    );
-  }
+  if (mode === 'disputes') return <ParticipantWorkspace user={user} partnerships={partnerships} veterinaryJobs={veterinaryJobs} mode="disputes" />;
 
   /* ========================================================================= */
   /* MODE 4: REVIEWS SYSTEM (GIVING & RECEIVING)                              */

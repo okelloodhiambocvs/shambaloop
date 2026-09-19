@@ -621,6 +621,7 @@ export default function FarmerDashboard(props: FarmerDashboardProps) {
           user={props.currentUser}
           partnerships={props.partnerships}
           mode={view === 'disputes' ? 'disputes' : view === 'reviews' ? 'reviews' : view === 'wallet' ? 'wallet' : 'fms'}
+          veterinaryJobs={props.vetJobs}
         />
       )}
 
