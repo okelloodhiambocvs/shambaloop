@@ -51,7 +51,7 @@ export const AboutSolution: React.FC = () => {
           {SOLUTION_STEPS.map((step) => (
             <div
               key={step.number}
-              className="bg-white dark:bg-slate-850 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-750 shadow-sm hover:shadow-lg transition flex flex-col group"
+              className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-lg transition flex flex-col group"
             >
               {/* Card Image Header with Floating Number Badge */}
               <div className="relative h-56 w-full overflow-hidden bg-slate-100 dark:bg-slate-800">

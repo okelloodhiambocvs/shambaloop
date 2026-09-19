@@ -21,10 +21,10 @@ export const AboutFooter: React.FC<AboutFooterProps> = ({
   return (
     <footer className="bg-[#123821] text-emerald-50 border-t border-emerald-900/60 pt-14 pb-8 font-sans" id="site_universal_footer">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 pb-12 border-b border-emerald-800/50">
-          <div className="lg:col-span-4 space-y-4">
+        <div className="grid grid-cols-1 gap-y-10 border-b border-emerald-800/50 pb-12 md:grid-cols-12 md:gap-x-8">
+          <div className="space-y-4 md:col-span-5">
             <Logo size={42} variant="full" isDarkMode={true} />
-            <p className="text-xs text-emerald-200/80 leading-relaxed max-w-sm">
+            <p className="max-w-md text-sm leading-relaxed text-emerald-200/80">
               Connecting landowners, livestock investors, and smallholder farmers across Kenya.
               Our mission is to unlock idle land, protect herds through clinical governance, and
               build resilient agricultural wealth through automated M-Pesa escrow.
@@ -36,11 +36,11 @@ export const AboutFooter: React.FC<AboutFooterProps> = ({
             </div>
           </div>
 
-          <div className="lg:col-span-2 space-y-3">
+          <div className="space-y-3 md:col-span-3">
             <h4 className="text-xs font-bold uppercase tracking-wider text-amber-300 font-display">
               Quick Links
             </h4>
-            <ul className="space-y-2 text-xs text-emerald-200/90">
+            <ul className="space-y-2 text-sm text-emerald-200/90">
               <li>
                 <button onClick={onBack} className="hover:text-white transition cursor-pointer text-left">
                   Marketplace Feed
@@ -69,11 +69,11 @@ export const AboutFooter: React.FC<AboutFooterProps> = ({
             </ul>
           </div>
 
-          <div className="lg:col-span-3 space-y-3">
+          <div className="space-y-3 md:col-span-4">
             <h4 className="text-xs font-bold uppercase tracking-wider text-amber-300 font-display">
               Contact Us
             </h4>
-            <div className="space-y-2.5 text-xs text-emerald-200/90">
+            <div className="space-y-2.5 text-sm text-emerald-200/90">
               <div className="flex items-center gap-2">
                 <Phone className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                 <span>+254 728 606 684</span>
@@ -93,34 +93,11 @@ export const AboutFooter: React.FC<AboutFooterProps> = ({
             </div>
           </div>
 
-          <div className="lg:col-span-3 space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-amber-300 font-display">
-              Regional Agricultural Hubs
-            </h4>
-            <ul className="space-y-2 text-xs text-emerald-200/90">
-              <li className="flex items-start gap-2">
-                <MapPin className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
-                <span><strong>Nyandarua Hub:</strong> Ol Kalou Agri-Center</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <MapPin className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
-                <span><strong>Nakuru Hub:</strong> Pipeline Agricultural Complex</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <MapPin className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
-                <span><strong>Kiambu Hub:</strong> Ruiru Produce Exchange</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <MapPin className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
-                <span><strong>Kisumu Hub:</strong> Kibos Sugar & Dairy Depot</span>
-              </li>
-            </ul>
-          </div>
         </div>
 
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-emerald-300/70">
+        <div className="flex flex-col items-start justify-between gap-4 pt-8 text-sm text-emerald-300/70 sm:flex-row sm:gap-8">
           <p>© {new Date().getFullYear()} ShambaLoop Kenya Co-operative Trust. All rights reserved.</p>
-          <div className="flex flex-wrap gap-4 text-emerald-300/90">
+          <div className="flex flex-wrap gap-4 text-emerald-300/90 sm:justify-end">
             <button onClick={() => onOpenDoc('Terms of Service')} className="hover:text-white transition cursor-pointer">
               Terms of Service
             </button>

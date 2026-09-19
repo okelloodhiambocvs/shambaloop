@@ -58,7 +58,7 @@ export const AboutProblem: React.FC = () => {
           {PROBLEM_CARDS.map((card) => (
             <div
               key={card.id}
-              className="bg-white dark:bg-slate-850 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-750 shadow-sm hover:shadow-md transition flex flex-col group"
+              className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition flex flex-col group"
             >
               {/* Card Image Header with Dark Badge */}
               <div className="relative h-48 w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
