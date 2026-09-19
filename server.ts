@@ -19,6 +19,7 @@ import {
   FarmRecord, LedgerTransaction, Review, UploadedFile
 } from './src/types.js';
 import { DEMO_ACCOUNT_IDS, DEMO_ACCOUNT_PROFILES } from './src/demoAccounts.js';
+import { DEVELOPMENT_SEED_PASSWORDS } from './server/developmentSeedAccounts.js';
 import { registerUploadRoutes } from './server/uploadService.js';
 import { registerVerificationRoutes } from './server/verificationService.js';
 import { registerWalletRoutes } from './server/walletService.js';
@@ -33,13 +34,15 @@ import { applyMigrations } from './server/migrations.js';
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
-if (process.env.NODE_ENV === 'production') {
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+if (IS_PRODUCTION) {
   for (const key of ['JWT_SECRET', 'REFRESH_TOKEN_SECRET', 'DB_ENCRYPTION_KEY']) {
     if (!process.env[key] || process.env[key]!.length < 32) throw new Error(`${key} must be configured with at least 32 characters.`);
   }
 }
 
 app.disable('x-powered-by');
+app.set('trust proxy', IS_PRODUCTION ? 1 : false);
 app.use('/api', (_req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
 app.use(express.json({ limit: '15mb' }));
 
@@ -340,18 +343,29 @@ function saveDatabase() {
   }
 }
 
-const DEMO_SESSIONS_ENABLED = process.env.NODE_ENV === 'test';
+// Local credentials make role-by-role development repeatable. They are never
+// enabled for an explicitly production process and can be disabled locally.
+const DEMO_SESSIONS_ENABLED = process.env.NODE_ENV !== 'production' && process.env.ENABLE_DEV_SEED_ACCOUNTS !== 'false';
 
 function ensureDevelopmentDemoAccounts(): boolean {
   if (!DEMO_SESSIONS_ENABLED) return false;
 
   let changed = false;
   for (const account of Object.values(DEMO_ACCOUNT_PROFILES)) {
-    if (db.users.some(user => user.id === account.id)) continue;
+    if (!db.users.some(user => user.id === account.id)) {
+      db.users.push({ ...account, passwordResetRequired: false });
+      changed = true;
+    }
 
-    db.users.push({ ...account, passwordResetRequired: true });
-    db.passwordHashes[account.id] = bcrypt.hashSync(`${crypto.randomBytes(24).toString('base64url')}Aa1!`, 10);
-    changed = true;
+    // These IDs are exclusively fixture records. Re-seeding them at startup
+    // keeps their documented local-development passwords deterministic.
+    const password = DEVELOPMENT_SEED_PASSWORDS[account.id as keyof typeof DEVELOPMENT_SEED_PASSWORDS];
+    if (password && !bcrypt.compareSync(password, db.passwordHashes[account.id] || '')) {
+      db.passwordHashes[account.id] = bcrypt.hashSync(password, 12);
+      const seededUser = db.users.find(user => user.id === account.id);
+      if (seededUser?.passwordResetRequired) seededUser.passwordResetRequired = false;
+      changed = true;
+    }
   }
   return changed;
 }
@@ -420,14 +434,15 @@ interface AuthenticatedRequest extends express.Request {
 
 const JWTAuthMiddleware = (req: AuthenticatedRequest, res: express.Response, next: express.NextFunction) => {
   const authHeader = req.headers.authorization;
-  let token = '';
+  const accessCookie = (req.headers.cookie || '').split(';').map(value => value.trim()).find(value => value.startsWith('sl_access='))?.slice('sl_access='.length);
+  let token = accessCookie ? decodeURIComponent(accessCookie) : '';
 
   if (authHeader && authHeader.startsWith('Bearer ')) {
     token = authHeader.substring(7);
   }
 
   if (!token) {
-    return res.status(401).json({ error: 'Authorization header with Bearer token is required.' });
+    return res.status(401).json({ error: 'Authentication is required.' });
   }
 
   const decoded = verifyToken(token);
@@ -506,6 +521,15 @@ const createSessionPayload = (user: User) => ({
   passwordResetRequired: Boolean(user.passwordResetRequired)
 });
 
+const SESSION_COOKIE_OPTIONS = { httpOnly: true, secure: IS_PRODUCTION, sameSite: 'lax' as const, path: '/api' };
+
+function issueBrowserSession(res: express.Response, user: User) {
+  const payload = createSessionPayload(user);
+  res.cookie('sl_access', payload.token, { ...SESSION_COOKIE_OPTIONS, maxAge: 30 * 60 * 1000 });
+  res.cookie('sl_refresh', payload.refreshToken, { ...SESSION_COOKIE_OPTIONS, maxAge: 7 * 24 * 60 * 60 * 1000 });
+  return process.env.NODE_ENV === 'test' ? payload : { user: payload.user, passwordResetRequired: payload.passwordResetRequired };
+}
+
 const verificationDecisionStatuses = new Set(['APPROVED', 'REJECTED', 'MORE_INFO']);
 const listingModerationStatuses = new Set(['APPROVED', 'REJECTED', 'SUSPENDED']);
 
@@ -529,19 +553,17 @@ const authRateLimiter = createRateLimiter(20, 60000);
 const sensitiveAuthRateLimiter = createRateLimiter(5, 15 * 60 * 1000);
 
 // CORS Whitelists
-const CORS_WHITELIST = (process.env.CORS_WHITELIST || 'http://localhost:3000,http://localhost:5173').split(',');
+const CORS_WHITELIST = new Set((process.env.CORS_WHITELIST || 'http://localhost:3000,http://localhost:5173').split(',').map(origin => origin.trim()).filter(Boolean));
 
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   
-  if (origin) {
+  if (origin && CORS_WHITELIST.has(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
-  } else {
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Vary', 'Origin');
   }
-  
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-user-id, X-Requested-With');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   
   if (req.method === 'OPTIONS') {
@@ -552,7 +574,8 @@ app.use((req, res, next) => {
 
 // Hardened Secure Headers Middleware (configured for AI Studio preview iframe support)
 app.use((req, res, next) => {
-  res.setHeader('Content-Security-Policy', "default-src 'self' https: data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; font-src 'self' https: data:; img-src 'self' data: https: blob:; connect-src 'self' https: wss: ws:; frame-src 'self' https:;");
+  const scriptPolicy = IS_PRODUCTION ? "script-src 'self'" : "script-src 'self' 'unsafe-inline' 'unsafe-eval'";
+  res.setHeader('Content-Security-Policy', `default-src 'self'; ${scriptPolicy}; style-src 'self' 'unsafe-inline' https://fonts.cdnfonts.com; font-src 'self' https://fonts.cdnfonts.com data:; img-src 'self' data: https: blob:; connect-src 'self' https: ${IS_PRODUCTION ? '' : 'ws: wss:'}; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'`);
   res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
@@ -584,7 +607,13 @@ app.use((req, res, next) => {
   next();
 });
 
-app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
+app.get('/api/health', (_req, res) => res.json({
+  status: 'ok',
+  environment: process.env.NODE_ENV || 'development',
+  uptimeSeconds: Math.floor(process.uptime()),
+  timestamp: new Date().toISOString(),
+  storage: process.env.DATABASE_URL ? 'postgresql-pending-migration' : 'file'
+}));
 
 // REST WEB ENDPOINTS
 
@@ -651,7 +680,7 @@ app.post('/api/auth/register', authRateLimiter, (req, res) => {
   syncRefs();
 
   writeAuditLog(newId, 'register_account', `user:${newId}`, null, { name: newUser.name, phone: newUser.phone, role: newUser.role }, req.ip || '127.0.0.1');
-  res.status(201).json(createSessionPayload(newUser));
+  res.status(201).json(issueBrowserSession(res, newUser));
 });
 
 app.post('/api/auth/login', authRateLimiter, (req, res) => {
@@ -684,7 +713,7 @@ app.post('/api/auth/login', authRateLimiter, (req, res) => {
   }
 
   writeAuditLog(matchedUser.id, 'login_success', `user:${matchedUser.id}`, null, { phone: normalized }, req.ip || '127.0.0.1');
-  res.status(200).json(createSessionPayload(matchedUser));
+  res.status(200).json(issueBrowserSession(res, matchedUser));
 });
 
 // Demo sessions are strictly local-development tooling. They use the same JWT
@@ -700,7 +729,7 @@ app.post('/api/auth/demo-login', authRateLimiter, (req, res) => {
   if (!user) return res.status(404).json({ error: 'The requested demo account is not available.' });
 
   writeAuditLog(user.id, 'demo_login_success', `user:${user.id}`, null, { role: user.role }, req.ip || '127.0.0.1');
-  res.status(200).json(createSessionPayload(user));
+  res.status(200).json(issueBrowserSession(res, user));
 });
 
 // Optional MFA challenges endpoints
@@ -767,7 +796,7 @@ app.post('/api/auth/mfa/verify', sensitiveAuthRateLimiter, (req, res) => {
   saveDatabase();
 
   writeAuditLog(normalizedUserId, 'mfa_success', 'mfa', null, null, req.ip || '127.0.0.1');
-  res.json({ success: true, ...createSessionPayload(user) });
+  res.json({ success: true, ...issueBrowserSession(res, user) });
 });
 
 app.post('/api/auth/mfa/recovery', sensitiveAuthRateLimiter, (req, res) => {
@@ -795,7 +824,7 @@ app.post('/api/auth/mfa/recovery', sensitiveAuthRateLimiter, (req, res) => {
   saveDatabase();
 
   writeAuditLog(normalizedUserId, 'mfa_recovery_success', 'mfa_backup', null, null, req.ip || '127.0.0.1');
-  res.json({ success: true, ...createSessionPayload(user), message: 'Security recovery verified.' });
+  res.json({ success: true, ...issueBrowserSession(res, user), message: 'Security recovery verified.' });
 });
 
 app.post('/api/auth/password-reset', sensitiveAuthRateLimiter, (req, res) => {
@@ -833,7 +862,8 @@ app.post('/api/auth/password-reset', sensitiveAuthRateLimiter, (req, res) => {
 registerPasswordRecovery(app, sensitiveAuthRateLimiter, () => db, saveDatabase, normalizeKenyanPhone, validatePasswordStrength);
 
 app.post('/api/auth/refresh', authRateLimiter, (req, res) => {
-  const refreshToken = cleanCredential(req.body?.refreshToken, 2048);
+  const cookieRefresh = (req.headers.cookie || '').split(';').map(value => value.trim()).find(value => value.startsWith('sl_refresh='))?.slice('sl_refresh='.length);
+  const refreshToken = cleanCredential(cookieRefresh || req.body?.refreshToken, 2048);
   if (!refreshToken) {
     return res.status(400).json({ error: 'Refresh token is required.' });
   }
@@ -862,19 +892,22 @@ app.post('/api/auth/refresh', authRateLimiter, (req, res) => {
 
     // Issue rotated tokens
     writeAuditLog(matched.id, 'token_refresh_rotated', 'tokens', null, null, req.ip || '127.0.0.1');
-    res.json(createSessionTokens(matched));
+    res.json(issueBrowserSession(res, matched));
   } catch (err) {
     return res.status(403).json({ error: 'Expired or damaged token signature.' });
   }
 });
 
 app.post('/api/auth/logout', authRateLimiter, (req, res) => {
-  const refreshToken = cleanCredential(req.body?.refreshToken, 2048);
+  const cookieRefresh = (req.headers.cookie || '').split(';').map(value => value.trim()).find(value => value.startsWith('sl_refresh='))?.slice('sl_refresh='.length);
+  const refreshToken = cleanCredential(cookieRefresh || req.body?.refreshToken, 2048);
   if (refreshToken && db.refreshTokens) {
     const hashed = crypto.createHash('sha256').update(refreshToken).digest('hex');
     db.refreshTokens = db.refreshTokens.filter(t => t !== hashed);
     saveDatabase();
   }
+  res.clearCookie('sl_access', SESSION_COOKIE_OPTIONS);
+  res.clearCookie('sl_refresh', SESSION_COOKIE_OPTIONS);
   res.json({ success: true, message: 'Logged out successfully.' });
 });
 

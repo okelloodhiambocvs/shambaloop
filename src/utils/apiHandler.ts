@@ -131,11 +131,7 @@ export async function safeFetch<T = any>(
   const urlString = typeof input === 'string' ? input : (input as any).url || '';
   try {
     const headers = new Headers(init?.headers);
-    if (typeof input === 'string' && input.startsWith('/api/') && !headers.has('Authorization')) {
-      const token = localStorage.getItem('sl_token');
-      if (token) headers.set('Authorization', `Bearer ${token}`);
-    }
-    const response = await fetch(input, { ...init, headers });
+    const response = await fetch(input, { ...init, headers, credentials: 'same-origin' });
     const contentType = response.headers.get('content-type');
     
     let responseData: any = null;
