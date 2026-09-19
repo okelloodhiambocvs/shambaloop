@@ -252,9 +252,6 @@ export default function App() {
         setAuthSuccessMsg('Akaunti imeundwa! Account created successfully.');
         setCurrentUser(data.user);
         localStorage.setItem('sl_current_user', JSON.stringify(data.user));
-        if (data.token) {
-          localStorage.setItem('sl_token', data.token);
-        }
         setUsersList(prev => [...prev.filter(u => u.phone !== data.user.phone), data.user]);
         logAction('register_account', { name: authName, phone: authPhone, role: authRole }, data.user.id, data.user.name);
         // Reset fields
@@ -290,9 +287,6 @@ export default function App() {
       if (!error && data?.user) {
         setCurrentUser(data.user);
         localStorage.setItem('sl_current_user', JSON.stringify(data.user));
-        if (data.token) {
-          localStorage.setItem('sl_token', data.token);
-        }
         setAuthSuccessMsg('Karibu tena! Welcome back.');
         logAction('login_account', { phone: authPhone }, data.user.id, data.user.name);
       } else {
@@ -304,9 +298,9 @@ export default function App() {
   };
 
   const handleLogout = () => {
+    void safeFetch('/api/auth/logout', { method: 'POST' });
     setCurrentUser(null);
     localStorage.removeItem('sl_current_user');
-    localStorage.removeItem('sl_token');
   };
 
   const handleSaveVeterinaryReport = async (input: { partnershipId: string; jobId: string; visitType: string; findings: string; recommendations: string; status: VeterinaryReport['status'] }) => {
@@ -329,14 +323,13 @@ export default function App() {
         body: JSON.stringify({ userId })
       });
 
-      if (error || !data?.user || !data.token) return { success: false, error: error || 'Demo sign-in could not be completed.' };
+      if (error || !data?.user) return { success: false, error: error || 'Demo sign-in could not be completed.' };
       if (loginTargetRole && loginTargetRole !== 'dashboard' && data.user.role !== loginTargetRole) {
         return { success: false, error: 'This account does not match the selected role.' };
       }
 
       setCurrentUser(data.user);
       localStorage.setItem('sl_current_user', JSON.stringify(data.user));
-      localStorage.setItem('sl_token', data.token);
       logAction('demo_login_account', { role: data.user.role }, data.user.id, data.user.name);
       return { success: true };
     } catch {
@@ -359,9 +352,6 @@ export default function App() {
 
         setCurrentUser(data.user);
         localStorage.setItem('sl_current_user', JSON.stringify(data.user));
-        if (data.token) {
-          localStorage.setItem('sl_token', data.token);
-        }
         logAction('login_account', { phone }, data.user.id, data.user.name);
         return { success: true };
       } else {
@@ -394,9 +384,6 @@ export default function App() {
       if (!error && data?.user) {
         setCurrentUser(data.user);
         localStorage.setItem('sl_current_user', JSON.stringify(data.user));
-        if (data.token) {
-          localStorage.setItem('sl_token', data.token);
-        }
         setUsersList(prev => [...prev.filter(u => u.phone !== data.user.phone), data.user]);
         logAction('register_account', userData, data.user.id, data.user.name);
         return { success: true };
@@ -1173,9 +1160,8 @@ export default function App() {
     setNetworkLoading(true);
     const wasOnline = navigator.onLine;
     try {
-      const token = localStorage.getItem('sl_token');
-      const isAdmin = currentUser?.role === UserRole.ADMIN && Boolean(token);
-      const adminHeaders = token ? { Authorization: `Bearer ${token}` } : undefined;
+      const isAdmin = currentUser?.role === UserRole.ADMIN;
+      const adminHeaders = undefined;
 
       // Admins receive their protected moderation queue; all other users only see public listings.
       const listRes = await fetch(isAdmin ? '/api/admin/listings' : '/api/listings', { headers: adminHeaders });
@@ -1237,15 +1223,14 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (currentUser?.role === UserRole.ADMIN && localStorage.getItem('sl_token')) {
+    if (currentUser?.role === UserRole.ADMIN) {
       fetchAllData();
     }
   }, [currentUser?.id, currentUser?.role]);
 
   useEffect(() => {
-    const token = localStorage.getItem('sl_token');
-    if (currentUser?.role !== UserRole.FARMER || !token) return;
-    const headers = { Authorization: `Bearer ${token}` };
+    if (currentUser?.role !== UserRole.FARMER) return;
+    const headers = undefined;
     Promise.all([
       fetch('/api/livestock/partnerships', { headers }),
       fetch('/api/farmer/investors', { headers }),
@@ -1267,9 +1252,8 @@ export default function App() {
   }, [currentUser?.id, currentUser?.role]);
 
   useEffect(() => {
-    const token = localStorage.getItem('sl_token');
-    if (currentUser?.role !== UserRole.INVESTOR || !token) return;
-    const headers = { Authorization: `Bearer ${token}` };
+    if (currentUser?.role !== UserRole.INVESTOR) return;
+    const headers = undefined;
     Promise.all([
       fetch('/api/livestock/partnerships', { headers }),
       fetch('/api/investor/proposals', { headers }),
@@ -1287,9 +1271,8 @@ export default function App() {
   }, [currentUser?.id, currentUser?.role]);
 
   useEffect(() => {
-    const token = localStorage.getItem('sl_token');
-    if (currentUser?.role !== UserRole.VETERINARIAN || !token) return;
-    const headers = { Authorization: `Bearer ${token}` };
+    if (currentUser?.role !== UserRole.VETERINARIAN) return;
+    const headers = undefined;
     Promise.all([fetch('/api/veterinary/jobs', { headers }), fetch('/api/veterinary/partnerships', { headers }), fetch('/api/veterinary/reports', { headers })]).then(async ([jobs, partnershipsResponse, reports]) => {
       if (jobs.ok) setVetJobs(await jobs.json());
       if (partnershipsResponse.ok) setPartnerships(await partnershipsResponse.json());
@@ -1528,36 +1511,28 @@ export default function App() {
 
   // 7. Administrative callbacks use the backend as the source of truth. No local fallback is allowed.
   const adminFetch = <T,>(url: string, init: RequestInit = {}) => {
-    const token = localStorage.getItem('sl_token');
-    if (!token) return Promise.resolve({ data: null as T | null, error: 'An administrator session is required.' });
     return safeFetch<T>(url, {
       ...init,
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, ...init.headers }
+      headers: { 'Content-Type': 'application/json', ...init.headers }
     });
   };
 
   const farmerFetch = <T,>(url: string, init: RequestInit = {}) => {
-    const token = localStorage.getItem('sl_token');
-    if (!token) return Promise.resolve({ data: null as T | null, error: 'A signed-in farmer session is required.' });
     return safeFetch<T>(url, {
       ...init,
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, ...init.headers }
+      headers: { 'Content-Type': 'application/json', ...init.headers }
     });
   };
 
   const investorFetch = <T,>(url: string, init: RequestInit = {}) => {
-    const token = localStorage.getItem('sl_token');
-    if (!token) return Promise.resolve({ data: null as T | null, error: 'A signed-in investor session is required.' });
     return safeFetch<T>(url, {
       ...init,
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, ...init.headers }
+      headers: { 'Content-Type': 'application/json', ...init.headers }
     });
   };
 
   const veterinaryFetch = <T,>(url: string, init: RequestInit = {}) => {
-    const token = localStorage.getItem('sl_token');
-    if (!token) return Promise.resolve({ data: null as T | null, error: 'A signed-in veterinary session is required.' });
-    return safeFetch<T>(url, { ...init, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, ...init.headers } });
+    return safeFetch<T>(url, { ...init, headers: { 'Content-Type': 'application/json', ...init.headers } });
   };
 
   const handleSaveFarmerProfile = async (input: { farmSpecialties: string[]; seekingLandAcreage: number }) => {
