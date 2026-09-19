@@ -1,7 +1,7 @@
 import { safeFetch } from '../utils/apiHandler';
 import type { Dispute, FarmRecord, LedgerTransaction, Review, UploadedFile, WalletSummary } from '../types';
 
-const authHeaders = () => ({ 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('sl_token') || ''}` });
+const authHeaders = () => ({ 'Content-Type': 'application/json' });
 const request = <T>(url: string, init?: RequestInit) => safeFetch<T>(url, { ...init, headers: { ...authHeaders(), ...(init?.headers || {}) } });
 
 export const farmerWorkspaceApi = {
