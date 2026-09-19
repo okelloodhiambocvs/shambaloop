@@ -45,6 +45,7 @@ describe('About Us Page (Nyumbani Greens Style)', () => {
     expect(html).toContain('Verified Land &amp; Livestock Marketplace');
     expect(html).toContain('KVB Veterinary Audits &amp; Milestone Escrow');
     expect(html).toContain('Daily Telemetry &amp; Automated M-Pesa Splits');
+    expect(html).toContain('dark:bg-slate-800');
 
     // Verify imagery of farms, livestock, calves
     expect(html).toContain('/images/kenyan_fertile_shamba_1789547934588.jpg');
@@ -68,7 +69,7 @@ describe('About Us Page (Nyumbani Greens Style)', () => {
     expect(html).toContain('Access Portal');
   });
 
-  test('renders AboutFooter with contact details and regional agricultural hubs', () => {
+  test('renders AboutFooter with contact details and no fabricated regional hub directory', () => {
     const html = renderToString(
       React.createElement(AboutFooter, {
         onBack: () => {},
@@ -80,8 +81,9 @@ describe('About Us Page (Nyumbani Greens Style)', () => {
     expect(html).toContain('+254 728 606 684');
     expect(html).toContain('info@shambaloop.com');
     expect(html).toContain('Milimani Innovation Hub, Kisumu');
-    expect(html).toContain('Nyandarua');
-    expect(html).toContain('Nakuru');
-    expect(html).toContain('Kiambu');
+    expect(html).toContain('md:grid-cols-12');
+    expect(html).not.toContain('Regional Agricultural Hubs');
+    expect(html).not.toContain('Ol Kalou Agri-Center');
+    expect(html).not.toContain('Pipeline Agricultural Complex');
   });
 });

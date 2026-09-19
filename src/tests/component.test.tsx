@@ -30,6 +30,7 @@ import AdminPanel from '../components/AdminPanel';
 import FarmerDashboard from '../components/FarmerDashboard';
 import InvestorDashboard from '../components/InvestorDashboard';
 import VeterinaryDashboard from '../components/VeterinaryDashboard';
+import { DisputesTab } from '../components/workspace/DisputesTab';
 import LoginModal from '../components/LoginModal';
 import { UserRole } from '../types';
 
@@ -62,6 +63,8 @@ describe('Recharts render test', () => {
     expect(cssText).toContain('@custom-variant dark');
     expect(cssText).toContain('.dark, .dark *');
     expect(cssText).toContain('.lucide {');
+    expect(cssText).toContain('main :is(p, li, td, dd, blockquote, figcaption)[class]');
+    expect(cssText).toContain('font-size: 0.875rem !important');
 
     const landingPageHtml = renderToString(
       React.createElement('div', null,
@@ -118,6 +121,7 @@ describe('Recharts render test', () => {
       onResolveDispute: async () => {}, onCreateTripartiteMatch: async () => {}
     }));
     expect(html).toContain('Requires attention');
+    expect(html).toContain('Treasury Wallet');
     expect(html).toContain('KYC awaiting action');
     expect(html).not.toContain('Regional Hub Escrow Capital');
   });
@@ -155,6 +159,17 @@ describe('Recharts render test', () => {
     }));
     expect(html).toContain('Jobs, records, and follow-up');
     expect(html).toContain('Jobs requiring action');
+    expect(html).toContain('Dispute Room');
+    expect(html).not.toContain('Farm Docs');
     expect(html).not.toContain('Veterinary Command Station');
+  });
+
+  test('keeps the dispute action visible even before a relationship is available', () => {
+    const html = renderToString(React.createElement(DisputesTab, {
+      user: { id: 'farmer_1', phone: '0712345678', name: 'Farmer One', role: UserRole.FARMER, verified: true, county: 'Nakuru', createdAt: '2026-01-01' },
+      partnerships: [], disputes: [], busy: false, act: async () => {}
+    }));
+    expect(html).toContain('File a Dispute');
+    expect(html).not.toContain('disabled=""');
   });
 });
