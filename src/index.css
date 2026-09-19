@@ -102,6 +102,16 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Use the same readable 14px scale as the escrow-agreement body copy across
+   pages and dashboards. Headings retain their component-specific scales. */
+main :is(p, li, td, dd, blockquote, figcaption),
+footer :is(p, li, td, dd, blockquote, figcaption),
+main :is(p, li, td, dd, blockquote, figcaption)[class],
+footer :is(p, li, td, dd, blockquote, figcaption)[class] {
+  font-size: 0.875rem !important;
+  line-height: 1.5;
+}
+
 /* The product uses a text-first interface. Keep the ShambaLoop brand mark,
    but hide library-supplied interface icons everywhere else. */
 .lucide {

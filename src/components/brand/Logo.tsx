@@ -84,17 +84,17 @@ export const Logo: React.FC<LogoProps> = ({
       {variant !== 'symbol' && (
         <div className="flex flex-col tracking-tight leading-none">
           <div className="flex items-baseline">
-            <span className="font-extrabold text-lg sm:text-xl font-display text-emerald-800 dark:text-emerald-400">
+            <span className={`font-extrabold text-lg sm:text-xl font-display ${isDark ? 'text-emerald-200' : 'text-emerald-800 dark:text-emerald-400'}`}>
               Shamba
             </span>
-            <span className="font-black text-lg sm:text-xl font-display text-amber-600 dark:text-amber-400">
+            <span className={`font-black text-lg sm:text-xl font-display ${isDark ? 'text-amber-300' : 'text-amber-600 dark:text-amber-400'}`}>
               Loop
             </span>
-            <span className="ml-1 px-1.5 py-0.2 bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 rounded text-[9px] font-bold font-mono tracking-wider uppercase border border-emerald-300/40 dark:border-emerald-800">
+            <span className={`ml-1 px-1.5 py-0.2 rounded text-[9px] font-bold font-mono tracking-wider uppercase border ${isDark ? 'bg-emerald-950/80 text-emerald-200 border-emerald-600/70' : 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border-emerald-300/40 dark:border-emerald-800'}`}>
               KE
             </span>
           </div>
-          <span className="text-[9px] uppercase font-bold tracking-widest text-slate-500 dark:text-slate-400 font-sans mt-0.5">
+          <span className={`text-[9px] uppercase font-bold tracking-widest font-sans mt-0.5 ${isDark ? 'text-emerald-100/80' : 'text-slate-500 dark:text-slate-400'}`}>
             Agricultural Trust
           </span>
         </div>
