@@ -293,11 +293,11 @@ export default function RoleWorkflowSection({
             How Shamba Loop Works
           </h2>
 
-          <p className="text-sm sm:text-base md:text-lg font-medium text-slate-600 dark:text-slate-300 leading-relaxed">
+          <p className="text-sm font-medium text-slate-600 dark:text-slate-300 leading-relaxed">
             One connected agricultural investment ecosystem protecting every shilling, every animal, and every hectare.
           </p>
 
-          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xl mx-auto">
+          <p className="text-sm text-slate-500 dark:text-slate-400 max-w-xl mx-auto leading-relaxed">
             Shamba Loop seamlessly coordinates three primary participants—<strong className="text-slate-800 dark:text-slate-200">Investor</strong>, <strong className="text-slate-800 dark:text-slate-200">Farmer</strong>, and <strong className="text-slate-800 dark:text-slate-200">Veterinary Professional</strong>—into an accountable, milestone-funded agricultural lifecycle.
           </p>
         </div>
@@ -336,7 +336,7 @@ export default function RoleWorkflowSection({
             })}
           </div>
 
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+          <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
             Select a role to view their specific step-by-step pathway.
           </p>
         </div>
@@ -356,7 +356,7 @@ export default function RoleWorkflowSection({
               <h3 className="text-xl sm:text-2xl font-black font-display text-slate-900 dark:text-white">
                 {currentWorkflow.title}
               </h3>
-              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-3xl leading-relaxed">
+              <p className="text-sm text-slate-600 dark:text-slate-300 max-w-3xl leading-relaxed">
                 {currentWorkflow.summary}
               </p>
             </div>
@@ -396,7 +396,7 @@ export default function RoleWorkflowSection({
                       {step.heading}
                     </h4>
 
-                    <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed font-normal">
+                    <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-normal">
                       {step.description}
                     </p>
 
@@ -429,7 +429,7 @@ export default function RoleWorkflowSection({
 
                     {/* Highlights Bullet List */}
                     {false && step.highlights && (
-                      <ul className="pt-2 border-t border-slate-100 dark:border-slate-800/80 space-y-1.5 text-[11px] text-slate-600 dark:text-slate-400">
+                      <ul className="pt-2 border-t border-slate-100 dark:border-slate-800/80 space-y-1.5 text-sm text-slate-600 dark:text-slate-400">
                         {step.highlights.map((point, pIdx) => (
                           <li key={pIdx} className="flex items-start gap-1.5">
                             <span className="text-emerald-500 font-bold shrink-0 leading-none mt-0.5">•</span>
@@ -456,7 +456,7 @@ export default function RoleWorkflowSection({
               <h3 className="text-lg sm:text-xl font-black font-display text-slate-900 dark:text-white mt-0.5">
                 INVEST → FARM → VERIFY → TRACK → PRODUCE → EARN
               </h3>
-              <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 max-w-2xl">
+              <p className="text-sm text-slate-600 dark:text-slate-300 mt-1 max-w-2xl leading-relaxed">
                 A single unified lifecycle connecting the Investor, Farmer, and Veterinary Professional with milestone-based funds, transparent evidence, and automated returns.
               </p>
             </div>
@@ -487,7 +487,7 @@ export default function RoleWorkflowSection({
                 <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-900 dark:text-white">
                   {stage.label}
                 </h4>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight">
+                <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
                   {stage.desc}
                 </p>
               </div>
@@ -496,35 +496,35 @@ export default function RoleWorkflowSection({
 
           {/* Architectural Tripartite Relationship Diagram */}
           <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 space-y-4">
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+            <div className="flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider sm:text-base">
               <Layers className="w-4 h-4 text-emerald-600" />
               <span>How The Tripartite Agreement Connects On-Chain & In Escrow</span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
               <div className="p-3 rounded-xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-800/40 space-y-1">
-                <div className="font-bold text-amber-900 dark:text-amber-300 uppercase tracking-wider text-[10px]">
+                <div className="font-bold text-amber-900 dark:text-amber-300 uppercase tracking-wider text-xs">
                   1. Capital Provider (Investor)
                 </div>
-                <p className="text-slate-600 dark:text-slate-300 text-[11px] leading-relaxed">
+                <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
                   Commits working capital into the M-Pesa escrow vault. Capital cannot be drained at once—it unlocks in phased tranches as verified milestones are achieved.
                 </p>
               </div>
 
               <div className="p-3 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/50 dark:border-emerald-800/40 space-y-1">
-                <div className="font-bold text-emerald-900 dark:text-emerald-300 uppercase tracking-wider text-[10px]">
+                <div className="font-bold text-emerald-900 dark:text-emerald-300 uppercase tracking-wider text-xs">
                   2. Farm Manager (Farmer)
                 </div>
-                <p className="text-slate-600 dark:text-slate-300 text-[11px] leading-relaxed">
+                <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
                   Provides arable land, daily labor, and animal care. Logs daily production telemetry and submits milestone completion evidence for independent review.
                 </p>
               </div>
 
               <div className="p-3 rounded-xl bg-teal-50/50 dark:bg-teal-950/20 border border-teal-200/50 dark:border-teal-800/40 space-y-1">
-                <div className="font-bold text-teal-900 dark:text-teal-300 uppercase tracking-wider text-[10px]">
+                <div className="font-bold text-teal-900 dark:text-teal-300 uppercase tracking-wider text-xs">
                   3. Clinical Validator (Veterinary)
                 </div>
-                <p className="text-slate-600 dark:text-slate-300 text-[11px] leading-relaxed">
+                <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
                   Licensed KVB professionals perform unannounced or scheduled audits, certify vaccination serials, and submit signed reports that authorize milestone releases.
                 </p>
               </div>
