@@ -71,10 +71,10 @@ export const FaqPage: React.FC<FaqPageProps> = ({
           </div>
 
           <div className="mt-14 p-6 sm:p-8 rounded-3xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center space-y-3">
-            <h3 className="text-base sm:text-lg font-bold font-display text-slate-900 dark:text-white">
+            <h3 className="text-xl sm:text-2xl md:text-3xl font-bold font-display text-slate-900 dark:text-white">
               Still have questions regarding your shamba or livestock?
             </h3>
-            <p className="text-xs text-slate-600 dark:text-slate-400 max-w-lg mx-auto">
+            <p className="text-sm sm:text-base md:text-lg text-slate-600 dark:text-slate-400 max-w-lg mx-auto leading-relaxed">
               Our regional agricultural liaisons in Nyandarua, Nakuru, Kiambu, and Kisumu are on standby to guide you.
             </p>
             <div className="pt-2 flex justify-center gap-3">
