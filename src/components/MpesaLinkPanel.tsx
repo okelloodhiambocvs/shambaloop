@@ -16,7 +16,6 @@ import { User, MpesaAccountLink } from '../types.js';
 
 interface MpesaLinkPanelProps {
   currentUser: User;
-  token?: string;
   onLinkUpdated?: (link: MpesaAccountLink | null) => void;
   isModal?: boolean;
   isOpen?: boolean;
@@ -25,7 +24,6 @@ interface MpesaLinkPanelProps {
 
 export function MpesaLinkPanel({
   currentUser,
-  token,
   onLinkUpdated,
   isModal = false,
   isOpen = true,
@@ -46,17 +44,12 @@ export function MpesaLinkPanel({
   const [idNumber, setIdNumber] = useState('');
   const [accountType, setAccountType] = useState<'PERSONAL' | 'TILL' | 'PAYBILL'>('PERSONAL');
 
-  const authToken = token || localStorage.getItem('sl_token') || '';
-
   // Fetch status on mount
   useEffect(() => {
-    if (!authToken) return;
     let isMounted = true;
     setLoading(true);
     fetch('/api/wallet/mpesa-link', {
-      headers: {
-        Authorization: `Bearer ${authToken}`
-      }
+      credentials: 'same-origin'
     })
       .then(async res => { const data = await res.json(); if (!res.ok) throw new Error(data.error || 'Unable to load wallet status.'); return data; })
       .then(data => {
@@ -77,7 +70,7 @@ export function MpesaLinkPanel({
     return () => {
       isMounted = false;
     };
-  }, [authToken]);
+  }, []);
 
   const handleLinkSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,10 +90,8 @@ export function MpesaLinkPanel({
     try {
       const res = await fetch('/api/wallet/mpesa-link', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${authToken}`
-        },
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           phoneNumber: phoneNumber.trim(),
           accountHolderName: accountHolderName.trim(),
@@ -133,9 +124,7 @@ export function MpesaLinkPanel({
     try {
       const res = await fetch('/api/wallet/mpesa-link', {
         method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${authToken}`
-        }
+        credentials: 'same-origin'
       });
       const data = await res.json();
       if (!res.ok) {

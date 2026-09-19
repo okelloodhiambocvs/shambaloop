@@ -12,7 +12,7 @@ export default function EscrowPaymentModal({ listing, onClose, onPaymentSuccess,
   async function submit(event: React.FormEvent) {
     event.preventDefault(); setBusy(true); setError('');
     try {
-      const response = await fetch(transaction ? `/api/payments/${transaction.id}/refresh` : '/api/payments/stkpush', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('sl_token') || ''}` }, body: JSON.stringify({ phone, listingId: listing.id, acreageLeased: acres, durationMonths: months }) });
+      const response = await fetch(transaction ? `/api/payments/${transaction.id}/refresh` : '/api/payments/stkpush', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone, listingId: listing.id, acreageLeased: acres, durationMonths: months }) });
       const data = await response.json(); if (!response.ok) throw new Error(data.error || 'Payment request failed.');
       setTransaction(data.transaction);
       if (data.transaction.status === 'FAILED') throw new Error('Payment failed. Close this panel and try again.');
