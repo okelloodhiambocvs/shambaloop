@@ -1,106 +1,19 @@
 import React from 'react';
-import { Cookie, Shield, Sliders, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Cookie, Shield, Sliders } from 'lucide-react';
 
-export const CookieModalContent: React.FC = () => {
-  return (
-    <div className="space-y-6 text-xs text-slate-700 dark:text-slate-200 leading-relaxed font-sans max-h-[75vh] overflow-y-auto pr-2" id="cookie_modal_content">
-      {/* Header */}
-      <div className="border-b border-slate-200 dark:border-slate-800 pb-3">
-        <span className="bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase font-mono">
-          Transparency & Consent Charter
-        </span>
-        <h4 className="font-extrabold text-slate-900 dark:text-white text-lg mt-2 font-display">
-          Cookie & Local Storage Policy
-        </h4>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          Effective: September 2026 | Compliant with ODPC Guidelines and ePrivacy Standards
-        </p>
-      </div>
+const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (<section className="space-y-1.5"><h5 className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider">{title}</h5><div className="space-y-1.5 text-slate-600 dark:text-slate-300 text-[11px]">{children}</div></section>);
 
-      {/* Preamble */}
-      <div className="p-3.5 bg-slate-50 dark:bg-slate-850 rounded-xl border border-slate-200 dark:border-slate-800 text-[11.5px] space-y-2">
-        <p className="font-semibold text-slate-900 dark:text-white">
-          HOW SHAMBALOOP UTILIZES COOKIES & CLIENT STORAGE
-        </p>
-        <p className="text-slate-600 dark:text-slate-300">
-          ShambaLoop uses small data files stored on your device—including HTTP cookies, browser LocalStorage, and SessionStorage—to maintain your authenticated session, remember your regional county filters, safeguard financial escrow commands against CSRF attacks, and ensure the reliable operation of the Farm Management System (FMS).
-        </p>
-      </div>
-
-      {/* Cookie Categories */}
-      <div className="space-y-3">
-        <h5 className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider flex items-center gap-2">
-          <Cookie className="w-3.5 h-3.5 text-emerald-600" />
-          Categories of Storage Technologies Employed
-        </h5>
-
-        <div className="space-y-2.5">
-          {/* Strictly Necessary */}
-          <div className="p-3 rounded-xl border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50/30 dark:bg-emerald-950/10 space-y-1">
-            <div className="flex items-center justify-between">
-              <strong className="text-slate-900 dark:text-white text-xs font-bold">
-                1. Strictly Necessary & Security Tokens (Mandatory)
-              </strong>
-              <span className="text-[9px] font-mono uppercase px-2 py-0.5 rounded bg-emerald-600 text-white font-bold">
-                Always Active
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
-              Essential for logging into your account, verifying cryptographic JWT tokens, securing Safaricom Daraja M-Pesa sessions, preventing cross-site request forgery, and keeping the audit trail uncompromised. The platform cannot function without these.
-            </p>
-          </div>
-
-          {/* Functional & Preferences */}
-          <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-1">
-            <div className="flex items-center justify-between">
-              <strong className="text-slate-900 dark:text-white text-xs font-bold">
-                2. Preference & Customization Storage
-              </strong>
-              <span className="text-[9px] font-mono uppercase px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold">
-                Configurable
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
-              Preserves user interface settings such as Dark/Light theme mode, preferred Kenyan county view (e.g. Kisumu, Nakuru, Nyandarua), table sorting preferences, and draft inputs in livestock registration forms.
-            </p>
-          </div>
-
-          {/* Performance & Telemetry */}
-          <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-1">
-            <div className="flex items-center justify-between">
-              <strong className="text-slate-900 dark:text-white text-xs font-bold">
-                3. Platform Performance & Telemetry Monitoring
-              </strong>
-              <span className="text-[9px] font-mono uppercase px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold">
-                Configurable
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
-              Measures page loading latencies across mobile cellular networks (Safaricom, Airtel), tracks API response times during milk telemetry submissions, and helps diagnose connection drops in remote farming clusters.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Managing Preferences */}
-      <div className="space-y-2">
-        <h5 className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider flex items-center gap-2">
-          <Sliders className="w-3.5 h-3.5 text-emerald-600" />
-          How to Manage or Clear Cookies
-        </h5>
-        <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed pl-2">
-          You can adjust your browser settings (Chrome, Safari, Firefox, Edge) to block or delete cookies at any time. Note that disabling strictly necessary cookies will prevent successful login, wallet balance querying, and lease signing on ShambaLoop.
-        </p>
-      </div>
-
-      <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-[11px] text-slate-600 dark:text-slate-300 space-y-1">
-        <strong className="block text-slate-900 dark:text-white font-bold text-xs uppercase tracking-wider">
-          Inquiries Regarding Cookies
-        </strong>
-        <p>
-          If you have questions regarding our cookie implementation, please email our security operations team at <span className="text-emerald-600 dark:text-emerald-400 font-semibold font-mono">privacy@shambaloop.com</span>.
-        </p>
-      </div>
-    </div>
-  );
-};
+export const CookieModalContent: React.FC = () => (
+  <div className="space-y-6 text-xs text-slate-700 dark:text-slate-200 leading-relaxed font-sans max-h-[75vh] overflow-y-auto pr-2" id="cookie_modal_content">
+    <header className="border-b border-slate-200 dark:border-slate-800 pb-3"><span className="bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase font-mono">Storage transparency</span><h4 className="font-extrabold text-slate-900 dark:text-white text-lg mt-2 font-display">Cookie &amp; Local Storage Policy</h4><p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Effective: 19 September 2026 · Version SL-COOKIE-1.0</p></header>
+    <div className="p-3.5 bg-slate-50 dark:bg-slate-850 rounded-xl border border-slate-200 dark:border-slate-800 text-[11.5px] space-y-2"><p className="font-semibold text-slate-900 dark:text-white">WHAT THIS POLICY COVERS</p><p className="text-slate-600 dark:text-slate-300">Cookies are small browser files. Local storage is browser-managed data that remains until cleared; session storage usually lasts only for the active browser session. This policy explains the client-side storage used by ShambaLoop and how you can manage it.</p></div>
+    <Section title="1. Storage technologies used by the current application"><p>The current application relies primarily on browser local storage rather than advertising cookies. It stores the signed-in user display data, authentication token, theme setting, limited cached marketplace data, recent activity data, and sync timestamps under names beginning with <span className="font-mono">sl_</span>.</p><p>We do not intentionally use this storage to sell personal data, build cross-site advertising profiles, or track you across unrelated websites. If third-party features are added, this policy and consent controls must be reviewed before they are activated.</p></Section>
+    <Section title="2. Strictly Necessary storage"><p>Authentication and security-related storage lets the application remember a signed-in session and send the authorisation token with protected API requests. Removing it signs you out and may prevent access to dashboards, private documents, and other authenticated features.</p><p>Security logs and rate-limiting are also handled by the server. Do not rely on browser storage alone as a security control, and never store passwords, M-Pesa PINs, recovery codes, or unredacted identity documents in a browser field or cache.</p></Section>
+    <Section title="3. Preference and functional storage"><p>Preference storage remembers the selected light or dark theme. Functional cache entries may help the interface display recently fetched listings, agreements, partnerships, or verification data while a refresh is in progress. These entries are for usability and do not replace the authoritative server record.</p><p>You can clear these items at any time. Clearing cached content may make the first subsequent load slower or remove a local preference, but it should not delete the underlying account or server-side records.</p></Section>
+    <Section title="4. Analytics and performance"><p>The current application does not intentionally place third-party advertising or behavioural-analytics cookies. It may record limited operational events, such as recent user actions or synchronization timing, to support troubleshooting and reliability. Any future analytics must be assessed for necessity, disclosed here, and made subject to consent where required.</p></Section>
+    <Section title="5. Managing, withdrawing, and clearing preferences"><p>You can manage browser cookies and storage through the privacy or site-data settings in Chrome, Edge, Firefox, Safari, or another browser. You can also sign out through the application to remove the local session record. On a shared device, always sign out and clear site data after use.</p><p>Blocking all site storage can prevent the platform from functioning correctly. If you withdraw consent for optional technologies, necessary security and account functionality may still operate where permitted by law.</p></Section>
+    <Section title="6. Retention and device sharing"><p>Local storage persists on the device until the application, browser, or user clears it. Cached data can become outdated, so the application refreshes it from the server where possible. Anyone who can access an unlocked browser profile may be able to view local storage; use a separate device profile and device lock for sensitive work.</p></Section>
+    <Section title="7. Changes and questions"><p>We will update this policy before materially changing client-side storage practices. For questions, contact <span className="font-semibold text-emerald-600 dark:text-emerald-400">privacy@shambaloop.com</span>. Our Privacy Policy explains the broader processing of personal data.</p></Section>
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[10.5px]"><div className="p-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40"><Cookie className="w-4 h-4 text-emerald-600 mb-1" /><strong>Necessary</strong><p>Session and core workspace operation.</p></div><div className="p-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40"><Sliders className="w-4 h-4 text-emerald-600 mb-1" /><strong>Preferences</strong><p>Theme and limited local cache.</p></div><div className="p-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40"><Shield className="w-4 h-4 text-emerald-600 mb-1" /><strong>Stay secure</strong><p>Sign out and clear data on shared devices.</p></div></div>
+  </div>
+);
