@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ShieldAlert, Plus, UploadCloud, AlertCircle, CheckCircle2, FileText, Scale } from 'lucide-react';
-import { User, LivestockPartnership, Dispute } from '../../types';
+import { User, LivestockPartnership, Dispute, VeterinaryJob } from '../../types';
 import { sharedWorkspaceApi, readFileAsBase64 } from '../../services/sharedWorkspaceService';
 
 interface DisputesTabProps {
   user: User;
   partnerships: LivestockPartnership[];
+  veterinaryJobs?: VeterinaryJob[];
   disputes: Dispute[];
   busy: boolean;
   act: (fn: () => Promise<void>, msg?: string) => Promise<void>;
@@ -14,6 +15,7 @@ interface DisputesTabProps {
 export const DisputesTab: React.FC<DisputesTabProps> = ({
   user,
   partnerships,
+  veterinaryJobs = [],
   disputes,
   busy,
   act,
@@ -21,14 +23,37 @@ export const DisputesTab: React.FC<DisputesTabProps> = ({
   const [showFileModal, setShowFileModal] = useState(false);
   const [title, setTitle] = useState('');
   const [reason, setReason] = useState('');
-  const [respondentId, setRespondentId] = useState(() => {
-    const p = partnerships[0];
-    return user.role === 'investor' ? p?.farmerId || '' : p?.investorId || '';
-  });
+  const [relationshipId, setRelationshipId] = useState('');
   const [evidenceFile, setEvidenceFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState('');
   const [fileSuccess, setFileSuccess] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const relationships = useMemo(() => {
+    const partnershipRelationships = partnerships
+      .filter((partnership) => user.role === 'investor' ? partnership.investorId === user.id : partnership.farmerId === user.id)
+      .map((partnership) => ({
+        id: `partnership:${partnership.id}`,
+        label: `${partnership.animalType || 'Partnership'} — ${user.role === 'investor' ? partnership.farmerId : partnership.investorId}`,
+        respondentId: user.role === 'investor' ? partnership.farmerId : partnership.investorId,
+        partnershipId: partnership.id,
+        farmId: `farm_${partnership.farmerId}`,
+      }));
+    const jobRelationships = veterinaryJobs
+      .filter((job) => user.role === 'veterinarian' ? job.assignedVetId === user.id : job.farmerId === user.id && Boolean(job.assignedVetId))
+      .map((job) => ({
+        id: `job:${job.id}`,
+        label: `${job.serviceType.replaceAll('_', ' ')} — ${user.role === 'veterinarian' ? job.farmerId : job.assignedVetId}`,
+        respondentId: user.role === 'veterinarian' ? job.farmerId : job.assignedVetId!,
+        jobId: job.id,
+        farmId: job.farmId,
+      }));
+    return user.role === 'veterinarian' ? jobRelationships : [...partnershipRelationships, ...jobRelationships];
+  }, [partnerships, user.id, user.role, veterinaryJobs]);
+  const selectedRelationship = relationships.find((relationship) => relationship.id === relationshipId);
+
+  useEffect(() => {
+    if (!selectedRelationship && relationships[0]) setRelationshipId(relationships[0].id);
+  }, [relationships, selectedRelationship]);
 
   const handleFileDispute = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,6 +62,10 @@ export const DisputesTab: React.FC<DisputesTabProps> = ({
 
     if (!title.trim() || !reason.trim()) {
       setFileError('Please provide a title and detailed reason for the dispute.');
+      return;
+    }
+    if (!selectedRelationship) {
+      setFileError('Select an active partnership or assigned veterinary job before filing a dispute.');
       return;
     }
 
@@ -50,6 +79,7 @@ export const DisputesTab: React.FC<DisputesTabProps> = ({
           fileName: evidenceFile.name,
           mimeType: evidenceFile.type,
           base64Data,
+          farmId: selectedRelationship.farmId,
           documentType: 'DISPUTE_EVIDENCE',
           description: `Dispute evidence for: ${title}`,
         });
@@ -63,7 +93,9 @@ export const DisputesTab: React.FC<DisputesTabProps> = ({
         const res = await sharedWorkspaceApi.raiseDispute({
           title,
           reason,
-          respondentId: respondentId || undefined,
+          respondentId: selectedRelationship.respondentId,
+          partnershipId: selectedRelationship.partnershipId,
+          jobId: selectedRelationship.jobId,
           evidenceUrls,
         });
         if (res.error) throw new Error(res.error);
@@ -103,6 +135,12 @@ export const DisputesTab: React.FC<DisputesTabProps> = ({
           <span>File a Dispute</span>
         </button>
       </div>
+
+      {!relationships.length && (
+        <p className="text-xs text-amber-700 dark:text-amber-300">
+          You can file a dispute as soon as an active partnership or assigned veterinary job is available to link to the case.
+        </p>
+      )}
 
       {showFileModal && (
         <div className="p-5 rounded-2xl border border-amber-500/30 bg-amber-50/40 dark:bg-amber-950/20 space-y-4">
@@ -150,18 +188,18 @@ export const DisputesTab: React.FC<DisputesTabProps> = ({
 
               <div>
                 <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                  Target Partner / Counterpart
+                  Related partnership or veterinary job
                 </label>
                 <select
-                  value={respondentId}
-                  onChange={(e) => setRespondentId(e.target.value)}
+                  value={relationshipId}
+                  onChange={(e) => setRelationshipId(e.target.value)}
                   className="w-full p-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900"
                   id="dispute_counterpart_select"
                 >
-                  <option value="">General Committee Arbitration</option>
-                  {partnerships.map((p) => (
-                    <option key={p.id} value={user.role === 'investor' ? p.farmerId : p.investorId}>
-                      {p.animalType || 'Partnership'} ({p.id})
+                  <option value="" disabled>Select the related record</option>
+                  {relationships.map((relationship) => (
+                    <option key={relationship.id} value={relationship.id}>
+                      {relationship.label}
                     </option>
                   ))}
                 </select>

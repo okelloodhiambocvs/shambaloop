@@ -14,7 +14,6 @@ export function registerDisputesRoutes(
     const user = req.user!;
     const db = getDb();
     db.disputes ||= [];
-
     let disputes: Dispute[] = [];
     if (user.role === UserRole.ADMIN) {
       disputes = db.disputes;
@@ -52,6 +51,15 @@ export function registerDisputesRoutes(
 
     const db = getDb();
     db.disputes ||= [];
+    const submittedEvidenceUrls = Array.isArray(evidenceUrls)
+      ? evidenceUrls.filter((url): url is string => typeof url === 'string' && /^\/api\/uploads\/[A-Za-z0-9_-]+$/.test(url)).slice(0, 10)
+      : [];
+    const ownedEvidenceUrls = (db.uploadedFiles || [])
+      .filter((file: any) => file.uploaderId === user.id && file.documentType === 'DISPUTE_EVIDENCE')
+      .map((file: any) => file.url);
+    if (submittedEvidenceUrls.length !== (Array.isArray(evidenceUrls) ? evidenceUrls.length : 0) || submittedEvidenceUrls.some((url) => !ownedEvidenceUrls.includes(url))) {
+      return res.status(403).json({ error: 'Dispute evidence must be a supporting file uploaded by the case creator.' });
+    }
 
     // If linked to a lease agreement, check participation and update escrow to DISPUTED
     let linkedAgreement: any = null;
@@ -94,7 +102,7 @@ export function registerDisputesRoutes(
       title: title ? String(title).trim().slice(0, 150) : 'Partnership Grievance',
       reason: String(reason).trim().slice(0, 2000),
       evidenceText: evidenceText ? String(evidenceText).trim() : undefined,
-      evidenceUrls: Array.isArray(evidenceUrls) ? evidenceUrls : [],
+      evidenceUrls: submittedEvidenceUrls,
       partnershipId,
       jobId,
       leaseId: targetLeaseId,
@@ -107,7 +115,7 @@ export function registerDisputesRoutes(
           senderName: user.name,
           senderRole: user.role,
           message: String(reason).trim(),
-          evidenceUrls: Array.isArray(evidenceUrls) ? evidenceUrls : [],
+          evidenceUrls: submittedEvidenceUrls,
           timestamp
         }
       ],
